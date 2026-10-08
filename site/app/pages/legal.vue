@@ -32,6 +32,7 @@ const MIS_A_JOUR = '8 octobre 2026'
         This site is published by a private person, not by a company. As French law allows a private publisher (LCEN, article 6,
         III, 2), their name is not shown here: it is known to the host below.
       </p>
+      <p>Contact: <a href="mailto:contact@sillysimple.app">contact@sillysimple.app</a></p>
     </section>
 
     <section aria-labelledby="host">
@@ -48,14 +49,19 @@ const MIS_A_JOUR = '8 octobre 2026'
       <h2 id="data">What a visit leaves behind</h2>
       <p>
         This site sets no cookies, counts no visitors, and loads nothing from anyone else: its fonts and pictures come from the site
-        itself. There is no account and no form.
+        itself. There is no account.
+      </p>
+      <p>
+        The <NuxtLink to="/contact/">contact form</NuxtLink> sends what you write, your address and the name you give by email to
+        the publisher, only to answer you. It is kept in that mailbox and nowhere else, and removed if you ask.
       </p>
       <p>
         Like any web server, the one behind this site keeps a short technical record of each request (the address it came from, the
         page and the time), to keep the site running and safe. It is used for nothing else and shared with no one.
       </p>
       <p>
-        Under the GDPR you may ask what is kept about you, and have it removed. You may also complain to the CNIL (cnil.fr).
+        Under the GDPR you may ask what is kept about you, and have it removed, by writing to
+        <a href="mailto:contact@sillysimple.app">contact@sillysimple.app</a>. You may also complain to the CNIL (cnil.fr).
       </p>
     </section>
 
@@ -89,6 +95,7 @@ const MIS_A_JOUR = '8 octobre 2026'
         Ce site est édité par un particulier, à titre non professionnel. Comme la loi le permet (LCEN, article 6, III, 2), son nom
         n'est pas indiqué ici : il est connu de l'hébergeur.
       </p>
+      <p>Contact : <a href="mailto:contact@sillysimple.app">contact@sillysimple.app</a></p>
 
       <h3>Hébergeur</h3>
       <p class="address">
@@ -101,12 +108,18 @@ const MIS_A_JOUR = '8 octobre 2026'
       <h3>Données personnelles</h3>
       <p>
         Ce site ne dépose aucun cookie, ne mesure pas l'audience et ne charge rien depuis un autre site : ses polices et ses images
-        viennent de lui-même. Il n'y a ni compte ni formulaire.
+        viennent de lui-même. Il n'y a pas de compte.
+      </p>
+      <p>
+        Le <NuxtLink to="/contact/">formulaire de contact</NuxtLink> envoie votre message, votre adresse et le nom indiqué par
+        e-mail à l'éditeur, uniquement pour vous répondre. Ils sont conservés dans cette boîte mail et nulle part ailleurs, et
+        supprimés sur demande.
       </p>
       <p>
         Comme tout serveur web, celui du site garde une courte trace technique de chaque requête (adresse d'origine, page, heure), pour
         son fonctionnement et sa sécurité. Elle ne sert à rien d'autre et n'est transmise à personne. Conformément au RGPD, vous pouvez
-        demander ce qui est conservé à votre sujet et sa suppression, et saisir la CNIL (cnil.fr).
+        demander ce qui est conservé à votre sujet et sa suppression en écrivant à
+        <a href="mailto:contact@sillysimple.app">contact@sillysimple.app</a>, et saisir la CNIL (cnil.fr).
       </p>
 
       <h3>L'application</h3>

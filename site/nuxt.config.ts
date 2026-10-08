@@ -1,5 +1,9 @@
-// The website of SillySimple: a few pages, built once into plain files (pnpm generate).
-// Nothing is worked out when a page is asked for: there is no server behind it.
+// The website of SillySimple: a few pages, built once into plain files, and one small server
+// behind them for the contact form (server/api/contact.post.ts).
+//
+//   pnpm build      what goes online: the pages, and the server that serves them and sends the
+//                   form (node .output/server/index.mjs)
+//   pnpm generate   the pages alone, without the form: to look at them anywhere
 // How it should look is in DESIGN.md, at the root of the project.
 
 export default defineNuxtConfig({
@@ -26,6 +30,17 @@ export default defineNuxtConfig({
   // Building starts from the home page and follows every link: a page nothing links to is
   // not built. The list of pages for search engines is made afterwards (scripts/sitemap.mjs).
   nitro: { prerender: { crawlLinks: true, routes: ['/'] } },
+
+  // The mailbox the contact form sends from. The address and the password are given to the
+  // server where it runs (NUXT_SMTP_USER, NUXT_SMTP_PASS in Coolify), never written here.
+  runtimeConfig: {
+    smtpHost: 'mail.infomaniak.com',
+    smtpPort: 587,
+    smtpUser: '',
+    smtpPass: '',
+    /** Where messages go: the mailbox itself, unless another address is given. */
+    contactTo: '',
+  },
 
   app: {
     head: {

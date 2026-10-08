@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "license": "GPL-3.0-or-later",
-  "description": "The website of SillySimple: one page that presents the app and offers the download.",
+  "description": "The website of SillySimple: the pages that present the app and offer the download, and its contact form.",
   "type": "module",
   "engines": {
     "node": ">=22.12.0"
@@ -12,6 +12,7 @@
   "scripts": {
     "postinstall": "nuxt prepare",
     "dev": "nuxt dev",
+    "build": "nuxt build && node scripts/sitemap.mjs",
     "generate": "nuxt generate && node scripts/sitemap.mjs",
     "preview": "nuxt preview",
     "typecheck": "nuxt typecheck",
@@ -21,11 +22,13 @@
     "@fontsource-variable/figtree": "^5.3.0",
     "@fontsource-variable/literata": "^5.3.0",
     "@lucide/vue": "^1.52.0",
+    "nodemailer": "^10.0.10",
     "nuxt": "^4.6.0",
     "vue": "^3.5.43",
     "vue-router": "^5.3.1"
   },
   "devDependencies": {
+    "@types/nodemailer": "^8.0.2",
     "playwright-core": "^1.63.0",
     "simple-icons": "^16.34.0",
     "typescript": "^6.0.3",
