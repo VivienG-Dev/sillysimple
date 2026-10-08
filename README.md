@@ -151,11 +151,15 @@ model is in memory, so the first message of a session loads it before reading th
 English and French (`src/core/mood/detectMood.ts`): no request to the model, and no symbol when
 the text gives no clear sign.
 
-Where the app's own embedding model runs (EmbeddingGemma 2, `SENSE_MODEL` in
-`src/core/engine/models.ts`: today a Mac with an Apple chip, replies coming from this computer),
+Where the app's own embedding model runs (EmbeddingGemma 2, `senseModel` in
+`src/core/engine/models.ts`: replies coming from this computer, on any system),
 the mood is also read from what the reply means, where the word lists are silent
 (`src/core/mood/senseMood.ts` for the arithmetic, `src/main/sense.ts` for the model: the app
-downloads it by itself, quietly, and falls back to the words whenever it cannot be used). A
+downloads it by itself, quietly, and falls back to the words whenever it cannot be used). It
+picks the file by itself: the compressed one (`270m-nvfp4-text`, 378 MB) on a Mac with an Apple
+chip, which runs on Ollama's MLX engine, and the plain one (`270m-bf16-text`, 574 MB) everywhere
+else, which runs on Ollama's usual engine. Ollama's short tags (`270m`, `latest`) are the MLX
+files: always write the full tag. A
 telling word still wins, unless the meaning finds no trace of that mood in what the character
 does or says (it was the user's). The page asks the main process (`window.api.mood.read`), and
 only plays a mood that differs from the one of the reply before (`isNews` in

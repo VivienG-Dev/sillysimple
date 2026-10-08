@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createPullTracker, sameOllamaModel } from '../providers/ollama'
 import { describeEngineDownloadError, describePullError, EngineMissingError, isAbort } from './errors'
-import { BUILTIN_MODELS, builtinModelBytes, cleanModelName, engineContextLength, isBuiltinModel, offersFor } from './models'
+import { BUILTIN_MODELS, builtinModelBytes, cleanModelName, engineContextLength, isBuiltinModel, offersFor, SENSE_MODEL, SENSE_MODEL_ANYWHERE, senseModel, senseSupported } from './models'
 import { compareVersions, ENGINE_VERSION, enginePackage } from './release'
 
 const GIB = 2 ** 30
@@ -60,6 +60,17 @@ describe('the models offered for a computer', () => {
     }
     expect(isBuiltinModel('qwen3:8b')).toBe(false)
     expect(builtinModelBytes('qwen3:8b')).toBeNull()
+  })
+
+  it('reads moods by meaning on every computer: the MLX file on a Mac with an Apple chip, the plain one elsewhere', () => {
+    expect(senseModel('darwin', 'arm64')).toBe(SENSE_MODEL)
+    expect(senseModel('darwin', 'x64')).toBe(SENSE_MODEL_ANYWHERE)
+    expect(senseModel('win32', 'x64')).toBe(SENSE_MODEL_ANYWHERE)
+    expect(senseModel('linux', 'x64')).toBe(SENSE_MODEL_ANYWHERE)
+    // Not Ollama's short tag ("270m"), which is the MLX file.
+    expect(SENSE_MODEL_ANYWHERE.id).toBe('embeddinggemma-2:270m-bf16-text')
+    for (const platform of ['darwin', 'win32', 'linux']) expect(senseSupported(platform, 'x64')).toBe(true)
+    expect(senseSupported('freebsd', 'x64')).toBe(false)
   })
 
   it('gives more context to a computer with more memory', () => {

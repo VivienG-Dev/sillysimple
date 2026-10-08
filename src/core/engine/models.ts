@@ -55,26 +55,51 @@ export const BUILTIN_MODELS: readonly BuiltinModel[] = [
   },
 ]
 
+export interface SenseModel {
+  id: string
+  name: string
+  bytes: number
+  /** The first Ollama that knows this model. */
+  needsOllama: string
+}
+
 /**
  * The app's own model for what a text means (not for writing): EmbeddingGemma 2, its
  * text-only size. First use: the mood of a reply (src/core/mood/senseMood.ts). Like the
  * chat models, the tag says exactly which file.
  *
- * In Ollama it only runs on the MLX engine, which Ollama's downloads carry on a Mac with
- * an Apple chip and nowhere else (0.40.0: on Windows and Linux it is a separate archive,
- * for NVIDIA cards only). Elsewhere the app does without it.
+ * Two files of the same model. This one, compressed (nvfp4), runs on Ollama's MLX engine,
+ * which Ollama's downloads carry on a Mac with an Apple chip only.
  */
-export const SENSE_MODEL = {
+export const SENSE_MODEL: SenseModel = {
   id: 'embeddinggemma-2:270m-nvfp4-text',
   name: 'EmbeddingGemma 2',
   bytes: 378e6,
-  /** The first Ollama that knows this model. */
   needsOllama: '0.40.0',
-} as const
+}
 
-/** True where the app's Ollama can run `SENSE_MODEL`. */
-export function senseSupported(platform: string, arch: string): boolean {
-  return platform === 'darwin' && arch === 'arm64'
+/**
+ * The same model, not compressed (bf16): it runs on Ollama's usual engine, so everywhere
+ * (Windows, Linux, a Mac with an Intel chip). Beware: Ollama's short tags ("270m",
+ * "latest") are the MLX files. Measured with the mood lab on 8 October 2026, with the same
+ * thresholds: 79 of the 142 replies read right, against 82 for the compressed one, and no
+ * mood shown where there is none for either; about 15 ms a reply.
+ */
+export const SENSE_MODEL_ANYWHERE: SenseModel = {
+  id: 'embeddinggemma-2:270m-bf16-text',
+  name: 'EmbeddingGemma 2',
+  bytes: 574e6,
+  needsOllama: '0.40.0',
+}
+
+/** Which file of the model the app uses on this kind of computer. */
+export function senseModel(platform: string, arch: string): SenseModel {
+  return platform === 'darwin' && arch === 'arm64' ? SENSE_MODEL : SENSE_MODEL_ANYWHERE
+}
+
+/** True where the app's Ollama can run one of the two (see `senseModel`): every computer it is made for. */
+export function senseSupported(platform: string, _arch?: string): boolean {
+  return platform === 'darwin' || platform === 'win32' || platform === 'linux'
 }
 
 /**

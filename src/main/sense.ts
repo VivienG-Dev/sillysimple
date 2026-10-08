@@ -1,4 +1,4 @@
-import { SENSE_MODEL } from '@core/engine/models'
+import { SENSE_MODEL, type SenseModel } from '@core/engine/models'
 import { compareVersions } from '@core/engine/release'
 import { detectMood, type Mood } from '@core/mood/detectMood'
 import { anchorList, buildSense, cutReply, senseMood, settleMood, type MoodReading, type Sense, type SenseReading } from '@core/mood/senseMood'
@@ -45,6 +45,8 @@ export interface SenseOptions {
   engine: Pick<Engine, 'current' | 'has' | 'fetchQuietly' | 'hold' | 'rest'>
   /** False on computers whose Ollama cannot run the model (see `senseSupported`). */
   supported: boolean
+  /** Which file of the model (see `senseModel`). The compressed one, for a Mac with an Apple chip, when left out. */
+  model?: SenseModel
   /** What the settings say now: whether moods are read by meaning, and whether replies come from this computer. */
   wanted: () => Promise<{ on: boolean; local: boolean }>
   log?: (line: string) => void
@@ -70,7 +72,8 @@ export function createSense(options: SenseOptions): SenseService {
   const patienceMs = options.patienceMs ?? PATIENCE_MS
   const timeoutMs = options.timeoutMs ?? TIMEOUT_MS
   const retryMs = options.retryMs ?? RETRY_MS
-  const model = SENSE_MODEL.id
+  const about = options.model ?? SENSE_MODEL
+  const model = about.id
 
   /** The moods as the model sees them. Null until it was asked, and again when the model is gone. */
   let sense: Sense | null = null
@@ -119,8 +122,8 @@ export function createSense(options: SenseOptions): SenseService {
       if (!server) return
       // A build made by hand says 0.0.0: whoever runs one knows what is in it.
       outdated =
-        server.version !== '0.0.0' && compareVersions(server.version, SENSE_MODEL.needsOllama) < 0
-          ? `It takes Ollama ${SENSE_MODEL.needsOllama} or newer; the one running is ${server.version}.`
+        server.version !== '0.0.0' && compareVersions(server.version, about.needsOllama) < 0
+          ? `It takes Ollama ${about.needsOllama} or newer; the one running is ${server.version}.`
           : null
       if (outdated) return
 
@@ -130,7 +133,7 @@ export function createSense(options: SenseOptions): SenseService {
         if (!(await options.engine.has(model))) {
           progress = 0
           for (const told of waiting) told()
-          log(`mood: downloading ${model} (${Math.round(SENSE_MODEL.bytes / 1e6)} MB), to read moods by meaning`)
+          log(`mood: downloading ${model} (${Math.round(about.bytes / 1e6)} MB), to read moods by meaning`)
           try {
             await options.engine.fetchQuietly(model, ({ doneBytes, totalBytes }) => {
               progress = totalBytes > 0 ? Math.min(1, doneBytes / totalBytes) : 0
@@ -270,8 +273,8 @@ export function createSense(options: SenseOptions): SenseService {
   }
 
   async function status(): Promise<SenseStatus> {
-    const about = { model: SENSE_MODEL.name, bytes: SENSE_MODEL.bytes }
-    const stands = (state: SenseStatus['state'], extra: Partial<SenseStatus> = {}): SenseStatus => ({ state, progress: null, problem: null, ...about, ...extra })
+    const info = { model: about.name, bytes: about.bytes }
+    const stands = (state: SenseStatus['state'], extra: Partial<SenseStatus> = {}): SenseStatus => ({ state, progress: null, problem: null, ...info, ...extra })
 
     if (!options.supported) return stands('unsupported')
     const { on, local } = await options.wanted()

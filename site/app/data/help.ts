@@ -90,7 +90,7 @@ export const HELP: HelpGroup[] = [
         question: 'I see several lines named “ollama” in Activity Monitor or the Task Manager. Is that normal?',
         answer: [
           'Yes. SillySimple runs models with Ollama, and Ollama shows as several lines: a small one for the program itself, and one for each model held in memory. They are named “ollama” or “llama-server”.',
-          'The biggest is the model that writes the replies: the Gemma 4 you picked (Small, Medium or Large), or the model you chose yourself. On a Mac with an Apple chip there can be a second, much smaller one: EmbeddingGemma 2, by Google (270 million parameters, a 378 MB download), which reads the mood of each reply. On Windows, Linux and Intel Macs it is not used, so there are two lines at most.',
+          'The biggest is the model that writes the replies: the Gemma 4 you picked (Small, Medium or Large), or the model you chose yourself. There can be a second, much smaller one: EmbeddingGemma 2, by Google (270 million parameters), which reads the mood of each reply. It is a 378 MB download on a Mac with an Apple chip, and 574 MB on other computers, where it comes in a file their Ollama can run.',
           'When SillySimple runs its own Ollama, a model leaves memory half an hour after it was last used, and everything stops when you quit the app. Your own Ollama, if you have one, keeps its own settings.',
         ],
       },

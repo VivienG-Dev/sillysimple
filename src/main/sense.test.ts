@@ -4,7 +4,7 @@ import { createServer, type AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { SENSE_MODEL } from '@core/engine/models'
+import { SENSE_MODEL, SENSE_MODEL_ANYWHERE, type SenseModel } from '@core/engine/models'
 import { ollamaVersion } from '@core/providers/ollama'
 import { createEngine, type Engine } from './engine'
 import { createSense, type SenseService } from './sense'
@@ -59,7 +59,7 @@ interface Setup {
 
 /** `ollama`: false for a computer where none runs; otherwise what the stand-in is told. */
 async function setup(
-  options: { ollama?: Record<string, string> | false; supported?: boolean; patienceMs?: number; timeoutMs?: number; retryMs?: number } = {},
+  options: { ollama?: Record<string, string> | false; supported?: boolean; model?: SenseModel; patienceMs?: number; timeoutMs?: number; retryMs?: number } = {},
 ): Promise<Setup> {
   const port = await freePort()
   if (options.ollama !== false) {
@@ -96,6 +96,7 @@ async function setup(
       },
     },
     supported: options.supported ?? true,
+    model: options.model,
     wanted: async () => ({ ...wanted }),
     log: (line) => lines.push(line),
     patienceMs: options.patienceMs,
@@ -229,6 +230,15 @@ describe('where the model cannot be of use', () => {
     expect(status.problem).toContain('0.40.0')
     expect(status.problem).toContain('0.39.2')
     expect(await engine.has(MODEL)).toBe(false)
+  })
+})
+
+describe('on a computer without an Apple chip', () => {
+  it('downloads and uses the plain file of the model', async () => {
+    const { sense } = await setup({ model: SENSE_MODEL_ANYWHERE, patienceMs: 3000 })
+    await until(async () => (await sense.status()).state === 'ready')
+    expect(await sense.status()).toMatchObject({ model: 'EmbeddingGemma 2', bytes: 574e6 })
+    expect(await sense.mood(FOND)).toEqual({ mood: 'love', by: 'meaning' })
   })
 })
 

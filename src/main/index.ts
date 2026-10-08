@@ -5,7 +5,7 @@ import { app, BrowserWindow, net, protocol, safeStorage, shell } from 'electron'
 import { IPC, PORTRAIT_SCHEME } from '@shared/ipc'
 import { initCharacters, portraitFile } from './characters'
 import { openSwappableDatabase } from './chatDatabase'
-import { senseSupported } from '@core/engine/models'
+import { senseModel, senseSupported } from '@core/engine/models'
 import { createEngine } from './engine'
 import { modelBusy, registerIpcHandlers } from './ipc'
 import { createKeyStore } from './keyStore'
@@ -152,7 +152,9 @@ void app.whenReady().then(async () => {
   // What a text means, for the mood of a reply: the app's own small model, where it can run (see sense.ts).
   const sense = createSense({
     engine,
-    // SILLYSIMPLE_SENSE=1: for trying it on a computer whose Ollama was built with the MLX engine by hand.
+    // The compressed file on a Mac with an Apple chip, the plain one elsewhere (see senseModel).
+    model: senseModel(process.platform, process.arch),
+    // SILLYSIMPLE_SENSE=1: for trying it on a system the app is not made for.
     supported: senseSupported(process.platform, process.arch) || process.env['SILLYSIMPLE_SENSE'] === '1',
     wanted: async () => {
       const { appearance, connection } = await getSettings()
