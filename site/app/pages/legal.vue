@@ -61,7 +61,7 @@ const MIS_A_JOUR = '8 octobre 2026'
       </p>
       <p>
         Under the GDPR you may ask what is kept about you, and have it removed, by writing to
-        <a href="mailto:contact@sillysimple.app">contact@sillysimple.app</a>. You may also complain to the CNIL (cnil.fr).
+        <a href="mailto:contact@sillysimple.app">contact@sillysimple.app</a>.
       </p>
     </section>
 
@@ -119,7 +119,7 @@ const MIS_A_JOUR = '8 octobre 2026'
         Comme tout serveur web, celui du site garde une courte trace technique de chaque requête (adresse d'origine, page, heure), pour
         son fonctionnement et sa sécurité. Elle ne sert à rien d'autre et n'est transmise à personne. Conformément au RGPD, vous pouvez
         demander ce qui est conservé à votre sujet et sa suppression en écrivant à
-        <a href="mailto:contact@sillysimple.app">contact@sillysimple.app</a>, et saisir la CNIL (cnil.fr).
+        <a href="mailto:contact@sillysimple.app">contact@sillysimple.app</a>.
       </p>
 
       <h3>L'application</h3>
