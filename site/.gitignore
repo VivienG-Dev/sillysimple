@@ -1,0 +1,8 @@
+node_modules
+.nuxt
+.output
+# The pictures a film is made from (scripts/film).
+.film
+dist
+*.log
+.DS_Store

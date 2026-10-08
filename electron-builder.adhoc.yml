@@ -1,0 +1,11 @@
+# The Mac app signed by nobody ("ad hoc"), for a Mac without a Developer ID certificate.
+# scripts/dist.mjs picks this file by itself when the keychain holds none.
+#
+# Without any signature at all, a Mac with an Apple chip says a downloaded app "is
+# damaged". Signed this way it says Apple could not check it, and lets the person open it
+# anyway (System Settings > Privacy & Security > Open Anyway).
+extends: ./electron-builder.yml
+mac:
+  identity: '-'
+  hardenedRuntime: false
+  notarize: false

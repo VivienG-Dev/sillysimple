@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>SillySimple</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Only the app's own files may load. The model and the voice service are called from the main process,
+         not from here: the page only plays the sound it is handed (blob:). -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: card:; font-src 'self' data:; media-src 'self' blob:"
+    />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

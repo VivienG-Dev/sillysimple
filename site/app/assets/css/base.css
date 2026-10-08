@@ -1,0 +1,209 @@
+/* Reset and the few classes shared by every part of the page. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* The foot of the page, so that a pull past its end shows no other colour. */
+  background: var(--page-6);
+  scroll-behavior: smooth;
+  /* What is jumped to, or reached with the keyboard, stops under the bar at the top. */
+  scroll-padding-top: var(--nav);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--page-0);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+ol,
+ul,
+figure {
+  margin: 0;
+}
+ol,
+ul {
+  padding: 0;
+  list-style: none;
+}
+
+h1,
+h2 {
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+h1 {
+  font-size: var(--text-display);
+}
+h2 {
+  font-size: var(--text-title);
+}
+p {
+  text-wrap: pretty;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+}
+
+/* Keyboard focus: a ring in the colour of the text around it. */
+:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--orange);
+  color: var(--ink);
+}
+
+/* Hidden on screen, still there for the keyboard and screen readers. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --- Layout ---------------------------------------------------------------- */
+
+.wrap {
+  width: 100%;
+  max-width: calc(var(--page) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.lead {
+  max-width: 34em;
+  font-size: var(--text-lead);
+  line-height: 1.45;
+}
+
+/* --- Buttons --------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 26px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background 0.12s,
+    transform 0.12s;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+/* The main button: orange, the one saturated thing on the page besides the icon. */
+.btn-main {
+  background: var(--action-bg);
+  color: var(--action-text);
+}
+.btn-main:hover {
+  background: var(--action-hover);
+}
+.btn-cream {
+  background: var(--cream);
+  color: var(--ink);
+}
+.btn-cream:hover {
+  background: var(--cream-bright);
+}
+/* The ring is drawn in the colour of the page's text, not of the button's. */
+.btn:focus-visible {
+  outline-color: var(--text);
+}
+
+/* --- A speech bubble ------------------------------------------------------- */
+
+/* The shape everything is said in: cream, round, with a tail at its foot. */
+.bubble {
+  position: relative;
+  background: var(--cream);
+  color: var(--ink);
+  border-radius: var(--radius-bubble);
+}
+.bubble::after {
+  content: '';
+  position: absolute;
+  left: 34px;
+  /* One pixel under the bubble's edge, so that no line shows between the two. */
+  bottom: -21px;
+  width: 30px;
+  height: 22px;
+  background: inherit;
+  /* A tail that leans, like the one of the icon. */
+  clip-path: path('M0 0 H30 C26 12 14 20 0 22 C6 16 7 8 0 0 Z');
+}
+.bubble.tail-right::after {
+  left: auto;
+  right: 34px;
+  transform: scaleX(-1);
+}
+.bubble.no-tail::after {
+  content: none;
+}
+
+/* --- The guide's words ----------------------------------------------------- */
+
+/* The guide (components/brand/MascotGuide.vue) writes its words letter by letter. Where
+   scripts run (the "js" mark is put on the page before anything is drawn), they wait unseen
+   until it starts, instead of showing whole for an instant and then starting over. */
+.js .mascot-guide:not(.ready) .whole {
+  visibility: hidden;
+}
+
+/* --- Less motion ----------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

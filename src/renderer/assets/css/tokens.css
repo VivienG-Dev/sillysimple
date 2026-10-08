@@ -1,0 +1,73 @@
+/* Design tokens, taken from the mockups. Components only use these variables. */
+
+:root {
+  /* Surfaces, darkest to lightest */
+  --bg-sidebar: #15141b;
+  --bg-sunken: #18171e;
+  --bg-app: #1b1a22;
+  --bg-panel: #1e1d26;
+  --bg-field: #201f28;
+  --bg-card: #201f29;
+  --bg-button: #23222c;
+  --bg-active: #262435;
+  --bg-tile: #2a2836;
+  --bg-selected: #34324a;
+
+  /* Lines */
+  --border: #2a2834;
+  --border-field: #2c2a36;
+  --border-strong: #2f2d3a;
+  --border-input: #383548;
+  --border-hover: #45425c;
+
+  /* Text, brightest to faintest */
+  --text: #ecebf2;
+  --text-prose: #e4e2ec;
+  --text-soft: #dcdae6;
+  --text-tag: #b8b5c8;
+  --text-action: #a9a6ba;
+  --text-muted: #a3a1b3;
+  --text-dim: #9896aa;
+  --text-faint: #8f8da0;
+  --text-ghost: #88869d;
+
+  /* Accent */
+  --accent: #6d5ce0;
+  --accent-hover: #7d6ff0;
+  --accent-strong: #8f84e8;
+  --accent-text: #b4a9ff;
+  --accent-soft: #cbbcff;
+  --accent-bg: #232035;
+
+  /* States */
+  --success: #3fb97a;
+  --success-text: #7fdcaa;
+  --success-bg: #1d3328;
+  --warning-text: #e8b86b;
+  --danger-text: #f2a4a4;
+  --danger-bg: #36202a;
+  --danger-border: #5a2f3d;
+  /* The heart of a favourite: the same pink whatever colours the character gives the app */
+  --like: #ff6b93;
+
+  /* Type: the system font on macOS, Figtree elsewhere; Literata for the story text */
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Figtree Variable', 'Segoe UI', sans-serif;
+  --font-prose: 'Literata Variable', Georgia, serif;
+  --font-mono: ui-monospace, Menlo, Consolas, monospace;
+
+  /* Shape */
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-pill: 999px;
+
+  /* Layout */
+  --titlebar-height: 52px;
+  --sidebar-width: 264px;
+  --panel-width: 300px;
+  /* Room kept free for the window buttons; set per platform in base.css */
+  --window-controls-left: 0px;
+  --window-controls-right: 0px;
+}

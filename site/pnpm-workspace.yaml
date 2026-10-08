@@ -1,0 +1,5 @@
+# The site is its own project: it does not share the app's dependencies.
+# Which dependencies may run install scripts.
+allowBuilds:
+  esbuild: true
+  '@parcel/watcher': true

@@ -1,0 +1,175 @@
+import { totalmem } from 'node:os'
+import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { app, BrowserWindow, net, protocol, safeStorage, shell } from 'electron'
+import { IPC, PORTRAIT_SCHEME } from '@shared/ipc'
+import { initCharacters, portraitFile } from './characters'
+import { openSwappableDatabase } from './chatDatabase'
+import { senseSupported } from '@core/engine/models'
+import { createEngine } from './engine'
+import { modelBusy, registerIpcHandlers } from './ipc'
+import { createKeyStore } from './keyStore'
+import { initScenarios, scenarioFile } from './scenarios'
+import { createSense } from './sense'
+import { getSettings } from './settings'
+import { BACKGROUND as BACKGROUND_FILE } from './userData'
+// The app's icon, for where the installed app's own icon does not show: the Dock while
+// developing (macOS), the window and the taskbar (Windows, Linux).
+import dockIcon from '../../resources/icon.png?asset'
+import windowIcon from '../../resources/icon-full.png?asset'
+
+const isMac = process.platform === 'darwin'
+const isWindows = process.platform === 'win32'
+
+// Must match --bg-app in the renderer, so the window never flashes white.
+const BACKGROUND = '#1b1a22'
+const TITLEBAR_HEIGHT = 52
+
+app.setName('SillySimple')
+
+// One SillySimple at a time: two would write the same files, and each would run an Ollama.
+// Opening it again brings the window of the one that runs to the front.
+const isFirst = app.requestSingleInstanceLock()
+if (!isFirst) {
+  console.log('SillySimple is already running: its window comes to the front instead.')
+  app.quit()
+}
+app.on('second-instance', () => {
+  const window = BrowserWindow.getAllWindows()[0]
+  if (!window) return
+  if (window.isMinimized()) window.restore()
+  window.focus()
+})
+
+// card://portrait/<character id> shows the picture of a PNG card, and
+// card://background/<version> the user's own chat background. The scheme has
+// to be declared before the app is ready; the handler is added once it is.
+protocol.registerSchemesAsPrivileged([{ scheme: PORTRAIT_SCHEME, privileges: { standard: true, secure: true } }])
+
+function createWindow(): void {
+  const window = new BrowserWindow({
+    width: 1280,
+    height: 800,
+    minWidth: 1024,
+    minHeight: 640,
+    show: false,
+    backgroundColor: BACKGROUND,
+    ...(!isMac && { icon: windowIcon }),
+    // The app draws its own top bar. macOS keeps the traffic lights on the left,
+    // Windows keeps its three buttons on the right.
+    ...(isMac && {
+      titleBarStyle: 'hiddenInset' as const,
+      trafficLightPosition: { x: 18, y: 18 },
+    }),
+    ...(isWindows && {
+      titleBarStyle: 'hidden' as const,
+      titleBarOverlay: { color: BACKGROUND, symbolColor: '#a3a1b3', height: TITLEBAR_HEIGHT },
+    }),
+    webPreferences: {
+      preload: join(import.meta.dirname, '../preload/index.cjs'),
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+    },
+  })
+
+  window.once('ready-to-show', () => window.show())
+
+  // The window only ever shows the app. Links open in the user's browser.
+  window.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://') || url.startsWith('http://')) void shell.openExternal(url)
+    return { action: 'deny' }
+  })
+  window.webContents.on('will-navigate', (event, url) => {
+    if (!isSamePage(url, window.webContents.getURL())) event.preventDefault()
+  })
+
+  // In development electron-vite serves the UI with hot reload; in production it is a file.
+  const devServerUrl = process.env['ELECTRON_RENDERER_URL']
+  if (!app.isPackaged && devServerUrl) {
+    void window.loadURL(devServerUrl)
+  } else {
+    void window.loadFile(join(import.meta.dirname, '../renderer/index.html'))
+  }
+}
+
+/** True when both URLs are the app's own page (routes only change the #hash). */
+function isSamePage(target: string, current: string): boolean {
+  try {
+    const a = new URL(target)
+    const b = new URL(current)
+    return a.protocol === b.protocol && a.host === b.host && a.pathname === b.pathname
+  } catch {
+    return false
+  }
+}
+
+void app.whenReady().then(async () => {
+  if (!isFirst) return
+  // Once installed, macOS takes the Dock icon from the app itself. Before that, it would be Electron's.
+  if (isMac && !app.isPackaged) app.dock?.setIcon(dockIcon)
+  // Everything the user owns lives in the app's data folder (see README).
+  const dataFolder = app.getPath('userData')
+  await initCharacters(join(dataFolder, 'characters'))
+  // The scenarios come with the app: beside it once packaged, at the root of the project before.
+  initScenarios(app.isPackaged ? join(process.resourcesPath, 'scenarios') : join(app.getAppPath(), 'scenarios'))
+  const db = openSwappableDatabase(join(dataFolder, 'chats.db'))
+  app.on('will-quit', () => db.close())
+
+  protocol.handle(PORTRAIT_SCHEME, async (request) => {
+    const url = new URL(request.url)
+    // The version in the address only serves to show a new picture at once: there is one file.
+    const id = decodeURIComponent(url.pathname.slice(1))
+    const file =
+      url.host === 'background' ? join(dataFolder, BACKGROUND_FILE) : url.host === 'scenario' ? await scenarioFile(id) : await portraitFile(id)
+    if (!file) return new Response(null, { status: 404 })
+    return net.fetch(pathToFileURL(file).toString()).catch(() => new Response(null, { status: 404 }))
+  })
+
+  // "On this computer": the user's Ollama when one runs, the app's own otherwise (see engine.ts).
+  const engine = createEngine({
+    folder: join(dataFolder, 'engine'),
+    platform: process.platform,
+    arch: process.arch,
+    memoryBytes: totalmem(),
+    busy: modelBusy,
+    // A size set by hand in Settings › Generation: the app's own Ollama loads models with it.
+    chosenContext: async () => {
+      const { generation } = await getSettings()
+      return generation.autoContext ? null : generation.contextSize
+    },
+    onChange: (status) => {
+      for (const window of BrowserWindow.getAllWindows()) {
+        if (!window.isDestroyed()) window.webContents.send(IPC.engineEvent, status)
+      }
+    },
+    log: (line) => console.log(line),
+  })
+  // The app's own Ollama never outlives the app.
+  app.on('will-quit', () => engine.stopNow())
+  process.on('exit', () => engine.stopNow())
+
+  // What a text means, for the mood of a reply: the app's own small model, where it can run (see sense.ts).
+  const sense = createSense({
+    engine,
+    // SILLYSIMPLE_SENSE=1: for trying it on a computer whose Ollama was built with the MLX engine by hand.
+    supported: senseSupported(process.platform, process.arch) || process.env['SILLYSIMPLE_SENSE'] === '1',
+    wanted: async () => {
+      const { appearance, connection } = await getSettings()
+      return { on: appearance.moods && appearance.moodsByMeaning, local: connection.kind === 'ollama' }
+    },
+    log: (line) => console.log(line),
+  })
+
+  registerIpcHandlers(db, createKeyStore(join(dataFolder, 'keys.json'), safeStorage), dataFolder, engine, sense)
+  createWindow()
+
+  // macOS: clicking the dock icon reopens a window if none is left.
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
+
+app.on('window-all-closed', () => {
+  if (!isMac) app.quit()
+})

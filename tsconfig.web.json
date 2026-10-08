@@ -1,0 +1,26 @@
+{
+  // Code that runs in the window: the Vue app.
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    "jsx": "preserve",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noUncheckedIndexedAccess": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "paths": {
+      "@/*": ["./src/renderer/*"],
+      "@shared/*": ["./src/shared/*"],
+      "@core/*": ["./src/core/*"]
+    }
+  },
+  "include": ["src/renderer/**/*.ts", "src/renderer/**/*.vue", "src/shared/**/*", "src/core/**/*"],
+  "exclude": ["src/core/**/*.test.ts"]
+}

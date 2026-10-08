@@ -1,0 +1,57 @@
+# Packaging (pnpm dist, pnpm dist:all: see scripts/dist.mjs).
+appId: app.sillysimple.desktop
+productName: SillySimple
+directories:
+  output: dist
+# Everything the app needs is already bundled into out/ by electron-vite.
+files:
+  - out/**/*
+  # The icon the running app shows on its window (see src/main/index.ts).
+  - resources/**/*
+  - package.json
+  # The licence travels with the app, as it asks.
+  - LICENSE
+# The ready-to-play scenarios: card files the app reads from its resources folder.
+extraResources:
+  - from: scenarios
+    to: scenarios
+    filter:
+      - '*.png'
+      - '*.json'
+# Nowhere to publish to, and no update file to write: the app does not update itself yet.
+publish: null
+# One name for every installer: SillySimple-0.1.0-mac-arm64.dmg, …-win-x64.exe, …-linux-x86_64.AppImage.
+artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+# The icon: build/icon.png keeps the margin macOS icons have; build/icon-full.png fills
+# its square, as Windows and Linux expect. The installers' own formats are made from them.
+mac:
+  icon: build/icon.png
+  category: public.app-category.entertainment
+  # Signed with the "Developer ID Application" certificate of the keychain, found by
+  # itself, and notarized by Apple when the credentials for it are there (scripts/dist.mjs
+  # looks and says). The hardened runtime is what notarization asks for; the packager's
+  # own entitlements allow what Electron needs under it. No certificate: see
+  # electron-builder.adhoc.yml.
+  hardenedRuntime: true
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+win:
+  icon: build/icon-full.png
+  target:
+    - target: nsis
+      arch:
+        - x64
+# One click, for this user only: no question asked, no administrator needed.
+nsis:
+  oneClick: true
+  perMachine: false
+linux:
+  icon: build/icon-full.png
+  category: Game
+  target:
+    - target: AppImage
+      arch:
+        - x64

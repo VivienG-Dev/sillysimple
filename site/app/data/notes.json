@@ -1,0 +1,27 @@
+{
+  "model": "Gemma 4 · Small (E2B)",
+  "character": "Suzu Amano",
+  "messages": 21,
+  "places": [
+    "Hoshimi High roof and yard",
+    "The corner bakery interior",
+    "A corner bakery interior"
+  ],
+  "outfits": [
+    "Sailor uniform, silver headphones"
+  ],
+  "memory": {
+    "covers": 11,
+    "text": "Suzu Amano was on the roof, sitting sideways on a floating broom with her headphones on. Around her, objects like a fork, two phones, history notes, and a slice of strawberry cake floated in the air. Suzu took a bite of the cake and pointed a fork at a paper parcel tied to the bristles, instructing Robin that they needed to make three stops before the last bell, and that the first stop would be the first delivery.\n\nRobin grabbed the parcel before it could bite and asked where to go first. Suzu made a humming sound that smelled of ozone and spun sugar, and Biscuit lifted her toward the edge of the schoolyard. Suzu guided them toward the old clock tower, noting that the wind shifted near the spire and warned that if they did not keep the rhythm steady, Biscuit could become philosophical.\n\nRobin asked Suzu to slow down, wanting to enjoy the view. Suzu responded that momentum was key, stating that slowing down would bore Biscuit and cause her to become grumpy, leading to messy magic. She told Robin to trust the flow, as it was faster than he thought.\n\nRobin asked what was in the parcel because it had growled at him twice. Suzu stopped abruptly, and the music cut out, creating a heavy silence. She revealed that the parcel contained a misplaced set of antique tuning forks that needed to be delivered to the library archives before the evening shift. Suzu then asked Robin if he would help her move the delivery across the courtyard.\n\nRobin offered Suzu his scarf to warm her up against the cold. Suzu wrapped it around her neck, acknowledging that even when things were smooth, the air still had edges. She stated that some people were built for walking, while others, like Biscuit, were built for momentum, and that the sky was where the currents were. She concluded by saying that if Robin could read the wind, he could ride it."
+  },
+  "heading": "The immediate goal is to pause the errand and enjoy a quiet moment together in the bakery, with Robin seeking a relaxed pace. Robin seems to want to slow down the action and connect with Suzu during this lull.",
+  "likes": [
+    "quiet moments",
+    "soft light",
+    "comforting scents"
+  ],
+  "dislikes": [
+    "rushed pace",
+    "anxiety"
+  ]
+}

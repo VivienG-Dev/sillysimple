@@ -1,0 +1,99 @@
+{
+  "first-launch": {
+    "length": 27.1,
+    "steps": [
+      {
+        "at": 0,
+        "label": "Open it"
+      },
+      {
+        "at": 6.4,
+        "label": "Say your name"
+      },
+      {
+        "at": 9.9,
+        "label": "Get a model"
+      },
+      {
+        "at": 18.5,
+        "label": "Pick a story"
+      },
+      {
+        "at": 22.2,
+        "label": "Start talking"
+      }
+    ]
+  },
+  "chat": {
+    "length": 15.9,
+    "steps": [
+      {
+        "at": 0,
+        "label": "Write a line"
+      },
+      {
+        "at": 5.9,
+        "label": "The character answers"
+      },
+      {
+        "at": 9.4,
+        "label": "Another version"
+      }
+    ]
+  },
+  "import": {
+    "length": 13.6,
+    "steps": [
+      {
+        "at": 0,
+        "label": "Open the Library"
+      },
+      {
+        "at": 3.5,
+        "label": "Import your cards"
+      },
+      {
+        "at": 5.2,
+        "label": "Start a chat"
+      }
+    ]
+  },
+  "scene": {
+    "length": 20,
+    "steps": [
+      {
+        "at": 0,
+        "label": "Add a character"
+      },
+      {
+        "at": 2.9,
+        "label": "Write to both"
+      },
+      {
+        "at": 15.1,
+        "label": "Make someone speak"
+      }
+    ]
+  },
+  "character": {
+    "length": 24.2,
+    "steps": [
+      {
+        "at": 0,
+        "label": "Open a new character"
+      },
+      {
+        "at": 2.8,
+        "label": "Describe it in a sentence"
+      },
+      {
+        "at": 7.7,
+        "label": "Let the model write"
+      },
+      {
+        "at": 15.7,
+        "label": "Read it, then create"
+      }
+    ]
+  }
+}

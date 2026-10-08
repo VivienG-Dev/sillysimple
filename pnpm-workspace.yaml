@@ -1,0 +1,5 @@
+# Which dependencies may run install scripts.
+# esbuild: needed by Vite. electron-winstaller: only for Squirrel installers, unused.
+allowBuilds:
+  esbuild: true
+  electron-winstaller: false

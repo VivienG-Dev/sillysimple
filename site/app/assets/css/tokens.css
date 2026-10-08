@@ -1,0 +1,102 @@
+/* Design tokens of the site (see DESIGN.md at the root).
+
+   The page is dark, in a warm dark taken from the ink of the icon's face. Cream is for
+   text and for what is said in bubbles. Orange, the colour of the icon's tile, is kept for
+   the icon itself, the main button and the visitor's questions.
+
+   There is one look. Components only use the names of the second half ("What each colour
+   is for"): a light look, if there is one some day, gives these names other values. */
+
+:root {
+  /* --- The colours of the icon ----------------------------------------------------- */
+
+  /* The top of its tile, and a brighter step for a button under the pointer. */
+  --orange: #e07023;
+  --orange-bright: #ee7d2f;
+  /* Its speech bubble. */
+  --cream: #fceed6;
+  --cream-bright: #fff7e8;
+  /* Its eyes and its smile. */
+  --ink: #2a1912;
+  /* Quieter text on cream: still 7:1. */
+  --ink-soft: #5a4335;
+
+  /* --- What each colour is for ------------------------------------------------------- */
+
+  /* The page behind everything, a little darker from its top (0) to its foot (6). */
+  --page-0: #2a1912;
+  --page-1: #27170f;
+  --page-2: #24150e;
+  --page-3: #20130c;
+  --page-4: #1c100a;
+  --page-5: #180e09;
+  --page-6: #150c08;
+
+  /* Text straight on the page, and what is written on a shape of that colour. */
+  --text: var(--cream);
+  --text-inverse: var(--ink);
+
+  /* The main button, and the film's play button. */
+  --action-bg: var(--orange);
+  --action-text: var(--ink);
+  --action-hover: var(--orange-bright);
+
+  /* A question asked by the visitor. */
+  --ask-bg: var(--orange);
+  --ask-text: var(--ink);
+
+  /* The large panel a story is read in, and the field a name is typed in. */
+  --panel-bg: #35221a;
+  --panel-text: var(--cream);
+  --panel-soft: #d6c3a9;
+  --field-bg: #35221a;
+  --field-text: var(--cream);
+  --field-line: #9a7f69;
+  --field-hint: #bfa98f;
+
+  /* The edge of a picture laid on the page, and the shadow under it. */
+  --frame-line: rgb(252 238 214 / 0.16);
+  --shade: 0 0 0;
+
+  /* What is behind the logo's entrance. */
+  --intro-backdrop: var(--page-0);
+
+  /* --- Type ---------------------------------------------------------------------------- */
+
+  /* Figtree for the interface, as in the app and as in the wordmark; Literata for stories. */
+  --font-ui: 'Figtree Variable', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-prose: 'Literata Variable', Georgia, serif;
+
+  --text-display: clamp(2.5rem, 1.3rem + 5.2vw, 5rem);
+  --text-title: clamp(1.9rem, 1.2rem + 3vw, 3.25rem);
+  --text-lead: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+  --text-body: 1.0625rem;
+  --text-small: 0.9375rem;
+
+  /* --- Shape and space ------------------------------------------------------------------ */
+
+  /* The app's corner scale, and a larger one for speech bubbles. */
+  --radius: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-bubble: 28px;
+  --radius-pill: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 72px;
+  --space-9: 112px;
+
+  /* Layout */
+  --page: 1180px;
+  --gutter: clamp(20px, 5vw, 48px);
+  /* Above and under each part of the page: two parts are twice this apart. */
+  --band: clamp(40px, 4.6vw, 66px);
+  /* The height of the bar that stays at the top of the window. */
+  --nav: 58px;
+}
