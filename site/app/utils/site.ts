@@ -18,4 +18,5 @@ export const FOOT_LINKS: SiteLink[] = [
   { label: 'First launch', to: '/#first-launch' },
   { label: 'Privacy', to: '/#privacy' },
   { label: 'Download', to: '/#download' },
+  { label: 'Legal', to: '/legal/' },
 ]
