@@ -149,6 +149,21 @@ function resetSystemPrompt(): void {
       <label class="toggle">
         <input
           type="checkbox"
+          :checked="settingsStore.generation.loreByMeaning"
+          @change="settingsStore.update({ generation: { loreByMeaning: ($event.target as HTMLInputElement).checked } })"
+        />
+        <span class="toggle-text">
+          <span class="toggle-title">Bring in lorebook notes by meaning</span>
+          <span class="toggle-hint">
+            A lorebook note is given to the model when one of its keywords comes up in the chat. With this, it is given
+            too when the chat talks about it in other words: "your granny" for a note about the grandmother. It uses the
+            small model that reads moods, when replies come from this computer; elsewhere the keywords work alone.
+          </span>
+        </span>
+      </label>
+      <label class="toggle">
+        <input
+          type="checkbox"
           :checked="settingsStore.generation.thinking"
           @change="settingsStore.update({ generation: { thinking: ($event.target as HTMLInputElement).checked } })"
         />

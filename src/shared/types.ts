@@ -255,6 +255,12 @@ export interface GenerationSettings {
    * dressed the same until the story changes it (see src/core/prompt/place.ts).
    */
   keepPlace: boolean
+  /**
+   * Send a lorebook note also when the chat talks about it without its keywords, as the
+   * app's own embedding model reads it (see src/core/prompt/loreMeaning.ts). Only where
+   * that model runs, with replies from this computer.
+   */
+  loreByMeaning: boolean
 }
 
 export interface AppearanceSettings {

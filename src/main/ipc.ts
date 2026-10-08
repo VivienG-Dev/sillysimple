@@ -117,6 +117,7 @@ import {
 import type { SwappableDatabase } from './chatDatabase'
 import type { Engine } from './engine'
 import type { KeyStore } from './keyStore'
+import { createLoreByMeaning } from './loreByMeaning'
 import type { SenseService } from './sense'
 import { colorOfPicture } from './pictureColor'
 import { listScenarios, scenarioFile } from './scenarios'
@@ -165,6 +166,9 @@ const MAX_FOLD_REQUESTS = 6
 const NOTICE_DELAY_MS = 1500
 
 export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataFolder: string, engine: Engine, sense: SenseService): void {
+  /** Lorebook notes the latest messages call by meaning (see loreByMeaning.ts). */
+  const loreByMeaning = createLoreByMeaning(sense, (line) => console.log(line))
+
   /**
    * Everything needed to reach the server a connection points to. This is where a
    * saved API key joins the request; `apiKey` is a key being tried, not saved yet.
@@ -907,6 +911,14 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
       : null
     const contextSize = effectiveContextSize(generation, detected)
 
+    // Lorebook notes the chat talks about without their keywords, read by the small model
+    // that reads moods (see src/core/prompt/loreMeaning.ts). Only with replies from this
+    // computer, and never for long: the keywords answer alone when it is not there.
+    const loreCalled =
+      generation.loreByMeaning && connection.kind === 'ollama'
+        ? await loreByMeaning(character, history.map((message) => message.content), persona.name).catch(() => undefined)
+        : undefined
+
     const send = (chatEvent: ChatEvent): void => {
       if (!event.sender.isDestroyed()) event.sender.send(IPC.chatEvent, chatEvent)
     }
@@ -936,6 +948,7 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
           tastes: adapt.learnTastes ? adapt : undefined,
           place: generation.keepPlace ? toldPlace : undefined,
           outfit: toldOutfit,
+          loreByMeaning: loreCalled,
         }),
         { contextSize, replyTokens: replyTokens(generation) },
       )

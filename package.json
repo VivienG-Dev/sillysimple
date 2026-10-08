@@ -22,6 +22,8 @@
     "mood:replay": "vitest run --config lab/vitest.config.ts mood/replay.lab",
     "scene:lab": "vitest run --config lab/vitest.config.ts scene.lab",
     "scene:replay": "vitest run --config lab/vitest.config.ts scene/replay.lab",
+    "lore:lab": "vitest run --config lab/vitest.config.ts lore.lab",
+    "lore:replay": "vitest run --config lab/vitest.config.ts lore/replay.lab",
     "dist": "node scripts/dist.mjs",
     "dist:all": "node scripts/dist.mjs --all"
   },

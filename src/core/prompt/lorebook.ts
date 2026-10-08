@@ -23,6 +23,12 @@ export interface LoreOptions {
   macros: MacroContext
   /** The most tokens the entries may take together. */
   tokenBudget: number
+  /**
+   * Entries called by what the chat means (see loreMeaning.ts), as their places in
+   * `book.entries`. They come after the ones the keywords call: they only take the room
+   * those leave.
+   */
+  byMeaning?: ReadonlySet<number>
 }
 
 /** Picks the entries of `book` that the latest `messages` call for. */
@@ -30,22 +36,19 @@ export function activateLorebook(book: Lorebook | null, messages: string[], opti
   const lore: ActiveLore = { before: [], after: [] }
   if (!book) return lore
 
-  const depth = Math.max(1, book.scanDepth ?? DEFAULT_SCAN_DEPTH)
-  const recent = messages.slice(-depth).join('\n')
+  const keyed = keyedEntries(book, messages, options.macros)
+  const meant = book.entries.filter(
+    (entry, index) => options.byMeaning?.has(index) && entry.enabled && entry.content.trim() !== '' && !keyed.includes(entry),
+  )
+  const called = [...keyed, ...meant]
 
-  const called = book.entries.filter((entry) => {
-    if (!entry.enabled || !entry.content.trim()) return false
-    if (entry.constant) return true
-    const mentions = (key: string): boolean => keyMatches(applyMacros(key, options.macros), recent, entry.caseSensitive)
-    if (!entry.keys.some(mentions)) return false
-    return !entry.selective || entry.secondaryKeys.length === 0 || entry.secondaryKeys.some(mentions)
-  })
-
-  // When there is not room for everything, the entries with the highest order stay.
+  // When there is not room for everything, the entries with the highest order stay; the
+  // ones the keywords call before the ones the meaning calls.
   const budget = Math.min(book.tokenBudget ?? Infinity, options.tokenBudget)
   const kept = new Set<LorebookEntry>()
   let used = 0
-  for (const entry of [...called].sort((a, b) => b.insertionOrder - a.insertionOrder)) {
+  const byOrder = (a: LorebookEntry, b: LorebookEntry): number => b.insertionOrder - a.insertionOrder
+  for (const entry of [...[...keyed].sort(byOrder), ...[...meant].sort(byOrder)]) {
     const cost = estimateTokens(entry.content)
     if (used + cost > budget) continue
     used += cost
@@ -56,6 +59,19 @@ export function activateLorebook(book: Lorebook | null, messages: string[], opti
     lore[entry.position === 'after_char' ? 'after' : 'before'].push(entry.content.trim())
   }
   return lore
+}
+
+/** The entries sent always, and those one of whose keys appears in the latest `messages`. */
+export function keyedEntries(book: Lorebook, messages: readonly string[], macros: MacroContext): LorebookEntry[] {
+  const depth = Math.max(1, book.scanDepth ?? DEFAULT_SCAN_DEPTH)
+  const recent = messages.slice(-depth).join('\n')
+  return book.entries.filter((entry) => {
+    if (!entry.enabled || !entry.content.trim()) return false
+    if (entry.constant) return true
+    const mentions = (key: string): boolean => keyMatches(applyMacros(key, macros), recent, entry.caseSensitive)
+    if (!entry.keys.some(mentions)) return false
+    return !entry.selective || entry.secondaryKeys.length === 0 || entry.secondaryKeys.some(mentions)
+  })
 }
 
 const SPACELESS_SCRIPTS = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Thai}]/u

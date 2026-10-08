@@ -52,7 +52,7 @@ interface Setup {
   engine: Engine
   lines: string[]
   /** What the settings say; a test changes it as a user would. */
-  wanted: { on: boolean; local: boolean }
+  wanted: { on: boolean; local: boolean; lore: boolean }
   /** How many times the engine was told replies come from elsewhere. */
   rests: { count: number }
 }
@@ -85,7 +85,7 @@ async function setup(
   cleanups.push(() => engine.stop())
 
   const lines: string[] = []
-  const wanted = { on: true, local: true }
+  const wanted = { on: true, local: true, lore: false }
   const rests = { count: 0 }
   const sense = createSense({
     engine: {
@@ -230,6 +230,36 @@ describe('where the model cannot be of use', () => {
     expect(status.problem).toContain('0.40.0')
     expect(status.problem).toContain('0.39.2')
     expect(await engine.has(MODEL)).toBe(false)
+  })
+})
+
+describe('for the lorebook', () => {
+  it('answers vectors only when the lorebook is read by meaning, with the moods off too', async () => {
+    const { sense, wanted } = await setup({ patienceMs: 3000 })
+    expect(await sense.embed(['Her granny runs a bakery.'], 3000)).toBeNull()
+
+    wanted.on = false
+    wanted.lore = true
+    // The first question gets the model (downloaded here, which nothing waits for), then it answers.
+    expect(await sense.embed(['Her granny runs a bakery.'], 3000)).toBeNull()
+    await until(async () => (await sense.embed(['x'], 3000)) !== null)
+    const vectors = await sense.embed(['Her granny runs a bakery.', 'The guild closes the route.'], 3000)
+    expect(vectors).toHaveLength(2)
+    expect(vectors![0]!.length).toBeGreaterThan(10)
+    // Moods stay off: they are read by words only.
+    expect(await sense.mood(FOND)).toEqual({ mood: null, by: null })
+
+    wanted.local = false
+    expect(await sense.embed(['x'], 3000)).toBeNull()
+  })
+
+  it('gives up on a slow answer without counting it against the model', async () => {
+    const { sense, wanted, lines } = await setup({ ollama: { FAKE_EMBED_MS: '400' }, patienceMs: 3000 })
+    wanted.lore = true
+    await until(async () => (await sense.embed(['x'], 3000)) !== null)
+    expect(await sense.embed(['a', 'b'], 100)).toBeNull()
+    expect(lines.some((line) => line.includes('lorebook question failed'))).toBe(false)
+    expect(await sense.embed(['a', 'b'], 3000)).toHaveLength(2)
   })
 })
 

@@ -52,6 +52,8 @@ export interface BuildMessagesInput {
   place?: string | null
   /** What the character who speaks is wearing, when the app knows: it is told to keep it on until the story changes it. */
   outfit?: string | null
+  /** Lorebook entries of `character` called by what the chat means (see loreMeaning.ts), by their places in its list. */
+  loreByMeaning?: ReadonlySet<number>
 }
 
 /** A lorebook may take up to this share of the model's context. */
@@ -76,7 +78,7 @@ export function buildMessages(input: BuildMessagesInput): LlmMessage[] {
   const lore = activateLorebook(
     character.lorebook,
     history.map((message) => message.content),
-    { macros: context, tokenBudget: Math.floor((input.contextSize ?? 8192) * LORE_SHARE) },
+    { macros: context, tokenBudget: Math.floor((input.contextSize ?? 8192) * LORE_SHARE), byMeaning: input.loreByMeaning },
   )
 
   const sections = [

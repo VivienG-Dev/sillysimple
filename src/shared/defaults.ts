@@ -32,6 +32,7 @@ export const DEFAULT_SETTINGS: Settings = {
     useCardPrompts: true,
     memory: true,
     keepPlace: true,
+    loreByMeaning: true,
   },
   appearance: {
     characterColors: true,

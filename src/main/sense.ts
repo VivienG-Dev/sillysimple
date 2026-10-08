@@ -47,8 +47,11 @@ export interface SenseOptions {
   supported: boolean
   /** Which file of the model (see `senseModel`). The compressed one, for a Mac with an Apple chip, when left out. */
   model?: SenseModel
-  /** What the settings say now: whether moods are read by meaning, and whether replies come from this computer. */
-  wanted: () => Promise<{ on: boolean; local: boolean }>
+  /**
+   * What the settings say now: whether moods are read by meaning (`on`), whether lorebook
+   * notes are called by meaning (`lore`), and whether replies come from this computer.
+   */
+  wanted: () => Promise<{ on: boolean; local: boolean; lore?: boolean }>
   log?: (line: string) => void
   patienceMs?: number
   timeoutMs?: number
@@ -65,6 +68,12 @@ export interface SenseService {
   warm(): void
   /** Where reading by meaning stands, for the settings. Looking is enough to get it ready when it can be. */
   status(): Promise<SenseStatus>
+  /**
+   * The model's vectors for these texts, for the lorebook (see loreMeaning.ts). Null when
+   * the lorebook is not to be read by meaning here, when the model is not ready (it is then
+   * got ready for next time), or when it does not answer within `waitMs`. Never throws.
+   */
+  embed(texts: string[], waitMs: number): Promise<number[][] | null>
 }
 
 export function createSense(options: SenseOptions): SenseService {
@@ -146,8 +155,8 @@ export function createSense(options: SenseOptions): SenseService {
           }
 
           // A download takes a while: the settings may have changed, and the Ollama in use too.
-          const { on, local } = await options.wanted()
-          if (!on || !local) return
+          const { on, local, lore } = await options.wanted()
+          if (!(on || lore) || !local) return
           server = await options.engine.current()
           if (!server) return
         }
@@ -216,11 +225,49 @@ export function createSense(options: SenseOptions): SenseService {
     return on && local
   }
 
+  /** True when the settings ask for the model for anything, here and now. */
+  async function wantedAtAll(): Promise<boolean> {
+    if (!options.supported || gaveUp) return false
+    const { on, local, lore } = await options.wanted()
+    return (on || lore === true) && local
+  }
+
   function warm(): void {
     if (sense || preparing) return
-    void wanted()
+    void wantedAtAll()
       .then((yes) => (yes ? prepare() : undefined))
       .catch(() => {})
+  }
+
+  async function embed(texts: string[], waitMs: number): Promise<number[][] | null> {
+    try {
+      if (texts.length === 0 || !options.supported || gaveUp) return null
+      const { local, lore } = await options.wanted()
+      if (!lore || !local) return null
+      if (!sense) {
+        // The first question loads the model: it is waited for, within `waitMs`. A download
+        // is not: the keywords answer alone meanwhile.
+        const ready = prepare()
+        if (progress !== null) return null
+        let told = (): void => {}
+        await Promise.race([ready, wait(waitMs), new Promise<void>((resolve) => waiting.add((told = resolve)))])
+        waiting.delete(told)
+      }
+      if (!sense || Date.now() < retryAt) return null
+      const server = await options.engine.current()
+      if (!server) return null
+      const release = options.engine.hold()
+      try {
+        return await embedWithOllama(server.url, model, texts, AbortSignal.timeout(waitMs), KEEP_ALIVE)
+      } finally {
+        release()
+      }
+    } catch (error) {
+      // Too slow this time is not the model failing: the keywords answer alone, once.
+      const late = error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')
+      if (!late) failed(error, 'a lorebook question', false)
+      return null
+    }
   }
 
   async function mood(text: string, userName?: string): Promise<MoodReading> {
@@ -292,7 +339,7 @@ export function createSense(options: SenseOptions): SenseService {
     return stands(sense ? 'ready' : 'preparing')
   }
 
-  return { mood, status, warm }
+  return { mood, status, warm, embed }
 }
 
 function wait(ms: number): Promise<void> {

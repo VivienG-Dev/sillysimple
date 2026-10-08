@@ -157,8 +157,8 @@ void app.whenReady().then(async () => {
     // SILLYSIMPLE_SENSE=1: for trying it on a system the app is not made for.
     supported: senseSupported(process.platform, process.arch) || process.env['SILLYSIMPLE_SENSE'] === '1',
     wanted: async () => {
-      const { appearance, connection } = await getSettings()
-      return { on: appearance.moods && appearance.moodsByMeaning, local: connection.kind === 'ollama' }
+      const { appearance, connection, generation } = await getSettings()
+      return { on: appearance.moods && appearance.moodsByMeaning, local: connection.kind === 'ollama', lore: generation.loreByMeaning }
     },
     log: (line) => console.log(line),
   })

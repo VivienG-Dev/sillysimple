@@ -134,6 +134,11 @@ so an old chat still shows who the user was then.
      sent as a separate system message, which many local models refuse in the middle of a chat;
    - its **lorebook** (`lorebook.ts`): an entry joins the system message while one of its keys
      appears in the last few messages. Entries may take up to a quarter of the context.
+     When the app's embedding model is there (the one that reads moods), one more entry may
+     join by meaning: "do you still see your granny?" brings the note about the grandmother
+     even without its keyword (`loreMeaning.ts`, `src/main/loreByMeaning.ts`; tuned with
+     `pnpm lore:lab`). Keyword entries keep the room first; it never holds a reply more than
+     1.2 s, and the setting "Bring in lorebook notes by meaning" turns it off.
 2. `fitToContext` drops the oldest messages when the whole thing would not fit in the model's
    context. The system message and the newest message are always kept. Sizes are estimated
    (about 3.3 characters per token), with a 5% margin, because the exact count depends on the model.
