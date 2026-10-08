@@ -11,7 +11,7 @@ export default defineAppConfig({
     linux: '',
   },
   /** The address of the site once it is online (https://…), for the picture shown when its link is shared. */
-  url: '',
+  url: 'https://sillysimple.app',
   /**
    * Where the code is, once it is public (https://github.com/…, without a slash at the end).
    * Until then the page says the app is free, and does not call it open source: nobody could
