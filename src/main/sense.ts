@@ -49,9 +49,10 @@ export interface SenseOptions {
   model?: SenseModel
   /**
    * What the settings say now: whether moods are read by meaning (`on`), whether lorebook
-   * notes are called by meaning (`lore`), and whether replies come from this computer.
+   * notes are called by meaning (`lore`), whether old moments of a chat are brought back
+   * (`recall`), and whether replies come from this computer.
    */
-  wanted: () => Promise<{ on: boolean; local: boolean; lore?: boolean }>
+  wanted: () => Promise<{ on: boolean; local: boolean; lore?: boolean; recall?: boolean }>
   log?: (line: string) => void
   patienceMs?: number
   timeoutMs?: number
@@ -69,11 +70,11 @@ export interface SenseService {
   /** Where reading by meaning stands, for the settings. Looking is enough to get it ready when it can be. */
   status(): Promise<SenseStatus>
   /**
-   * The model's vectors for these texts, for the lorebook (see loreMeaning.ts). Null when
-   * the lorebook is not to be read by meaning here, when the model is not ready (it is then
+   * The model's vectors for these texts, for the lorebook (see loreMeaning.ts) or for old
+   * moments of a chat (`use` 'recall', see recall.ts). Null when that is not to be done here, when the model is not ready (it is then
    * got ready for next time), or when it does not answer within `waitMs`. Never throws.
    */
-  embed(texts: string[], waitMs: number): Promise<number[][] | null>
+  embed(texts: string[], waitMs: number, use?: 'lore' | 'recall'): Promise<number[][] | null>
 }
 
 export function createSense(options: SenseOptions): SenseService {
@@ -155,8 +156,8 @@ export function createSense(options: SenseOptions): SenseService {
           }
 
           // A download takes a while: the settings may have changed, and the Ollama in use too.
-          const { on, local, lore } = await options.wanted()
-          if (!(on || lore) || !local) return
+          const { on, local, lore, recall } = await options.wanted()
+          if (!(on || lore || recall) || !local) return
           server = await options.engine.current()
           if (!server) return
         }
@@ -228,8 +229,8 @@ export function createSense(options: SenseOptions): SenseService {
   /** True when the settings ask for the model for anything, here and now. */
   async function wantedAtAll(): Promise<boolean> {
     if (!options.supported || gaveUp) return false
-    const { on, local, lore } = await options.wanted()
-    return (on || lore === true) && local
+    const { on, local, lore, recall } = await options.wanted()
+    return (on || lore === true || recall === true) && local
   }
 
   function warm(): void {
@@ -239,11 +240,11 @@ export function createSense(options: SenseOptions): SenseService {
       .catch(() => {})
   }
 
-  async function embed(texts: string[], waitMs: number): Promise<number[][] | null> {
+  async function embed(texts: string[], waitMs: number, use: 'lore' | 'recall' = 'lore'): Promise<number[][] | null> {
     try {
       if (texts.length === 0 || !options.supported || gaveUp) return null
-      const { local, lore } = await options.wanted()
-      if (!lore || !local) return null
+      const asked = await options.wanted()
+      if (!asked[use] || !asked.local) return null
       if (!sense) {
         // The first question loads the model: it is waited for, within `waitMs`. A download
         // is not: the keywords answer alone meanwhile.
@@ -265,7 +266,7 @@ export function createSense(options: SenseOptions): SenseService {
     } catch (error) {
       // Too slow this time is not the model failing: the keywords answer alone, once.
       const late = error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')
-      if (!late) failed(error, 'a lorebook question', false)
+      if (!late) failed(error, use === 'lore' ? 'a lorebook question' : 'an old-moments question', false)
       return null
     }
   }

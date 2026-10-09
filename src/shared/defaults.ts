@@ -33,6 +33,7 @@ export const DEFAULT_SETTINGS: Settings = {
     memory: true,
     keepPlace: true,
     loreByMeaning: true,
+    recallByMeaning: true,
   },
   appearance: {
     characterColors: true,

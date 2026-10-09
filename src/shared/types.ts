@@ -261,6 +261,12 @@ export interface GenerationSettings {
    * that model runs, with replies from this computer.
    */
   loreByMeaning: boolean
+  /**
+   * Bring old moments of a long chat back word for word when the chat comes back to them,
+   * as the app's own embedding model reads it (see src/core/prompt/recall.ts). Only where
+   * that model runs, with replies from this computer.
+   */
+  recallByMeaning: boolean
 }
 
 export interface AppearanceSettings {

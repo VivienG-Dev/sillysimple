@@ -36,6 +36,7 @@ import {
 } from '@core/prompt/notice'
 import { createNameFilter, sceneStops } from '@core/prompt/scene'
 import { joinContinuation } from '@core/prompt/replyLength'
+import type { Recalled } from '@core/prompt/recall'
 import {
   describeConnectionError,
   describeEmptyReply,
@@ -118,6 +119,7 @@ import type { SwappableDatabase } from './chatDatabase'
 import type { Engine } from './engine'
 import type { KeyStore } from './keyStore'
 import { createLoreByMeaning } from './loreByMeaning'
+import { createRecall } from './recall'
 import type { SenseService } from './sense'
 import { colorOfPicture } from './pictureColor'
 import { listScenarios, scenarioFile } from './scenarios'
@@ -168,6 +170,8 @@ const NOTICE_DELAY_MS = 1500
 export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataFolder: string, engine: Engine, sense: SenseService): void {
   /** Lorebook notes the latest messages call by meaning (see loreByMeaning.ts). */
   const loreByMeaning = createLoreByMeaning(sense, (line) => console.log(line))
+  /** Old moments of a long chat, brought back when the chat returns to them (see recall.ts). */
+  const recall = createRecall(sense, (line) => console.log(line))
 
   /**
    * Everything needed to reach the server a connection points to. This is where a
@@ -925,7 +929,7 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
 
     // The messages for the model: the card, what is remembered of the chat's oldest
     // messages, then the messages that came after those, as many as fit.
-    const fitWith = (memory: ChatMemory) =>
+    const fitWith = (memory: ChatMemory, recalled?: Recalled[]) =>
       fitToContext(
         buildMessages({
           character,
@@ -949,6 +953,7 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
           place: generation.keepPlace ? toldPlace : undefined,
           outfit: toldOutfit,
           loreByMeaning: loreCalled,
+          recalled,
         }),
         { contextSize, replyTokens: replyTokens(generation) },
       )
@@ -961,12 +966,12 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
 
     // Long memory: when messages would be left out, the oldest are summed up first, so
     // that the model keeps a trace of them (see src/core/prompt/memory.ts).
+    const nameOf = (message: ChatMessage): string => {
+      if (message.role === 'user') return message.author ?? persona.name
+      const speaker = [character, ...others].find((item) => item.id === (message.characterId ?? chat.characterId))
+      return speaker?.name ?? message.author ?? character.name
+    }
     if (generation.memory && fit.droppedCount > 0) {
-      const nameOf = (message: ChatMessage): string => {
-        if (message.role === 'user') return message.author ?? persona.name
-        const speaker = [character, ...others].find((item) => item.id === (message.characterId ?? chat.characterId))
-        return speaker?.name ?? message.author ?? character.name
-      }
       const pending = history.slice(memory.count)
       const cardTokens = estimateTokens(fitWith({ summary: '', count: history.length }).messages[0]?.content ?? '')
       const room = fit.budgetTokens - cardTokens - memoryTokens(contextSize)
@@ -1009,6 +1014,19 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
         }
         fit = fitWith(memory)
       }
+    }
+
+    // Old moments the chat comes back to, word for word: the messages the model no longer
+    // reads (summed up, or left out) are searched by meaning (see src/core/prompt/recall.ts).
+    const unseen = memory.count + fit.droppedCount
+    if (generation.recallByMeaning && connection.kind === 'ollama' && unseen > 0 && !continuedMessage) {
+      const recalled = await recall(
+        history.slice(0, unseen).map((message) => ({ role: message.role, name: nameOf(message), content: message.content })),
+        history.map((message) => message.content),
+        contextSize,
+        [persona.name, character.name, ...others.map((other) => other.name)],
+      ).catch(() => undefined)
+      if (recalled?.length) fit = fitWith(memory, recalled)
     }
 
     // In a scene, models tend to sign their lines ("Elara: …") and to go on writing

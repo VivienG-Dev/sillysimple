@@ -93,9 +93,7 @@ export function lorePieces(messages: readonly string[], depth: number): LorePiec
   const pieces: LorePiece[] = []
   const latest = messages.slice(-Math.max(1, depth)).reverse()
   latest.forEach((message, age) => {
-    const sentences = (message.match(/[^.!?…。！？\n]+[.!?…。！？]*/g) ?? [])
-      .map((sentence) => sentence.replace(/[*"“”«»„「」『』]/g, ' ').replace(/\s+/g, ' ').trim())
-      .filter((sentence) => /[\p{L}\p{N}]/u.test(sentence))
+    const sentences = sentencesOf(message)
     // A short sentence goes with the one before it, or, first of its message, with the one after.
     const joined: string[] = []
     let carried = ''
@@ -112,11 +110,31 @@ export function lorePieces(messages: readonly string[], depth: number): LorePiec
   return pieces
 }
 
+/** The sentences of a message, without asterisks or quotes. Also used by recall.ts. */
+export function sentencesOf(message: string): string[] {
+  return rawSentences(message).map(cleanSentence).filter(saysSomething)
+}
+
+/** A message cut into its sentences as they are written, asterisks and quotes kept. */
+export function rawSentences(message: string): string[] {
+  return message.match(/[^.!?…。！？\n]+[.!?…。！？]*["”»」』*]*/g) ?? []
+}
+
+/** A sentence as the model reads it: without asterisks or quotes. */
+export function cleanSentence(sentence: string): string {
+  return sentence.replace(/[*"“”«»„「」『』]/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+/** Whether a piece of text has a letter or a figure in it. */
+export function saysSomething(text: string): boolean {
+  return /[\p{L}\p{N}]/u.test(text)
+}
+
 /**
  * How close each note is to the latest messages: for each note, its best score over the
  * sentences. `entryVectors[i]` and `pieceVectors[j]` as the model gave them.
  */
-export function loreScores(entryVectors: readonly (readonly number[])[], pieceVectors: readonly (readonly number[])[], method: LoreMethod): number[] {
+export function loreScores(entryVectors: readonly ArrayLike<number>[], pieceVectors: readonly ArrayLike<number>[], method: LoreMethod): number[] {
   const entries = entryVectors.map(unit)
   const pieces = pieceVectors.map(unit)
   const useMargin = method === 'margin' && entries.length >= MARGIN_NEEDS
@@ -154,13 +172,13 @@ export function pickByMeaning(
     .slice(0, settings.most)
 }
 
-function dot(a: readonly number[], b: readonly number[]): number {
+function dot(a: ArrayLike<number>, b: ArrayLike<number>): number {
   let sum = 0
   for (let index = 0; index < a.length; index++) sum += a[index]! * b[index]!
   return sum
 }
 
-function unit(vector: readonly number[]): number[] {
+function unit(vector: ArrayLike<number>): number[] {
   const length = Math.sqrt(dot(vector, vector)) || 1
-  return vector.map((value) => value / length)
+  return Array.from(vector, (value) => value / length)
 }

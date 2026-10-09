@@ -52,7 +52,7 @@ interface Setup {
   engine: Engine
   lines: string[]
   /** What the settings say; a test changes it as a user would. */
-  wanted: { on: boolean; local: boolean; lore: boolean }
+  wanted: { on: boolean; local: boolean; lore: boolean; recall: boolean }
   /** How many times the engine was told replies come from elsewhere. */
   rests: { count: number }
 }
@@ -85,7 +85,7 @@ async function setup(
   cleanups.push(() => engine.stop())
 
   const lines: string[] = []
-  const wanted = { on: true, local: true, lore: false }
+  const wanted = { on: true, local: true, lore: false, recall: false }
   const rests = { count: 0 }
   const sense = createSense({
     engine: {
@@ -251,6 +251,18 @@ describe('for the lorebook', () => {
 
     wanted.local = false
     expect(await sense.embed(['x'], 3000)).toBeNull()
+  })
+
+  it('answers for old moments only when they are brought back by meaning', async () => {
+    const { sense, wanted } = await setup({ patienceMs: 3000 })
+    wanted.on = false
+    wanted.recall = true
+    await until(async () => (await sense.embed(['x'], 3000, 'recall')) !== null)
+    expect(await sense.embed(['She kept the compass.'], 3000, 'recall')).toHaveLength(1)
+    // The lorebook is not read by meaning: its questions are not answered.
+    expect(await sense.embed(['x'], 3000)).toBeNull()
+    wanted.recall = false
+    expect(await sense.embed(['x'], 3000, 'recall')).toBeNull()
   })
 
   it('gives up on a slow answer without counting it against the model', async () => {

@@ -15,7 +15,7 @@ behind the site. How it should look is in `DESIGN.md`, at the root of the projec
 
 ```bash
 pnpm install     # once
-pnpm dev         # the site with hot reload, on http://localhost:3000
+pnpm dev         # the site with hot reload, on http://localhost:3100
 pnpm generate    # the site as plain files, in .output/public
 pnpm preview     # look at what generate made
 pnpm typecheck   # check types

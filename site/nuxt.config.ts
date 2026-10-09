@@ -11,6 +11,10 @@ export default defineNuxtConfig({
   telemetry: false,
   devtools: { enabled: false },
 
+  // Not 3000: Manga Hive's API listens there, and its front-end would end up
+  // calling this site instead.
+  devServer: { port: 3100 },
+
   // The same fonts as the app, shipped with the site: nothing is loaded from a font service.
   css: [
     '@fontsource-variable/figtree/wght.css',

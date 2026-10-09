@@ -5,6 +5,7 @@ import { applyMacros } from './macros'
 import { memorySection } from './memory'
 import { storySection, tastesSection, type Tastes } from './notice'
 import { steadyNote } from './place'
+import { recallNote, type Recalled } from './recall'
 import { CONTINUE_CUE, lengthInstruction } from './replyLength'
 import { sceneHistory, sceneInstructions, type SceneMember, type SceneMessage } from './scene'
 
@@ -54,6 +55,8 @@ export interface BuildMessagesInput {
   outfit?: string | null
   /** Lorebook entries of `character` called by what the chat means (see loreMeaning.ts), by their places in its list. */
   loreByMeaning?: ReadonlySet<number>
+  /** Old messages of the chat no longer in `history`, brought back because the chat returns to them (see recall.ts). */
+  recalled?: readonly Recalled[]
 }
 
 /** A lorebook may take up to this share of the model's context. */
@@ -118,6 +121,14 @@ export function buildMessages(input: BuildMessagesInput): LlmMessage[] {
   } else {
     const cue = input.continuing ? CONTINUE_CUE : direction || (ending ? GO_ON_CUE : OPEN_CUE)
     conversation.push({ role: 'user', content: cue })
+  }
+
+  // Old moments the chat comes back to, word for word: at the end, so that the start of
+  // what the model reads stays the same from one reply to the next (see recall.ts).
+  const recalled = input.continuing ? '' : recallNote(input.recalled ?? [])
+  if (recalled) {
+    const asked = conversation.at(-1)!
+    asked.content = `${asked.content}\n\n${recalled}`
   }
 
   // The scene stays where it is and the character keeps its clothes: said last, where it

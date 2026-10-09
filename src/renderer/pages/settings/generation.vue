@@ -132,6 +132,21 @@ function resetSystemPrompt(): void {
       <label class="toggle">
         <input
           type="checkbox"
+          :checked="settingsStore.generation.recallByMeaning"
+          @change="settingsStore.update({ generation: { recallByMeaning: ($event.target as HTMLInputElement).checked } })"
+        />
+        <span class="toggle-text">
+          <span class="toggle-title">Bring back old moments word for word</span>
+          <span class="toggle-hint">
+            A summary keeps the story, not every detail. When the chat comes back to something said long ago (a
+            promise, a gift, a name), the app finds those old messages and gives them to the model again, as they were
+            written. It uses the small model that reads moods, when replies come from this computer.
+          </span>
+        </span>
+      </label>
+      <label class="toggle">
+        <input
+          type="checkbox"
           :checked="settingsStore.generation.keepPlace"
           @change="settingsStore.update({ generation: { keepPlace: ($event.target as HTMLInputElement).checked } })"
         />

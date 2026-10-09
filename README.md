@@ -213,6 +213,16 @@ but summed up by the model, and that summary is sent in their place: see
 `chats.memory_count` for how many first messages it stands for); the user reads and edits it in
 the Memory tab of the right panel.
 
+**Exact memory**: a summary keeps the story, not the details. When the chat comes back to
+something said long ago ("do you still have the compass I gave you?"), the app's embedding model
+(the one that reads moods) finds the closest old message the model no longer reads, and gives it
+back word for word, with the message it answers or that answers it, in a note at the end of the
+user's message (at the end, so that Ollama keeps what it already read of the chat). A rare name
+said again weighs extra. See `src/core/prompt/recall.ts` and `src/main/recall.ts`; tuned with
+`pnpm recall:lab` (lab/recall: three long chats and 40 later lines), `pnpm recall:replay` without
+the model. The setting "Bring back old moments word for word" turns it off; the terminal shows a
+line `[recall] #12 0.104 of 40 old messages…` per reply.
+
 **Advice on a character** that exists already is in `src/core/cards/reviewCard.ts`. `reviewCard`
 is a handful of checks on what a card holds (no opening message, a thin description, no
 lorebook notes…): no model is asked, so the advice shows at once at the top of the editor
