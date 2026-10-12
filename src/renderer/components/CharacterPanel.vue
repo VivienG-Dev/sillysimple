@@ -262,6 +262,7 @@ const extras = computed(() => cardExtras(props.character))
         <div class="identity-text">
           <h2 class="title-serif name">{{ character.name }}</h2>
           <span class="tagline">{{ character.tagline }}</span>
+          <CardCredit v-if="character.creator" :creator="character.creator" />
         </div>
         <button
           type="button"

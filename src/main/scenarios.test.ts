@@ -172,7 +172,14 @@ describe('the scenarios of this project', () => {
     expect(scenarios.length).toBeGreaterThanOrEqual(8)
     expect(new Set(scenarios.map((scenario) => scenario.name)).size).toBe(scenarios.length)
 
-    for (const scenario of scenarios) {
+    // The app's own: written for it, held to its own advice. A partner's card (it names
+    // its creator) comes as its author wrote it, and is only checked to be credited.
+    for (const scenario of scenarios.filter((item) => item.creator)) {
+      expect(scenario.creator?.name.trim(), scenario.id).not.toBe('')
+      expect(scenario.tagline, scenario.id).not.toBe('')
+    }
+
+    for (const scenario of scenarios.filter((item) => !item.creator)) {
       expect(scenario.tagline, scenario.id).not.toBe('')
       expect(scenario.pitch, scenario.id).toContain('{{user}}')
       expect(scenario.greetings, scenario.id).toBeGreaterThan(1)

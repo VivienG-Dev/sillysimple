@@ -10,6 +10,8 @@ import { createEngine } from './engine'
 import { modelBusy, registerIpcHandlers } from './ipc'
 import { createKeyStore } from './keyStore'
 import { initScenarios, scenarioFile } from './scenarios'
+import { authorPicture } from './authors'
+import { fetchWebMedia, webAddressOf } from './webMedia'
 import { createSense } from './sense'
 import { getSettings } from './settings'
 import { BACKGROUND as BACKGROUND_FILE } from './userData'
@@ -44,7 +46,8 @@ app.on('second-instance', () => {
 // card://portrait/<character id> shows the picture of a PNG card, and
 // card://background/<version> the user's own chat background. The scheme has
 // to be declared before the app is ready; the handler is added once it is.
-protocol.registerSchemesAsPrivileged([{ scheme: PORTRAIT_SCHEME, privileges: { standard: true, secure: true } }])
+// `stream`: sounds and videos are served in parts, so that they can be played and sought in.
+protocol.registerSchemesAsPrivileged([{ scheme: PORTRAIT_SCHEME, privileges: { standard: true, secure: true, stream: true } }])
 
 function createWindow(): void {
   const window = new BrowserWindow({
@@ -118,10 +121,22 @@ void app.whenReady().then(async () => {
 
   protocol.handle(PORTRAIT_SCHEME, async (request) => {
     const url = new URL(request.url)
+    if (url.host === 'web') {
+      // A picture or a sound a message brings from the web (see webMedia.ts).
+      const address = webAddressOf(url.pathname)
+      if (!address || !(await getSettings()).appearance.webMedia) return new Response(null, { status: 404 })
+      return fetchWebMedia(address, request.headers.get('range'))
+    }
     // The version in the address only serves to show a new picture at once: there is one file.
     const id = decodeURIComponent(url.pathname.slice(1))
     const file =
-      url.host === 'background' ? join(dataFolder, BACKGROUND_FILE) : url.host === 'scenario' ? await scenarioFile(id) : await portraitFile(id)
+      url.host === 'background'
+        ? join(dataFolder, BACKGROUND_FILE)
+        : url.host === 'scenario'
+          ? await scenarioFile(id)
+          : url.host === 'author'
+            ? await authorPicture(id)
+            : await portraitFile(id)
     if (!file) return new Response(null, { status: 404 })
     return net.fetch(pathToFileURL(file).toString()).catch(() => new Response(null, { status: 404 }))
   })

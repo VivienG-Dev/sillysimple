@@ -123,6 +123,7 @@ import { createRecall } from './recall'
 import type { SenseService } from './sense'
 import { colorOfPicture } from './pictureColor'
 import { listScenarios, scenarioFile } from './scenarios'
+import { listAuthors } from './authors'
 import { forgetSettings, getSettings, updateSettings } from './settings'
 import {
   BACKGROUND,
@@ -467,6 +468,7 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
 
   // Ready-to-play scenarios: the characters the app comes with.
   ipcMain.handle(IPC.scenariosList, () => listScenarios())
+  ipcMain.handle(IPC.authorsList, async () => listAuthors(await listScenarios()))
 
   ipcMain.handle(IPC.scenariosPlay, async (_event, id: string): Promise<Character> => {
     const file = await scenarioFile(String(id))

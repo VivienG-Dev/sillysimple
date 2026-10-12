@@ -73,6 +73,9 @@ const api: SillyApi = {
     list: () => ipcRenderer.invoke(IPC.scenariosList),
     play: (id) => ipcRenderer.invoke(IPC.scenariosPlay, id),
   },
+  authors: {
+    list: () => ipcRenderer.invoke(IPC.authorsList),
+  },
 
   chats: {
     list: (characterId) => ipcRenderer.invoke(IPC.chatsList, characterId),

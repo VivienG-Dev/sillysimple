@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Heart, Pencil, Play, Plus, Search, Trash2, Upload } from '@lucide/vue'
+import { Heart, MessageCircle, Pencil, Play, Plus, Search, Trash2, Upload } from '@lucide/vue'
 import { applyMacros } from '@core/prompt/macros'
 import type { Character, ImportResult, Scenario } from '@shared/types'
 
@@ -69,11 +69,14 @@ onMounted(async () => {
   scenarios.value = await window.api.scenarios.list().catch(() => [])
 })
 
-/** Those the user does not have yet. Once played, a scenario is one of their characters, under the same id. */
-const readyToPlay = computed(() => {
-  const owned = new Set(charactersStore.characters.map((character) => character.id))
-  return scenarios.value.filter((scenario) => !owned.has(scenario.id))
-})
+/** The user's characters, by id: once played, a scenario is one of them, under the same id. */
+const owned = computed(() => new Set(charactersStore.characters.map((character) => character.id)))
+
+/**
+ * Those the user does not have yet, and every partner's (they name their creator): those
+ * stay at the top once played, where their author is credited, and "Chat" goes back to them.
+ */
+const readyToPlay = computed(() => scenarios.value.filter((scenario) => scenario.creator || !owned.value.has(scenario.id)))
 
 // One row of them is shown, so that the user's own characters stay close: the rest is a click away.
 const scenarioGrid = ref<HTMLElement | null>(null)
@@ -105,6 +108,9 @@ const starting = ref('')
 
 async function play(scenario: Scenario): Promise<void> {
   if (starting.value) return
+  // Already one of the user's characters: back to it, and to the chat they had with it.
+  const mine = charactersStore.characters.find((character) => character.id === scenario.id)
+  if (mine) return open(mine)
   starting.value = scenario.id
   try {
     problem.value = ''
@@ -256,6 +262,7 @@ function onDrop(event: DragEvent): void {
             <div class="scenario-body">
               <h3 class="card-name">{{ scenario.name }}</h3>
               <p class="card-tagline">{{ scenario.tagline }}</p>
+              <CardCredit v-if="scenario.creator" :creator="scenario.creator" />
               <p class="scenario-pitch">{{ pitchOf(scenario) }}</p>
               <span class="card-tags">
                 <span v-for="tag in scenario.tags.slice(0, 4)" :key="tag" class="tag">{{ tag }}</span>
@@ -265,10 +272,11 @@ function onDrop(event: DragEvent): void {
                   type="button"
                   class="btn btn-primary btn-small"
                   :disabled="starting !== ''"
-                  :aria-label="`Play ${scenario.name}`"
+                  :aria-label="owned.has(scenario.id) ? `Chat with ${scenario.name}` : `Play ${scenario.name}`"
                   @click="play(scenario)"
                 >
-                  <Play :size="13" :stroke-width="2" fill="currentColor" />Play
+                  <template v-if="owned.has(scenario.id)"><MessageCircle :size="13" :stroke-width="2" />Chat</template>
+                  <template v-else><Play :size="13" :stroke-width="2" fill="currentColor" />Play</template>
                 </button>
                 <span v-if="scenario.greetings > 1" class="scenario-openings">{{ scenario.greetings }} ways to begin</span>
               </div>
@@ -345,6 +353,7 @@ function onDrop(event: DragEvent): void {
             <span class="card-more" aria-hidden="true">
               <span class="card-name">{{ character.name }}</span>
               <span v-if="character.tagline" class="card-tagline">{{ character.tagline }}</span>
+              <CardCredit v-if="character.creator" :creator="character.creator" :linked="false" />
               <span v-if="character.tags.length > 0" class="card-tags">
                 <span v-for="tag in character.tags.slice(0, TAGS_ON_HOVER)" :key="tag" class="tag">{{ tag }}</span>
                 <span v-if="character.tags.length > TAGS_ON_HOVER" class="tag tag-more">+{{ character.tags.length - TAGS_ON_HOVER }}</span>

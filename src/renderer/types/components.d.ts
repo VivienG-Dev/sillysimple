@@ -18,6 +18,7 @@ declare module 'vue' {
     AppSlider: typeof import('./../components/AppSlider.vue')['default']
     AppTour: typeof import('./../components/AppTour.vue')['default']
     CardAdvice: typeof import('./../components/CardAdvice.vue')['default']
+    CardCredit: typeof import('./../components/CardCredit.vue')['default']
     CharacterAssistant: typeof import('./../components/CharacterAssistant.vue')['default']
     CharacterAvatar: typeof import('./../components/CharacterAvatar.vue')['default']
     CharacterEditor: typeof import('./../components/CharacterEditor.vue')['default']

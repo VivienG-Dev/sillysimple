@@ -39,6 +39,7 @@ export const DEFAULT_SETTINGS: Settings = {
     characterColors: true,
     moods: true,
     moodsByMeaning: true,
+    webMedia: true,
     background: 'character',
     backgroundStrength: 50,
     backgroundVersion: 0,

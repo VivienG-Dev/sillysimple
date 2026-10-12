@@ -19,6 +19,8 @@ function prepare(message: string): string {
   return message
     .replace(/\r\n?/g, '\n')
     .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/<(style|script)\b[\s\S]*?<\/\1\s*>/gi, ' ')
+    .replace(/<\/?[a-z][^>\n]*>/gi, ' ')
     .replace(/`([^`\n]*)`/g, '$1')
     .replace(/!?\[([^\]\n]*)\]\([^)\n]*\)/g, '$1')
     .replace(/https?:\/\/\S+/g, ' ')

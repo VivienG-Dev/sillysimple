@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Compass, Sparkles } from '@lucide/vue'
 import wordmark from '@/assets/brand/wordmark.png'
+import type { CardCreator } from '@shared/types'
 
 // Help: the tour again, the app's few special words in plain language, and what to do
 // when something goes wrong. Written for someone who has never used an app like this one.
@@ -12,6 +13,25 @@ const settingsStore = useSettingsStore()
 const version = __APP_VERSION__
 
 const intro = ref<{ play: () => void } | null>(null)
+
+// The characters that come with the app, credited to the people who wrote them: some are
+// shared by their authors on the promise that they always are. Read from the cards
+// themselves (their `creator`), so a new card is credited here as soon as it is added.
+const { partnerOf } = useAuthors()
+const credits = ref<{ creator: CardCreator; characters: string[] }[]>([])
+onMounted(async () => {
+  const scenarios = await window.api.scenarios.list().catch(() => [])
+  const byCreator = new Map<string, { creator: CardCreator; characters: string[] }>()
+  for (const scenario of scenarios) {
+    if (!scenario.creator) continue
+    const key = scenario.creator.name.toLowerCase()
+    const entry = byCreator.get(key) ?? { creator: scenario.creator, characters: [] }
+    if (!entry.creator.link && scenario.creator.link) entry.creator = scenario.creator
+    entry.characters.push(scenario.name)
+    byCreator.set(key, entry)
+  }
+  credits.value = [...byCreator.values()].sort((a, b) => a.creator.name.localeCompare(b.creator.name))
+})
 
 /** The tour starts by itself on the chat screen when it has not been seen. */
 async function showTour(): Promise<void> {
@@ -162,6 +182,23 @@ const troubles = [
         What the app keeps and what leaves this computer is in
         <RouterLink to="/settings/data">Data &amp; Privacy</RouterLink>.
       </p>
+    </section>
+
+    <section v-if="credits.length" class="card">
+      <h2 class="card-title">Credits</h2>
+      <p class="hint">The characters that come with the app were written by these people. Thank you to them.</p>
+      <dl>
+        <div v-for="item in credits" :key="item.creator.name" class="entry">
+          <dt>
+            <RouterLink v-if="partnerOf(item.creator.name)" :to="`/authors/${partnerOf(item.creator.name)?.id}`">{{
+              item.creator.name
+            }}</RouterLink>
+            <a v-else-if="item.creator.link" :href="item.creator.link" target="_blank" rel="noreferrer">{{ item.creator.name }}</a>
+            <template v-else>{{ item.creator.name }}</template>
+          </dt>
+          <dd>{{ item.characters.join(', ') }}</dd>
+        </div>
+      </dl>
     </section>
 
     <footer class="about">

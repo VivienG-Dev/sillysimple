@@ -2,6 +2,7 @@ import type { PictureColor } from '@core/color/accent'
 import type { MoodReading } from '@core/mood/senseMood'
 import type {
   Attempt,
+  Author,
   BackupInfo,
   Character,
   CharacterDraft,
@@ -180,6 +181,11 @@ export interface SillyApi {
      * they already have it, theirs is returned and nothing is copied.
      */
     play(id: string): Promise<Character>
+  }
+
+  authors: {
+    /** The partners whose characters come with the app, each with a page of their own. */
+    list(): Promise<Author[]>
   }
 
   chats: {

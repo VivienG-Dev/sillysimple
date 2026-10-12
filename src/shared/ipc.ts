@@ -32,6 +32,7 @@ export const IPC = {
   charactersDelete: 'characters:delete',
   scenariosList: 'scenarios:list',
   scenariosPlay: 'scenarios:play',
+  authorsList: 'authors:list',
   chatsList: 'chats:list',
   chatsOpen: 'chats:open',
   chatsCreate: 'chats:create',
@@ -67,5 +68,7 @@ export const IPC = {
  *   card://portrait/<character id>   a card's picture
  *   card://background/<version>      the user's own chat background
  *   card://scenario/<scenario id>    the picture of a ready-to-play scenario
+ *   card://author/<author id>        the picture of a partner author
+ *   card://web/<https address>       a picture or a sound a message brings from the web (fetched by the main process)
  */
 export const PORTRAIT_SCHEME = 'card'

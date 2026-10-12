@@ -3,7 +3,7 @@ import { Check } from '@lucide/vue'
 import { AnimatePresence, motion } from 'motion-v'
 import { applyMacros } from '@core/prompt/macros'
 import type { ConnectionChoice } from '@/components/ConnectionPicker.vue'
-import type { Scenario } from '@shared/types'
+import type { CardCreator, Scenario } from '@shared/types'
 
 // First launch, three steps: your name, a model, a story to start with. The mascot
 // stands at the top and says what each step is about (MascotGuide.vue).
@@ -36,6 +36,7 @@ interface Choice {
   name: string
   tagline: string
   pictureUrl?: string
+  creator?: CardCreator
   /** What the story starts on, with {{char}} and {{user}} still in it. */
   pitch: string
 }
@@ -52,6 +53,7 @@ const choices = computed<Choice[]>(() => {
     name: character.name,
     tagline: character.tagline,
     pictureUrl: character.portraitUrl,
+    creator: character.creator,
     pitch: character.scenario,
   }))
   const had = new Set(owned.map((choice) => choice.id))
@@ -318,6 +320,7 @@ async function finish(): Promise<void> {
               <span class="character-text">
                 <span class="character-name">{{ choice.name }}</span>
                 <span class="character-tagline">{{ choice.tagline }}</span>
+                <CardCredit v-if="choice.creator" :creator="choice.creator" :linked="false" />
               </span>
             </label>
           </div>

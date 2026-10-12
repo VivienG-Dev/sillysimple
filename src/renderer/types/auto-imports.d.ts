@@ -94,6 +94,7 @@ declare global {
   const triggerRef: typeof import('vue').triggerRef
   const unref: typeof import('vue').unref
   const useAttrs: typeof import('vue').useAttrs
+  const useAuthors: typeof import('../composables/useAuthors').useAuthors
   const useCharacterColors: typeof import('../composables/useCharacterColors').useCharacterColors
   const useCharacterEditor: typeof import('../composables/useCharacterEditor').useCharacterEditor
   const useCharactersStore: typeof import('../stores/characters').useCharactersStore
@@ -229,6 +230,7 @@ declare module 'vue' {
     readonly triggerRef: UnwrapRef<typeof import('vue')['triggerRef']>
     readonly unref: UnwrapRef<typeof import('vue')['unref']>
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
+    readonly useAuthors: UnwrapRef<typeof import('../composables/useAuthors')['useAuthors']>
     readonly useCharacterColors: UnwrapRef<typeof import('../composables/useCharacterColors')['useCharacterColors']>
     readonly useCharacterEditor: UnwrapRef<typeof import('../composables/useCharacterEditor')['useCharacterEditor']>
     readonly useCharactersStore: UnwrapRef<typeof import('../stores/characters')['useCharactersStore']>

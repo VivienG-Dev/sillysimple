@@ -1,6 +1,6 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { extname, join } from 'node:path'
-import { parseCardFile } from '@core/cards/parseCard'
+import { creatorNotes, parseCard, readCardJson } from '@core/cards/parseCard'
 import { PORTRAIT_SCHEME } from '@shared/ipc'
 import type { Scenario } from '@shared/types'
 
@@ -23,6 +23,11 @@ export function initScenarios(folder: string): void {
   directory = folder
 }
 
+/** The folder the scenarios are read from (the partner authors are in it too, see authors.ts). */
+export function scenariosFolder(): string {
+  return directory
+}
+
 /**
  * The scenarios the app comes with: those that have a picture first, then by name.
  * A file that cannot be read is left out.
@@ -38,22 +43,28 @@ export async function listScenarios(): Promise<Scenario[]> {
   for (const name of names) {
     const extension = extname(name).toLowerCase()
     const id = name.slice(0, name.length - extension.length)
-    if (!CARD_EXTENSIONS.includes(extension) || !ID.test(id) || scenarios.has(id)) continue
+    if (!CARD_EXTENSIONS.includes(extension) || scenarios.has(id)) continue
+    if (!ID.test(id)) {
+      // Easy to miss when adding a card: say why it is not in the gallery.
+      console.warn(`[scenarios] ${name} skipped: its name must be lowercase words and dashes (for instance "ayaka.png").`)
+      continue
+    }
 
     try {
       const path = join(directory, name)
       const info = await stat(path)
       if (info.size > MAX_CARD_BYTES) continue
-      const card = parseCardFile(name, await readFile(path))
+      const json = readCardJson(name, await readFile(path))
+      const card = parseCard(json)
       scenarios.set(id, {
         id,
         name: card.name,
         tagline: card.tagline,
-        // What the story starts on: the card's scenario, or else the beginning of its description.
-        pitch: card.scenario.trim() || card.description.trim().split(/(?<=[.!?])\s+/).slice(0, 2).join(' '),
+        pitch: pitchOf(card.scenario, creatorNotes(json), card.tagline, card.description),
         tags: card.tags,
         greetings: [card.firstMessage, ...card.alternateGreetings].filter((text) => text.trim()).length,
         pictureUrl: extension === '.png' ? `${PORTRAIT_SCHEME}://scenario/${encodeURIComponent(id)}?v=${Math.round(info.mtimeMs)}` : undefined,
+        ...(card.creator && { creator: card.creator }),
       })
     } catch {
       // Not a card: it does not belong in the gallery.
@@ -62,6 +73,20 @@ export async function listScenarios(): Promise<Scenario[]> {
   return [...scenarios.values()].sort(
     (a, b) => Number(!a.pictureUrl) - Number(!b.pictureUrl) || a.name.localeCompare(b.name),
   )
+}
+
+/**
+ * What the story starts on, in a few sentences: the card's scenario; else what its author
+ * wrote to present it (cards shared online, past the line already shown as the tagline);
+ * else the beginning of its description.
+ */
+function pitchOf(scenario: string, notes: string[], tagline: string, description: string): string {
+  const sentences = (text: string, count: number): string =>
+    text.trim().split(/(?<=[.!?])\s+/).slice(0, count).join(' ')
+  if (scenario.trim()) return scenario.trim()
+  const presented = (notes[0] === tagline ? notes.slice(1) : notes).join(' ')
+  if (presented.trim()) return sentences(presented, 3)
+  return sentences(description, 2)
 }
 
 const isJson = (name: string): boolean => extname(name).toLowerCase() === '.json'

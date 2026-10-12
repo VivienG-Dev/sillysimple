@@ -470,3 +470,41 @@ describe('the voice of a character', () => {
     expect(parseCard({ name: 'Bare', extensions: { sillysimple: { voices: { server: { id: 'nova' } } } } }).voices).toEqual({ server: { id: 'nova', name: 'nova' } })
   })
 })
+
+describe('who wrote a card', () => {
+  const card = (data: Record<string, unknown>) => ({ spec: 'chara_card_v2', data: { name: 'Lyra', ...data } })
+
+  it('reads the creator, with the link the app keeps for them', () => {
+    const parsed = parseCard(card({ creator: ' Ash ', extensions: { sillysimple: { creatorLink: 'https://example.com/ash' } } }))
+    expect(parsed.creator).toEqual({ name: 'Ash', link: 'https://example.com/ash' })
+  })
+
+  it('has no creator when the card names none', () => {
+    expect(parseCard(card({ creator: '  ' })).creator).toBeUndefined()
+    expect(parseCard({ name: 'Flat' }).creator).toBeUndefined()
+  })
+
+  it('only takes a web address as a link', () => {
+    const parsed = parseCard(card({ creator: 'Ash', extensions: { sillysimple: { creatorLink: 'javascript:alert(1)' } } }))
+    expect(parsed.creator).toEqual({ name: 'Ash' })
+  })
+
+  it('keeps the creator when the card is edited', () => {
+    const json = card({ creator: 'Ash', extensions: { sillysimple: { creatorLink: 'https://example.com/ash' } } })
+    const edited = applyDraft(json, { ...EMPTY_CHARACTER, name: 'Lyra', tagline: 'New line' })
+    expect(parseCard(edited).creator).toEqual({ name: 'Ash', link: 'https://example.com/ash' })
+  })
+})
+
+describe('the tagline taken from the creator notes', () => {
+  const tagline = (notes: string) => parseCard({ spec: 'chara_card_v2', data: { name: 'Ayaka', creator_notes: notes } }).tagline
+
+  it('reads past the HTML and styles a card page is written in', () => {
+    expect(tagline('<div class="luxe-container">\n<h2>The rainbow is here!\nMore</h2>\n</div>\n<style>:root{--a:1}</style>')).toBe('The rainbow is here!')
+    expect(tagline('<style>body{color:red}</style><p>Hello <b>there</b></p>')).toBe('Hello there')
+  })
+
+  it('leaves out pictures and keeps the words of links', () => {
+    expect(tagline('![](https://example.com/a.png)\n## A [knight](https://example.com) of old')).toBe('A knight of old')
+  })
+})

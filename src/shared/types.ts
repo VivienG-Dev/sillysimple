@@ -5,6 +5,13 @@
  * A character as the app uses it. On disk it is a character card file
  * (SillyTavern format, .png or .json) in the app's `characters` folder.
  */
+/** Who wrote a character card, as the card says: credited wherever the character is shown. */
+export interface CardCreator {
+  name: string
+  /** Where to find them (their page, their profile), when the card gives one. Always http(s). */
+  link?: string
+}
+
 export interface Character {
   /** The card's file name without its extension. */
   id: string
@@ -27,6 +34,8 @@ export interface Character {
   tags: string[]
   /** The card's lorebook: notes about its world, sent only when the chat mentions them. */
   lorebook: Lorebook | null
+  /** Who wrote the card, when it says. Read only: the editor does not change it. */
+  creator?: CardCreator
   /** Present when the user marked this character as one they like. Kept in the card, where SillyTavern keeps it too. */
   favorite?: boolean
   /** The voice the user gave this character, for each voice service they used. Kept in the card. */
@@ -286,6 +295,11 @@ export interface AppearanceSettings {
    * that model can run; elsewhere this changes nothing.
    */
   moodsByMeaning: boolean
+  /**
+   * Show the pictures and sounds that messages bring from the web (cards often put some
+   * in their greetings). Off: they are left out, and nothing is fetched from those sites.
+   */
+  webMedia: boolean
   /**
    * What sits behind the chat: nothing, the picture of the character one is talking to
    * (blurred), or one picture of the user's own, kept as background.webp in the data folder.
@@ -644,6 +658,24 @@ export interface WriteCharacterRequest {
  * A ready-to-play scenario: a character that comes with the app, shown in the library
  * until the user makes it theirs with "Play" (see src/main/scenarios.ts).
  */
+/**
+ * A partner: someone who lets the app come with characters they wrote, and gets a page of
+ * their own in it (see src/main/authors.ts). Everything but the name is optional.
+ */
+export interface Author {
+  /** Made from the name: what the page's address is built on. */
+  id: string
+  /** As on their cards (`creator`), which is how their characters are found. */
+  name: string
+  /** A few words about them, as they want them. */
+  about: string
+  /** Where to find them: their page, their profile… At most a few, https only. */
+  links: { label: string; url: string }[]
+  pictureUrl?: string
+  /** The scenarios they wrote, among those the app comes with. */
+  scenarioIds: string[]
+}
+
 export interface Scenario {
   /** Its file name without the extension. Once played, the user's character has the same id. */
   id: string
@@ -655,6 +687,8 @@ export interface Scenario {
   /** How many opening messages it has. */
   greetings: number
   pictureUrl?: string
+  /** Who wrote it: the scenarios the app comes with are credited to their authors. */
+  creator?: CardCreator
 }
 
 /** What the advice on a character looks at: the fields of a card, and its lorebook in brief. */

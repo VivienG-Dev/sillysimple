@@ -18,6 +18,11 @@ extraResources:
     filter:
       - '*.png'
       - '*.json'
+      # The partner authors: authors.json and their pictures (see src/main/authors.ts).
+      - 'authors/*.png'
+      - 'authors/*.jpg'
+      - 'authors/*.webp'
+      - 'authors/authors.json'
 # Nowhere to publish to, and no update file to write: the app does not update itself yet.
 publish: null
 # One name for every installer: SillySimple-0.1.0-mac-arm64.dmg, …-win-x64.exe, …-linux-x86_64.AppImage.

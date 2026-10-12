@@ -54,7 +54,23 @@ const emit = defineEmits<{
   speak: []
 }>()
 
-const html = computed(() => formatMessage(props.content))
+const settingsStore = useSettingsStore()
+const html = computed(() => formatMessage(props.content, { media: settingsStore.appearance.webMedia }))
+
+/**
+ * A picture or a sound from the web that could not be had (the site refuses it, or it is
+ * gone): a short note in its place, rather than an empty space or a player stuck at 0:00.
+ * Error events do not bubble, so this listens while they go down (capture).
+ */
+function onMediaError(event: Event): void {
+  const element = event.target
+  if (!(element instanceof HTMLImageElement || element instanceof HTMLMediaElement)) return
+  if (!element.classList.contains('media-picture') && !element.classList.contains('media-sound') && !element.classList.contains('media-video')) return
+  const note = document.createElement('span')
+  note.className = 'media-missing'
+  note.textContent = element instanceof HTMLImageElement ? 'Picture unavailable' : 'Sound unavailable'
+  element.replaceWith(note)
+}
 const directed = computed(() => directionChoice(props.direction))
 
 // --- Copy ----------------------------------------------------------------------
@@ -183,7 +199,7 @@ function nextSwipe(): void {
 
       <template v-else>
         <!-- formatMessage() escapes the text before adding its own tags -->
-        <div v-if="content" class="prose" :class="{ streaming }" v-html="html" />
+        <div v-if="content" class="prose" :class="{ streaming }" @error.capture="onMediaError" v-html="html" />
         <div v-else class="typing" :aria-label="remembering ? 'Remembering' : thinking ? 'Thinking' : 'Writing'">
           <span class="dot" /><span class="dot" /><span class="dot" />
           <span v-if="remembering" class="typing-label">Remembering earlier messages…</span>
@@ -394,6 +410,30 @@ function nextSwipe(): void {
 }
 .prose :deep(em) {
   color: var(--text-action);
+}
+/* Pictures and sounds a card puts in its messages (see formatMessage) */
+.prose :deep(.media-picture),
+.prose :deep(.media-video) {
+  display: block;
+  max-width: 100%;
+  max-height: 420px;
+  margin: 4px 0;
+  border-radius: var(--radius-md, 10px);
+}
+.prose :deep(.media-missing) {
+  display: inline-block;
+  padding: 3px 9px;
+  font-family: var(--font-ui, inherit);
+  font-size: 12px;
+  color: var(--text-faint);
+  border: 1px dashed var(--border-field);
+  border-radius: var(--radius-md, 10px);
+}
+.prose :deep(.media-sound) {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  margin: 4px 0;
 }
 /* A caret at the end of the text while the reply is being written */
 .prose.streaming :deep(p:last-child)::after {

@@ -1,4 +1,4 @@
-import type { Character, CharacterDraft, Lorebook, LorebookEntry, VoiceChoice, VoiceService } from '@shared/types'
+import type { CardCreator, Character, CharacterDraft, Lorebook, LorebookEntry, VoiceChoice, VoiceService } from '@shared/types'
 import { readCardFromPng } from './png'
 
 // Reads and writes character cards in the formats SillyTavern, TavernAI and chub.ai use:
@@ -15,8 +15,23 @@ const TAGLINE_MAX = 90
 
 /** Reads a card from a file's bytes. The extension says whether it is a PNG or JSON. */
 export function parseCardFile(fileName: string, bytes: Uint8Array): CardFields {
-  if (/\.png$/i.test(fileName)) return parseCard(readCardFromPng(bytes))
-  return parseCard(parseJsonBytes(bytes))
+  return parseCard(readCardJson(fileName, bytes))
+}
+
+/** The card's JSON as it is in the file, without reading it into fields. */
+export function readCardJson(fileName: string, bytes: Uint8Array): unknown {
+  return /\.png$/i.test(fileName) ? readCardFromPng(bytes) : parseJsonBytes(bytes)
+}
+
+/**
+ * What the author wrote to present the card (its `creator_notes`), as plain lines.
+ * On sites like chub.ai this is the card's page: its first line is often a hook, the
+ * next ones a short pitch.
+ */
+export function creatorNotes(json: unknown): string[] {
+  if (!isRecord(json)) return []
+  const data = isRecord(json['data']) ? json['data'] : json
+  return plainLines(text(data['creator_notes']))
 }
 
 export function parseJsonBytes(bytes: Uint8Array): unknown {
@@ -48,9 +63,25 @@ export function parseCard(json: unknown): CardFields {
     postHistoryInstructions: text(data['post_history_instructions']),
     tags: strings(data['tags']),
     lorebook: parseLorebook(data['character_book']),
+    ...creatorOf(data),
     ...(favoriteOf(json) && { favorite: true }),
     ...voicesOf(data),
   }
+}
+
+/**
+ * Who wrote the card: the `creator` field every card format has, and where to find them.
+ * Card formats have no field for a link, so it is the app's own, kept under
+ * `extensions.sillysimple.creatorLink` (set by hand in the cards the app comes with).
+ * Only an http(s) address is taken: the link is opened in the browser.
+ */
+function creatorOf(data: Record<string, unknown>): { creator?: CardCreator } {
+  const name = text(data['creator']).trim()
+  if (!name) return {}
+  const extensions = isRecord(data['extensions']) ? data['extensions'] : {}
+  const own = isRecord(extensions['sillysimple']) ? extensions['sillysimple'] : {}
+  const link = text(own['creatorLink']).trim()
+  return { creator: { name, ...(/^https?:\/\/\S+$/i.test(link) && { link }) } }
 }
 
 /**
@@ -234,8 +265,32 @@ function taglineOf(data: Record<string, unknown>): string {
   // An empty tagline of our own is a choice (the user cleared it), not a missing one.
   if (typeof own === 'string') return own.trim()
 
-  const firstLine = text(data['creator_notes']).trim().split(/\r?\n/)[0] ?? ''
+  const firstLine = plainLines(text(data['creator_notes']))[0] ?? ''
   return firstLine.length > TAGLINE_MAX ? `${firstLine.slice(0, TAGLINE_MAX - 1).trimEnd()}…` : firstLine
+}
+
+/**
+ * The lines of a text written for a web page, as plain text: creator notes are often
+ * HTML with styles (chub.ai shows them as a page), or Markdown with pictures and links.
+ * Tags, styles, scripts and pictures are left out, a link keeps its words; empty lines are dropped.
+ */
+export function plainLines(source: string): string[] {
+  return source
+    .replace(/<(style|script)\b[\s\S]*?(<\/\1\s*>|$)/gi, '\n')
+    .replace(/<!--[\s\S]*?(-->|$)/g, '\n')
+    .replace(/<\/?(p|div|h[1-6]|li|ul|ol|br|hr|tr|table|section|blockquote)\b[^>]*>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^\s*(#{1,6}\s+|[-*>]\s+)/, '').replace(/\*\*|__/g, '').trim())
+    .filter(Boolean)
 }
 
 /**

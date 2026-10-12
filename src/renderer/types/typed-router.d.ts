@@ -38,6 +38,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/authors/[id]': RouteRecordInfo<
+      '/authors/[id]',
+      '/authors/:id',
+      { id: ParamValue<true> },
+      { id: ParamValue<false> },
+      | never
+    >,
     '/library': RouteRecordInfo<
       '/library',
       '/library',
@@ -142,6 +149,14 @@ declare module 'vue-router/auto-routes' {
         | never
       pathParamNames:
         | never
+    }
+    'pages/authors/[id].vue': {
+      routes:
+        | '/authors/[id]'
+      views:
+        | never
+      pathParamNames:
+        | 'id'
     }
     'pages/library.vue': {
       routes:

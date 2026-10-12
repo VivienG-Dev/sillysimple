@@ -1,24 +1,63 @@
 import { replyWords } from '@core/prompt/replyLength'
+import { PORTRAIT_SCHEME } from '@shared/ipc'
 import type { Character } from '@shared/types'
+
+const escapeHtml = (text: string): string =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
+// Pictures and sounds in a message. Cards often bring them in their greetings (a picture
+// of the scene, a song): as Markdown, ![](address), or as an HTML tag, <img src="…">,
+// <audio src="…">. Only those are kept, rebuilt by the app from their address alone:
+// any other attribute (a style, an event) is dropped, and only https addresses load,
+// through the main process (card://web/…, see src/main/webMedia.ts).
+const MEDIA =
+  /!\[([^\]\n]*)\]\(\s*<?([^\s)>]+)>?(?:\s+"[^"\n]*")?\s*\)|<(img|audio|video)\b([^>]*)>(?:[^<]*<\/\3\s*>)?/gi
+const SOURCE = /\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i
+const ALT = /\balt\s*=\s*(?:"([^"]*)"|'([^']*)')/i
+/** Stands for a picture or a sound while the rest of the text is escaped. Nothing a model writes contains it. */
+const MARK = (index: number): string => `\u0000${index}\u0000`
+
+/** A picture or a sound as the app writes it, or null when its address is not an https one. */
+function mediaHtml(markdownAlt: string | undefined, markdownSource: string | undefined, tag: string | undefined, attributes = ''): string | null {
+  const kind = (tag ?? 'img').toLowerCase()
+  const found = markdownSource ?? attributes.match(SOURCE)?.slice(1).find((value) => value !== undefined)
+  const source = found?.trim()
+  if (!source || !/^https:\/\/[^\s"'<>]+$/i.test(source)) return null
+  // Fetched by the main process, not by the page (see src/main/webMedia.ts).
+  const address = escapeHtml(`${PORTRAIT_SCHEME}://web/${encodeURIComponent(source)}`)
+  if (kind === 'audio') return `<audio class="media-sound" controls preload="none" src="${address}"></audio>`
+  if (kind === 'video') return `<video class="media-video" controls preload="metadata" src="${address}"></video>`
+  const alt = markdownAlt ?? attributes.match(ALT)?.slice(1).find((value) => value !== undefined) ?? ''
+  return `<img class="media-picture" src="${address}" alt="${escapeHtml(alt)}" loading="lazy" referrerpolicy="no-referrer" />`
+}
 
 /**
  * Turns roleplay text into safe HTML: *actions* become italics, blank lines become paragraphs.
- * The text is escaped first, so nothing a model writes can inject markup.
+ * The text is escaped first, so nothing a model writes can inject markup; pictures and
+ * sounds (see MEDIA) are rebuilt by the app, and left out when `media` is false.
  * (To be replaced by a real Markdown renderer when messages need more than this.)
  */
-export function formatMessage(text: string): string {
-  const escaped = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+export function formatMessage(text: string, options: { media?: boolean } = {}): string {
+  const media: string[] = []
+  const marked = text
+    .replace(/\u0000/g, '')
+    .replace(MEDIA, (_whole, markdownAlt?: string, markdownSource?: string, tag?: string, attributes?: string) => {
+      // Turned off, or an address that is not https: nothing is shown, not even the code.
+      const html = options.media === false ? null : mediaHtml(markdownAlt, markdownSource, tag, attributes)
+      if (html === null) return ''
+      media.push(html)
+      return MARK(media.length - 1)
+    })
 
-  return escaped
+  return escapeHtml(marked)
     .trim()
     .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
     .map((paragraph) => {
       const withActions = paragraph.replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
-      return `<p>${withActions.replace(/\n/g, '<br>')}</p>`
+      const withMedia = withActions.replace(/\u0000(\d+)\u0000/g, (_, index: string) => media[Number(index)] ?? '')
+      return `<p>${withMedia.replace(/\n/g, '<br>')}</p>`
     })
     .join('')
 }

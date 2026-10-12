@@ -61,6 +61,10 @@ async function removePicture(): Promise<void> {
   await settingsStore.removeBackground()
 }
 
+async function setWebMedia(event: Event): Promise<void> {
+  await settingsStore.update({ appearance: { webMedia: (event.target as HTMLInputElement).checked } })
+}
+
 async function setMoods(event: Event): Promise<void> {
   await settingsStore.update({ appearance: { moods: (event.target as HTMLInputElement).checked } })
   void lookAtSense()
@@ -222,6 +226,20 @@ function setCharacterColors(event: Event): void {
           </span>
           <span v-if="sense.state === 'failed'" class="toggle-hint problem">
             It does not work right now, so the mood is read from the words alone. {{ sense.problem }}
+          </span>
+        </span>
+      </label>
+    </section>
+
+    <section class="card">
+      <label class="toggle">
+        <input type="checkbox" :checked="settingsStore.appearance.webMedia" @change="setWebMedia" />
+        <span class="toggle-text">
+          <span class="toggle-title">Show pictures and sounds in messages</span>
+          <span class="toggle-hint">
+            Some characters bring a picture of the scene or a song in their messages, kept on a website. Showing them
+            means asking that website for them, as a browser would. Off: they are left out of the messages, and
+            nothing is asked.
           </span>
         </span>
       </label>

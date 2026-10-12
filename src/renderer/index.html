@@ -5,10 +5,11 @@
     <title>SillySimple</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Only the app's own files may load. The model and the voice service are called from the main process,
-         not from here: the page only plays the sound it is handed (blob:). -->
+         not from here: the page only plays the sound it is handed (blob:). Pictures and sounds that messages bring
+         from the web are fetched by the main process too, and reach the page as card://web/… (see webMedia.ts). -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: card:; font-src 'self' data:; media-src 'self' blob:"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: card:; font-src 'self' data:; media-src 'self' blob: card:"
     />
   </head>
   <body>
