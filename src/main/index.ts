@@ -24,7 +24,7 @@ const isMac = process.platform === 'darwin'
 const isWindows = process.platform === 'win32'
 
 // Must match --bg-app in the renderer, so the window never flashes white.
-const BACKGROUND = '#1b1a22'
+const BACKGROUND = '#221915'
 const TITLEBAR_HEIGHT = 52
 
 app.setName('SillySimple')

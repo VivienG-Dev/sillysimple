@@ -132,7 +132,7 @@ const unseen = useSeen(shelf)
   padding: 0;
   overflow: hidden;
   /* What shows while a picture loads, and behind the name if it never does. */
-  background: #15141b;
+  background: #1b1410;
   /* An edge: without it a dark cover would melt into the dark page. */
   border: 1px solid var(--frame-line);
   border-radius: var(--radius-lg);
@@ -172,7 +172,7 @@ const unseen = useSeen(shelf)
   padding: 26px 8px 10px;
   /* Dark enough behind the name whatever the picture is. */
   background: linear-gradient(to top, rgb(21 20 27 / 0.94), rgb(21 20 27 / 0.82) 55%, rgb(21 20 27 / 0));
-  color: #ecebf2;
+  color: #f2ebe7;
   font-size: clamp(0.75rem, 1vw, 0.875rem);
   font-weight: 700;
   line-height: 1.2;

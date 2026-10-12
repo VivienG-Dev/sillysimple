@@ -37,7 +37,7 @@ a {
   text-decoration: none;
 }
 a:hover {
-  color: #d3ccff;
+  color: #fbc7ab;
 }
 
 button,
@@ -62,7 +62,7 @@ button:disabled {
 }
 
 ::selection {
-  background: #4a3fa0;
+  background: #7f3a06;
 }
 
 ::-webkit-scrollbar {

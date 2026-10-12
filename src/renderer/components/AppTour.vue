@@ -203,7 +203,7 @@ onBeforeUnmount(() => {
   border-radius: var(--radius-lg);
   box-shadow:
     0 0 0 1px var(--accent-strong),
-    0 0 0 9999px rgb(8 7 12 / 0.64);
+    0 0 0 9999px rgb(11 7 4 / 0.64);
   pointer-events: none;
   transition:
     top 0.3s ease,

@@ -173,23 +173,13 @@ function setCharacterColors(event: Event): void {
         <span class="toggle-text">
           <span class="toggle-title">Take the colours from the character</span>
           <span class="toggle-hint">
-            The app leans towards the main colour of the picture of the character you are talking to: its buttons,
-            its links, and a hint of it in the dark background. A character without a picture gives the colour of
-            its initials. Turn this off to keep the same violet everywhere.
+            In a chat, the app leans towards the main colour of the picture of the character you are talking to:
+            its buttons, its links, and a hint of it in the dark background. A character without a picture gives the
+            colour of its initials. The Library and the settings keep the app's own colours. Turn this off to keep them
+            in the chat too.
           </span>
         </span>
       </label>
-
-      <!-- A sample of what follows the character, so the choice shows without leaving the page -->
-      <div class="sample" aria-hidden="true">
-        <span class="swatch accent" />
-        <span class="swatch accent-text" />
-        <span class="swatch selected" />
-        <span class="swatch surface" />
-        <span class="sample-text">
-          {{ settingsStore.appearance.characterColors ? 'Colours of the character on screen' : "The app's own colours" }}
-        </span>
-      </div>
     </section>
 
     <section class="card">
@@ -384,37 +374,5 @@ header p {
 .problem {
   font-size: 12px;
   color: var(--danger-text);
-}
-
-.sample {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 14px;
-  background: var(--bg-sunken);
-  border-radius: var(--radius);
-}
-.swatch {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 1px solid var(--border-input);
-}
-.swatch.accent {
-  background: var(--accent);
-}
-.swatch.accent-text {
-  background: var(--accent-text);
-}
-.swatch.selected {
-  background: var(--bg-selected);
-}
-.swatch.surface {
-  background: var(--bg-app);
-}
-.sample-text {
-  margin-left: 6px;
-  font-size: 12px;
-  color: var(--text-muted);
 }
 </style>

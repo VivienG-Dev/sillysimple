@@ -338,7 +338,7 @@ async function remove(id: string, name: string, bytes?: number): Promise<void> {
   flex-shrink: 0;
   width: 16px;
   height: 16px;
-  border: 1.5px solid #55526a;
+  border: 1.5px solid #685042;
   border-radius: 50%;
 }
 .selected .radio {

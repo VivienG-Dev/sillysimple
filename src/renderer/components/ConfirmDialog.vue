@@ -46,7 +46,7 @@ function onClick(event: MouseEvent): void {
   color: var(--text);
 }
 .confirm::backdrop {
-  background: rgb(8 7 12 / 0.6);
+  background: rgb(11 7 4 / 0.6);
 }
 
 .box {

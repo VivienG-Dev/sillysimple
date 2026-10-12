@@ -383,7 +383,7 @@ header p {
   flex-shrink: 0;
   width: 18px;
   height: 18px;
-  border: 1.5px solid #55526a;
+  border: 1.5px solid #685042;
   border-radius: 50%;
 }
 .selected > .radio {

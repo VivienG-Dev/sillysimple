@@ -535,7 +535,7 @@ function finish(): void {
   overflow: hidden;
 }
 .editor::backdrop {
-  background: rgb(8 7 12 / 0.6);
+  background: rgb(11 7 4 / 0.6);
 }
 
 .box {

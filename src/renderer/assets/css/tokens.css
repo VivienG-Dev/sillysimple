@@ -1,43 +1,47 @@
-/* Design tokens, taken from the mockups. Components only use these variables. */
+/* Design tokens. Components only use these variables.
+   The app's own colours are those of its icon and of the website: a warm dark, and the
+   icon's orange as accent. They are the mockups' violet turned to the icon's orange hue
+   (#e07023) with themeFor() (src/core/color/accent.ts), so every brightness, and every
+   contrast checked in DESIGN.md, is the one it was. */
 
 :root {
-  /* Surfaces, darkest to lightest */
-  --bg-sidebar: #15141b;
-  --bg-sunken: #18171e;
-  --bg-app: #1b1a22;
-  --bg-panel: #1e1d26;
-  --bg-field: #201f28;
-  --bg-card: #201f29;
-  --bg-button: #23222c;
-  --bg-active: #262435;
-  --bg-tile: #2a2836;
-  --bg-selected: #34324a;
+  /* Surfaces, darkest to lightest: the warm dark of the site */
+  --bg-sidebar: #1b1410;
+  --bg-sunken: #1e1613;
+  --bg-app: #221915;
+  --bg-panel: #251c17;
+  --bg-field: #281e19;
+  --bg-card: #281e19;
+  --bg-button: #2b211b;
+  --bg-active: #342219;
+  --bg-tile: #35271f;
+  --bg-selected: #482f22;
 
   /* Lines */
-  --border: #2a2834;
-  --border-field: #2c2a36;
-  --border-strong: #2f2d3a;
-  --border-input: #383548;
-  --border-hover: #45425c;
+  --border: #332720;
+  --border-field: #352922;
+  --border-strong: #392b24;
+  --border-input: #463329;
+  --border-hover: #593f31;
 
   /* Text, brightest to faintest */
-  --text: #ecebf2;
-  --text-prose: #e4e2ec;
-  --text-soft: #dcdae6;
-  --text-tag: #b8b5c8;
-  --text-action: #a9a6ba;
-  --text-muted: #a3a1b3;
-  --text-dim: #9896aa;
-  --text-faint: #8f8da0;
-  --text-ghost: #88869d;
+  --text: #f2ebe7;
+  --text-prose: #ece1dc;
+  --text-soft: #e5d9d3;
+  --text-tag: #c7b4a9;
+  --text-action: #b9a59a;
+  --text-muted: #b29f96;
+  --text-dim: #a99489;
+  --text-faint: #9f8b81;
+  --text-ghost: #9b8377;
 
-  /* Accent */
-  --accent: #6d5ce0;
-  --accent-hover: #7d6ff0;
-  --accent-strong: #8f84e8;
-  --accent-text: #b4a9ff;
-  --accent-soft: #cbbcff;
-  --accent-bg: #232035;
+  /* Accent: the icon's orange, dark enough for white text (4.9:1) */
+  --accent: #b35611;
+  --accent-hover: #cd6418;
+  --accent-strong: #da7739;
+  --accent-text: #f59e6e;
+  --accent-soft: #fbb691;
+  --accent-bg: #331d12;
 
   /* States */
   --success: #3fb97a;

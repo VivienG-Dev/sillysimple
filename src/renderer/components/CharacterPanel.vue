@@ -601,7 +601,7 @@ const extras = computed(() => cardExtras(props.character))
   justify-content: center;
   border: 1px solid rgb(255 255 255 / 0.14);
   border-radius: 50%;
-  background: rgb(20 19 26 / 0.62);
+  background: rgb(26 19 15 / 0.62);
   backdrop-filter: blur(6px);
   color: #fff;
   opacity: 0.85;
@@ -610,7 +610,7 @@ const extras = computed(() => cardExtras(props.character))
 .swap:hover,
 .swap:focus-visible {
   opacity: 1;
-  background: rgb(20 19 26 / 0.85);
+  background: rgb(26 19 15 / 0.85);
 }
 
 .portrait {

@@ -4,6 +4,8 @@ import { hexToOklch, themeFor, type PictureColor } from '@core/color/accent'
 // turn towards the main colour of the character's picture (or of its initials tile, when
 // it has no picture). The design does not change: same lightness, same contrasts, another
 // hue. See src/core/color/accent.ts. Called once, in App.vue.
+// Only on the chat screen, where one is with the character: the Library, Settings and the
+// authors' pages keep the app's own colours (Vivien, 13 October).
 
 /** The colours of tokens.css that follow the character. States (success, danger…) keep their meaning. */
 const THEMED = [
@@ -43,6 +45,7 @@ const FADE = '0.45s ease'
 export function useCharacterColors(): void {
   const charactersStore = useCharactersStore()
   const settingsStore = useSettingsStore()
+  const route = useRoute()
   const root = document.documentElement
 
   // The design's own colours, read from the stylesheet before anything is changed.
@@ -95,7 +98,7 @@ export function useCharacterColors(): void {
     () => {
       const character = charactersStore.active
       // Not during the first-launch screens: those show the app's own colours.
-      const on = settingsStore.appearance.characterColors && settingsStore.onboardingDone
+      const on = settingsStore.appearance.characterColors && settingsStore.onboardingDone && route.path === '/'
       return on && character ? { id: character.id, name: character.name, portraitUrl: character.portraitUrl } : null
     },
     async (character) => {

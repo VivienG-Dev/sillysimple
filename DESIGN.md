@@ -2,9 +2,8 @@
 version: alpha
 name: SillySimple
 description: |
-  The look of SillySimple, for the desktop app and for its website. A calm, dark, violet-tinted
-  reading room for stories, with one warm exception: the orange icon and its smiling cream
-  speech bubble. Written from the app's code on 7 October 2026; the code stays the reference
+  The look of SillySimple, for the desktop app and for its website. A calm, warm, dark reading room
+  for stories, in the colours of its icon: the orange tile and its smiling cream speech bubble. Written from the app's code on 7 October 2026; the code stays the reference
   (src/renderer/assets/css/tokens.css and base.css).
 
 colors:
@@ -15,39 +14,39 @@ colors:
   brand-cream: "#fceed6"
   brand-ink: "#2a1912"
   # Interface surfaces, darkest to lightest.
-  bg-sidebar: "#15141b"
-  bg-sunken: "#18171e"
-  bg-app: "#1b1a22"
-  bg-panel: "#1e1d26"
-  bg-field: "#201f28"
-  bg-card: "#201f29"
-  bg-button: "#23222c"
-  bg-active: "#262435"
-  bg-tile: "#2a2836"
-  bg-selected: "#34324a"
+  bg-sidebar: "#1b1410"
+  bg-sunken: "#1e1613"
+  bg-app: "#221915"
+  bg-panel: "#251c17"
+  bg-field: "#281e19"
+  bg-card: "#281e19"
+  bg-button: "#2b211b"
+  bg-active: "#342219"
+  bg-tile: "#35271f"
+  bg-selected: "#482f22"
   # Lines.
-  border: "#2a2834"
-  border-field: "#2c2a36"
-  border-strong: "#2f2d3a"
-  border-input: "#383548"
-  border-hover: "#45425c"
+  border: "#332720"
+  border-field: "#352922"
+  border-strong: "#392b24"
+  border-input: "#463329"
+  border-hover: "#593f31"
   # Text, brightest to faintest.
-  text: "#ecebf2"
-  text-prose: "#e4e2ec"
-  text-soft: "#dcdae6"
-  text-tag: "#b8b5c8"
-  text-action: "#a9a6ba"
-  text-muted: "#a3a1b3"
-  text-dim: "#9896aa"
-  text-faint: "#8f8da0"
-  text-ghost: "#88869d"
+  text: "#f2ebe7"
+  text-prose: "#ece1dc"
+  text-soft: "#e5d9d3"
+  text-tag: "#c7b4a9"
+  text-action: "#b9a59a"
+  text-muted: "#b29f96"
+  text-dim: "#a99489"
+  text-faint: "#9f8b81"
+  text-ghost: "#9b8377"
   # Accent.
-  accent: "#6d5ce0"
-  accent-hover: "#7d6ff0"
-  accent-strong: "#8f84e8"
-  accent-text: "#b4a9ff"
-  accent-soft: "#cbbcff"
-  accent-bg: "#232035"
+  accent: "#b35611"
+  accent-hover: "#cd6418"
+  accent-strong: "#da7739"
+  accent-text: "#f59e6e"
+  accent-soft: "#fbb691"
+  accent-bg: "#331d12"
   # States.
   success: "#3fb97a"
   success-text: "#7fdcaa"
@@ -98,11 +97,11 @@ model.
 
 Two things make it recognisable:
 
-- **A quiet, dark place to read.** Dark surfaces with a hint of violet, a serif for the story,
+- **A quiet, dark place to read.** Dark surfaces with a warm hint of the icon's orange, a serif for the story,
   few controls on screen. The text of the story is the brightest and largest thing in the window.
 - **One friendly face.** The icon is an orange tile with a cream speech bubble that smiles. It is
-  the only warm, saturated thing in the product, and it is used sparingly: the app icon, the
-  first launch, the Help page.
+  the brightest, most saturated thing in the product, and it is used sparingly: the app icon,
+  the first launch, the Help page. The interface takes its accent from it, darker and quieter.
 
 ## Colours
 
@@ -134,13 +133,13 @@ So the bright orange is for surfaces and shapes, and the darker orange for anyth
 
 ### Interface
 
-- **Surfaces** are ten steps of the same violet-tinted near-black, from `--bg-sidebar` (darkest)
+- **Surfaces** are ten steps of the same warm near-black, from `--bg-sidebar` (darkest)
   to `--bg-selected`. Depth comes from stepping one or two shades and from a 1px border, not
   from shadows.
 - **Text** has nine steps from `--text` to `--text-ghost`. Every step reaches at least 4.5:1 on
   `--bg-app`, `--bg-panel` and `--bg-card`. `--text-ghost` is the faintest and is only for small
   secondary lines (hints, counters, captions) and for things that are switched off.
-- **Accent** is one violet, `--accent` (`#6d5ce0`), with lighter steps for text and links
+- **Accent** is the icon's orange, darkened for text, `--accent` (`#b35611`), with lighter steps for text and links
   (`--accent-text`, `--accent-soft`). White text on `--accent` is 4.9:1.
 - **States** keep their usual meaning: green for success, amber for a warning, a soft red for
   errors and for what cannot be undone. `--like` (`#ff6b93`) is the heart of a favourite and
@@ -151,7 +150,8 @@ So the bright orange is for surfaces and shapes, and the darker orange for anyth
 By default the app turns its surfaces, text and accent towards the main colour of the
 character on screen ("Take the colours from the character", in Appearance). Only the hue
 changes: each colour keeps its exact brightness, so every contrast stays what it was. The
-change fades over 0.45s. The first-launch screens always show the app's own violet.
+change fades over 0.45s. Only on the chat screen: the Library, the settings, the authors' pages and the first-launch
+screens always show the app's own colours.
 
 A character without a picture gets initials on one of six muted tiles (violet, brown, teal,
 plum, olive, blue; see `utils/avatar.ts`). The user's own persona is always the teal one.
@@ -266,11 +266,10 @@ Orange, cream, ink, Literata and Lucide are the brand's own choices, taken from 
 drew and from the app. A design tool or skill that discourages them by default must keep them
 here.
 
-What does not carry over: the violet accent and the violet-tinted surfaces of the app's
-`tokens.css`. The site's dark is a warm one. Screenshots of the app show the app's own colours.
-
-The app may move to these colours later. That is an idea, not a plan: nothing in the app
-changes for now.
+The app and the site share their warm dark and their orange (13 October 2026: the app left the
+mockups' violet for them). Their exact values differ a little: the app's are the mockups' violet
+turned to the icon's hue, so that every contrast checked for the app still holds. Screenshots
+of the app show the app's own colours.
 
 ### The colours of the page
 

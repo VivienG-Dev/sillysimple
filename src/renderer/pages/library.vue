@@ -612,7 +612,7 @@ h2 {
   min-height: 280px;
   padding: 20px;
   background: var(--bg-sunken);
-  border: 1.5px dashed #444158;
+  border: 1.5px dashed #563e32;
   border-radius: var(--radius-xl);
   text-align: center;
   transition:
@@ -681,7 +681,7 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgb(20 19 27 / 0.82);
+  background: rgb(26 18 14 / 0.82);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   color: var(--text-soft);
@@ -702,7 +702,7 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgb(20 19 27 / 0.82);
+  background: rgb(26 18 14 / 0.82);
   border: 1px solid var(--border-strong);
   border-radius: 50%;
   color: var(--text-soft);

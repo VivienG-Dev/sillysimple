@@ -74,7 +74,7 @@ defineExpose({ goTo })
   position: relative;
   border-radius: var(--radius-xl);
   overflow: hidden;
-  background: #1b1a22;
+  background: #221915;
   box-shadow:
     0 0 0 1px var(--frame-line),
     0 44px 70px -28px rgb(var(--shade) / 0.7);

@@ -404,7 +404,7 @@ onBeforeUnmount(() => window.api.engine.rest())
   flex-shrink: 0;
   width: 18px;
   height: 18px;
-  border: 1.5px solid #55526a;
+  border: 1.5px solid #685042;
   border-radius: 50%;
 }
 .radio.small {
@@ -616,7 +616,7 @@ onBeforeUnmount(() => window.api.engine.rest())
   background: var(--bg-panel);
 }
 .model.selected {
-  background: #2a2740;
+  background: #3d2416;
 }
 .model-id {
   flex: 1;
