@@ -9,7 +9,7 @@ import type { LlmMessage } from './buildMessages'
 const TOKENS_PER_MESSAGE = 4
 
 /** Kept free so that an estimate that runs a little low does not overflow the model. */
-const SAFETY_MARGIN = 0.05
+export const SAFETY_MARGIN = 0.05
 
 // With thinking on, the reasoning counts against max_tokens. This extra room
 // keeps "Reply length" meaning the length of the visible reply.

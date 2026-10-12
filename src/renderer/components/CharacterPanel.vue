@@ -485,11 +485,11 @@ const extras = computed(() => cardExtras(props.character))
   position: relative;
   flex-shrink: 0;
 }
-/* The mood plays over the top of the picture, where heads usually are; a very tall picture
-   is not covered all the way down. */
+/* The mood's tone covers the whole picture, however tall; its symbols play over the top,
+   where heads usually are (see .pieces in MoodEmote.vue). */
 .mood {
-  inset: 0 0 auto;
-  height: min(100%, 460px);
+  inset: 0;
+  --pieces-height: 460px;
 }
 
 /* The picture answers the mood with a movement of its own, and for some moods changes

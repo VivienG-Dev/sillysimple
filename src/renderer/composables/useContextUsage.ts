@@ -1,5 +1,5 @@
 import { buildMessages } from '@core/prompt/buildMessages'
-import { effectiveContextSize, fitToContext, replyTokens } from '@core/prompt/context'
+import { effectiveContextSize, fitToContext, replyTokens, SAFETY_MARGIN } from '@core/prompt/context'
 
 /**
  * How full the model's context is for the chat on screen, computed with the very
@@ -33,13 +33,22 @@ export function useContextUsage() {
         others: chatStore.members.slice(1).map((member) => member.character),
         useCardPrompts: generation.useCardPrompts,
         contextSize,
+        // Sent with every reply too: left out, the bar would read lower than what the
+        // main process counts, and the memory would seem to start before the bar is full.
+        replyLength: generation.maxTokens,
+        place: generation.keepPlace ? chatStore.place || null : undefined,
+        outfit: generation.keepPlace ? chatStore.outfits[character.id] || null : undefined,
       }),
       { contextSize, replyTokens: reserved },
     )
 
+    // The small margin kept free (see context.ts) counts as taken: the bar is full exactly
+    // when the oldest messages stop fitting, which is when the long memory steps in.
+    const margin = contextSize - Math.floor(contextSize * (1 - SAFETY_MARGIN))
+
     return {
-      /** Tokens taken once the reply is written: what is sent, plus the room kept for the reply. */
-      occupiedTokens: fit.usedTokens + reserved,
+      /** Tokens taken once the reply is written: what is sent, the room kept for the reply, and the safety margin. */
+      occupiedTokens: fit.usedTokens + reserved + margin,
       contextSize,
       /** Oldest messages the model no longer sees. */
       droppedCount: fit.droppedCount,

@@ -266,30 +266,33 @@ export const LIFETIME = 4600
   <div class="effect" :class="mood" aria-hidden="true">
     <div v-if="scene.tone" class="tone" :class="scene.tone" />
 
-    <div
-      v-for="(piece, index) in scene.pieces"
-      :key="index"
-      class="piece"
-      :style="{
-        left: `${piece.x}%`,
-        top: `${piece.y}%`,
-        width: `${piece.size}px`,
-        height: `${piece.size}px`,
-        '--delay': `${piece.delay ?? 0}s`,
-        '--tilt': `${piece.tilt ?? 0}deg`,
-      }"
-    >
-      <svg viewBox="0 0 64 64" :class="[shapeOf(piece).kind, piece.motion]">
-        <g class="outline">
-          <path v-for="part in shapeOf(piece).parts" :key="part.d" :d="part.d" />
-        </g>
-        <g class="body">
-          <path v-for="part in shapeOf(piece).parts" :key="part.d" :d="part.d" :style="{ '--tint': part.color }" />
-        </g>
-        <g class="glint">
-          <path v-for="d in shapeOf(piece).glint ?? []" :key="d" :d="d" />
-        </g>
-      </svg>
+    <!-- The symbols play where heads usually are (see .pieces), the tone over everything. -->
+    <div class="pieces">
+      <div
+        v-for="(piece, index) in scene.pieces"
+        :key="index"
+        class="piece"
+        :style="{
+          left: `${piece.x}%`,
+          top: `${piece.y}%`,
+          width: `${piece.size}px`,
+          height: `${piece.size}px`,
+          '--delay': `${piece.delay ?? 0}s`,
+          '--tilt': `${piece.tilt ?? 0}deg`,
+        }"
+      >
+        <svg viewBox="0 0 64 64" :class="[shapeOf(piece).kind, piece.motion]">
+          <g class="outline">
+            <path v-for="part in shapeOf(piece).parts" :key="part.d" :d="part.d" />
+          </g>
+          <g class="body">
+            <path v-for="part in shapeOf(piece).parts" :key="part.d" :d="part.d" :style="{ '--tint': part.color }" />
+          </g>
+          <g class="glint">
+            <path v-for="d in shapeOf(piece).glint ?? []" :key="d" :d="d" />
+          </g>
+        </svg>
+      </div>
     </div>
   </div>
 </template>
@@ -306,6 +309,15 @@ export const LIFETIME = 4600
   to {
     opacity: 0;
   }
+}
+
+/* The symbols are placed within this box, as high as the parent says (--pieces-height):
+   on a tall picture they stay around the head while the tone still covers it all.
+   Not clipped here: a symbol near its bottom edge shows whole, over the picture. */
+.pieces {
+  position: absolute;
+  inset: 0 0 auto;
+  height: min(100%, var(--pieces-height, 100%));
 }
 
 /* --- Tones: what is laid over the whole picture --------------------------------- */
