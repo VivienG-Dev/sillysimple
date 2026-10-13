@@ -508,3 +508,21 @@ describe('the tagline taken from the creator notes', () => {
     expect(tagline('![](https://example.com/a.png)\n## A [knight](https://example.com) of old')).toBe('A knight of old')
   })
 })
+
+describe('the author the user signs a card with', () => {
+  it('is written as the card creator, and read back', () => {
+    const card = toCardV2({ ...EMPTY_CHARACTER, name: 'Lyra', creatorName: '  Vivien ' })
+    expect((card['data'] as Record<string, unknown>)['creator']).toBe('Vivien')
+    expect(parseCard(card).creator).toEqual({ name: 'Vivien' })
+  })
+
+  it('leaves the creator alone when the editor does not send one', () => {
+    const json = { spec: 'chara_card_v2', data: { name: 'Ayaka', creator: 'SzainX' } }
+    expect(parseCard(applyDraft(json, { ...EMPTY_CHARACTER, name: 'Ayaka' })).creator).toEqual({ name: 'SzainX' })
+  })
+
+  it('can be taken away', () => {
+    const json = { spec: 'chara_card_v2', data: { name: 'Lyra', creator: 'Someone' } }
+    expect(parseCard(applyDraft(json, { ...EMPTY_CHARACTER, name: 'Lyra', creatorName: '' })).creator).toBeUndefined()
+  })
+})

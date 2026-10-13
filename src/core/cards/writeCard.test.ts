@@ -266,3 +266,27 @@ describe('reading what the model wrote', () => {
     })
   })
 })
+
+describe('the personality, trait by trait', () => {
+  it('keeps traits shown by what the character does, one per line', () => {
+    const card = readWrittenCard(
+      [
+        '### PERSONALITY',
+        '- **Loyal**: When someone doubts {{user}}, she stands up, her voice shaking but firm.',
+        '- Bubbly: Talks about melon bread with a little hop, clapping her hands.',
+        'Likes: melon bread, anime. Dislikes: silence. Wants: to become an idol.',
+        '### SCENARIO',
+        'A school corridor.',
+      ].join('\n'),
+    )
+    expect(card.personality).toBe(
+      'Loyal: When someone doubts {{user}}, she stands up, her voice shaking but firm.\n' +
+        'Bubbly: Talks about melon bread with a little hop, clapping her hands.\n' +
+        'Likes: melon bread, anime. Dislikes: silence. Wants: to become an idol.',
+    )
+  })
+
+  it('still reads a bare list of traits as one line', () => {
+    expect(readWrittenCard('### PERSONALITY\n- bold\n- reckless\n### SCENARIO\nA hangar.').personality).toBe('bold, reckless')
+  })
+})

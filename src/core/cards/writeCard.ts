@@ -61,7 +61,10 @@ One short line that sums the character up, under ten words.
 120 to 200 words, in the third person and the present tense: who they are, what they look like, where they come from, what they want, how they speak, how they move, and how they behave with {{user}}. Concrete details, no vague praise.
 
 ### PERSONALITY
-Four to six traits on one line, separated by commas.
+Four to six traits, one per line. Each trait is followed by one concrete thing the character does that shows it: a habit, a reaction, a small scene with {{user}} or with others. Never a bare adjective: the chat learns how to play a trait from what it does. Written like this:
+Trait: what they do that shows it, in one sentence.
+Then one last line:
+Likes: two or three things. Dislikes: two or three things. Wants: what they want most.
 
 ### SCENARIO
 One or two sentences: where and when the chat begins, and what brings {{user}} there.
@@ -73,7 +76,7 @@ Two short exchanges that show how the character talks and moves. Each begins wit
 Three to five tags on one line, separated by commas.
 
 ### LORE
-Three to five notes on what belongs to the character's life and may come up later in a chat: the people close to them, the places they know, what happened to them, a secret. The app shows a note to the character only when one of its keywords is said, so each note has to make sense by itself. One note per line, keywords first, written like this:
+Three to five notes on what belongs to the character's life and may come up later in a chat: the people close to them, the places they know, what happened to them, a secret. One of them is their flaw, fear or darker side: what makes them more than nice. The app shows a note to the character only when one of its keywords is said, so each note has to make sense by itself. One note per line, keywords first, written like this:
 keyword, keyword, keyword: The note, one or two sentences in the third person.
 Keywords are what someone would say when the subject comes up: names and plain nouns, two to four of them ("sister, Lise, family"). Never a word as common as "she" or "home".
 
@@ -183,7 +186,7 @@ export function readWrittenCard(text: string, options: { partial?: boolean } = {
     name: firstLine('NAME').slice(0, 80),
     tagline: firstLine('TAGLINE').slice(0, 90),
     description: body('DESCRIPTION'),
-    personality: listOf(body('PERSONALITY')).join(', '),
+    personality: personalityOf(body('PERSONALITY')),
     scenario: body('SCENARIO'),
     exampleMessages: examplesOf(body('EXAMPLE DIALOGUE')),
     firstMessage: body('FIRST MESSAGE'),
@@ -245,6 +248,20 @@ function unwrap(text: string): string {
     .replace(/^[-*•]\s+/, '')
     .replace(/^(\*\*|__|["'“”«»])+|(\*\*|__|["'“”«»])+$/g, '')
     .trim()
+}
+
+/**
+ * The PERSONALITY section: traits each shown by what the character does ("Loyal: stands up
+ * for {{user}}…"), kept one per line; or, as older answers and small models write it,
+ * a bare list of traits, kept on one line with commas.
+ */
+function personalityOf(text: string): string {
+  const lines = text
+    .split('\n')
+    .map((line) => line.trim().replace(/^([-*•·]|\d+[.)])\s+/, '').replace(/^(\*\*|__)([^*_:]+)(\*\*|__)\s*:/, '$2:'))
+    .filter(Boolean)
+  const shown = lines.filter((line) => /^[^:]{1,40}:\s*\S+(\s+\S+){3,}/.test(line))
+  return shown.length > 0 ? lines.join('\n') : listOf(text).join(', ')
 }
 
 /** The items of a list written on one line with commas, or one per line with dashes. */

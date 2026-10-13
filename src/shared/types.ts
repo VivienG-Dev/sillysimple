@@ -62,6 +62,11 @@ export type CharacterDraft = Pick<
   | 'tags'
 > & {
   /**
+   * Who wrote the card, as the user signs it: written to the card's `creator`, which every
+   * app shows. Left out, the card's creator is not touched (a partner's card keeps its credit).
+   */
+  creatorName?: string
+  /**
    * The lorebook entries, when the editor changed them. Left out, the card's lorebook
    * is not touched at all.
    */

@@ -29,6 +29,10 @@ const tabs = computed<{ value: Tab; label: string }[]>(() => [
 
 /** The character being changed, or null for a new one. */
 const original = ref<Character | null>(null)
+
+/** A partner's card (see useAuthors): its author is credited as they asked, and cannot be changed here. */
+const { partnerOf } = useAuthors()
+const partner = computed(() => partnerOf(original.value?.creator?.name))
 const draft = ref<CharacterDraft>(toPlain(EMPTY_CHARACTER))
 /** Tags are typed as one line, separated by commas. */
 const tagsText = ref('')
@@ -55,6 +59,7 @@ watch(
 
     original.value = request.character
     draft.value = toPlain(pickDraft(request.character ?? EMPTY_CHARACTER))
+    draft.value.creatorName = request.character?.creator?.name ?? ''
     tagsText.value = draft.value.tags.join(', ')
     lore.value = toPlain(request.character?.lorebook?.entries ?? [])
     untouchedLore = JSON.stringify(lore.value)
@@ -282,6 +287,8 @@ async function save(): Promise<void> {
   problem.value = ''
   const tags = tagsText.value.split(',').map((tag) => tag.trim())
   const toSave: CharacterDraft = { ...draft.value, tags: tags.filter(Boolean) }
+  // A partner's card keeps its creator as it is (see `partner`).
+  if (partner.value) delete toSave.creatorName
   // An untouched lorebook is not sent at all, so the card's own stays exactly as it is.
   if (JSON.stringify(lore.value) !== untouchedLore) {
     toSave.lorebookEntries = lore.value.filter((entry) => entry.content.trim() || entry.keys.length || entry.source !== null)
@@ -410,12 +417,13 @@ function finish(): void {
           </label>
           <label>
             <span class="label">Personality <span class="optional">· optional</span></span>
-            <input
+            <span class="hint">Each trait with something the character does that shows it: the model plays a trait from what it sees done.</span>
+            <textarea
               v-model="draft.personality"
               data-section="PERSONALITY"
               class="field"
-              type="text"
-              placeholder="A few words: guarded, dry humor, loyal"
+              rows="4"
+              placeholder="Loyal: when someone doubts you, she stands up for you, her voice shaking but firm.&#10;Likes: rain, old maps. Dislikes: lies. Wants: to find her brother."
             />
           </label>
           <label>
@@ -447,6 +455,19 @@ function finish(): void {
               placeholder="Mystery, Slow burn, Coastal"
               data-section="TAGS"
             />
+          </label>
+          <label>
+            <span class="label">Author <span class="optional">· optional</span></span>
+            <template v-if="partner">
+              <span class="hint">
+                Written by {{ partner.name }}, who shares this character with the app. Their credit stays on the card.
+              </span>
+              <input :value="partner.name" class="field" type="text" disabled />
+            </template>
+            <template v-else>
+              <span class="hint">Your name or pseudonym, shown as “by …” here and in other apps if you share the card.</span>
+              <input v-model="draft.creatorName" class="field" type="text" maxlength="80" placeholder="Your name or pseudonym" />
+            </template>
           </label>
         </template>
 

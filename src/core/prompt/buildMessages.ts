@@ -88,7 +88,11 @@ export function buildMessages(input: BuildMessagesInput): LlmMessage[] {
     instructions,
     ...lore.before,
     character.description,
-    character.personality && `{{char}}'s personality: ${character.personality}`,
+    // Traits shown by what the character does come one per line: they get a line of their own.
+    character.personality &&
+      (character.personality.includes('\n')
+        ? `{{char}}'s personality:\n${character.personality}`
+        : `{{char}}'s personality: ${character.personality}`),
     character.scenario && `Scenario: ${character.scenario}`,
     ...lore.after,
     examplesOf(character.exampleMessages),

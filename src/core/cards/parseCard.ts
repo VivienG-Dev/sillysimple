@@ -200,6 +200,12 @@ export function applyDraft(json: unknown, draft: CharacterDraft): Record<string,
   const own = isRecord(extensions['sillysimple']) ? extensions['sillysimple'] : {}
   data['extensions'] = { ...extensions, sillysimple: { ...own, tagline: draft.tagline.trim() } }
 
+  // The author, as the user signs the card. V1 readers find it next to `data` when the card has it there.
+  if (draft.creatorName !== undefined) {
+    data['creator'] = draft.creatorName.trim().slice(0, 80)
+    if ('creator' in card) card['creator'] = data['creator']
+  }
+
   if (draft.lorebookEntries) data['character_book'] = applyLorebook(data['character_book'], draft.lorebookEntries)
 
   return card
