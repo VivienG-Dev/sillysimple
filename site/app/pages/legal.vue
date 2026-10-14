@@ -15,7 +15,7 @@ usePage({
 })
 
 const config = useAppConfig()
-const UPDATED = '8 October 2026'
+const UPDATED = '14 October 2026'
 const MIS_A_JOUR = '8 octobre 2026'
 </script>
 
@@ -68,8 +68,13 @@ const MIS_A_JOUR = '8 octobre 2026'
     <section aria-labelledby="app">
       <h2 id="app">The app</h2>
       <p>
-        SillySimple runs on your computer. It has no account and no server of its own: nothing you write is sent to us.
+        SillySimple runs on your computer. It has no account, and nothing you write is sent to us.
         <NuxtLink to="/help/#what-leaves">What leaves your computer</NuxtLink> depends on the way you choose to chat, and Help says it in full.
+      </p>
+      <p>
+        To tell you when a new version is out, the app reads a small file at downloads.sillysimple.app at launch and every few hours,
+        and downloads the new version from there when you ask it to. Nothing about you or your chats goes with it; that server keeps the
+        same short technical record as this site's. It can be turned off in the app, in Settings › Data &amp; Privacy.
       </p>
       <p>
         The models it downloads are made by others and come with their own terms: Gemma, the model offered by default, is Google's, under the
@@ -124,7 +129,10 @@ const MIS_A_JOUR = '8 octobre 2026'
 
       <h3>L'application</h3>
       <p>
-        SillySimple fonctionne sur votre ordinateur, sans compte ni serveur à elle : rien de ce que vous écrivez ne nous est envoyé. Les
+        SillySimple fonctionne sur votre ordinateur, sans compte : rien de ce que vous écrivez ne nous est envoyé. Pour signaler une
+        nouvelle version, l'application lit un petit fichier sur downloads.sillysimple.app au lancement puis toutes les quelques heures,
+        et y télécharge la nouvelle version quand vous le demandez. Rien sur vous ni sur vos conversations n'est transmis ; ce serveur
+        garde la même courte trace technique que celui du site. Cela se coupe dans l'application, dans Settings › Data &amp; Privacy. Les
         modèles qu'elle télécharge sont l'œuvre d'autres éditeurs et ont leurs propres conditions (Gemma, proposé par défaut, appartient
         à Google, sous les Gemma Terms of Use). Ce qu'un modèle écrit l'est sur votre ordinateur ; l'éditeur de ce site n'y a pas accès.
       </p>

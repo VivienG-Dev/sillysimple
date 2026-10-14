@@ -28,6 +28,7 @@ import type {
   SettingsPatch,
   SpeakOutcome,
   SpeakRequest,
+  UpdateStatus,
   TurnMode,
   VoiceChoice,
   VoiceService,
@@ -256,5 +257,22 @@ export interface SillyApi {
     onNotice(listener: (event: NoticeEvent) => void): () => void
     /** Called when the place of a chat's scene was noted again, after a reply. Returns a function that stops listening. */
     onPlace(listener: (event: PlaceEvent) => void): () => void
+  }
+
+  /**
+   * The app's own updates (src/main/updates.ts). A check happens by itself at launch and
+   * every few hours when Settings › Data & Privacy allows it; nothing is downloaded until
+   * the user says so.
+   */
+  updates: {
+    status(): Promise<UpdateStatus>
+    /** Looks now, whatever the setting says: the user asked. Resolves with where things stand. */
+    check(): Promise<UpdateStatus>
+    /** Downloads the version that is out. Progress arrives through `onStatus`. */
+    download(): void
+    /** Quits, installs the downloaded version and opens it again. */
+    install(): void
+    /** Returns a function that stops listening. */
+    onStatus(listener: (status: UpdateStatus) => void): () => void
   }
 }

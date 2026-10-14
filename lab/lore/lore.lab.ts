@@ -75,10 +75,11 @@ async function run(url: string, what: string): Promise<void> {
     return texts.push(text) - 1
   }
 
-  const folder = resolve('scenarios')
-  const books = readdirSync(folder)
-    .filter((file) => /\.(png|json)$/i.test(file))
-    .map((file) => {
+  // The stories of the app, and those waiting for a picture (scenarios/drafts), which carry most of the notes.
+  const folders = [resolve('scenarios'), resolve('scenarios', 'drafts')]
+  const books = folders
+    .flatMap((folder) => readdirSync(folder).filter((file) => /\.(png|json)$/i.test(file)).map((file) => ({ folder, file })))
+    .map(({ folder, file }) => {
       const card = parseCardFile(file, new Uint8Array(readFileSync(join(folder, file))))
       const fill = (text: string): string => applyMacros(text, { char: card.name, user: USER })
       const entries = (card.lorebook?.entries ?? []).map((entry) => ({
@@ -93,7 +94,7 @@ async function run(url: string, what: string): Promise<void> {
   const deepest = Math.max(...DEPTHS)
   const cases = CASES.map((item) => {
     const book = books.find((each) => each.id === item.card)
-    if (!book) throw new Error(`cases.ts names a story that is not in scenarios/: ${item.card}`)
+    if (!book) throw new Error(`cases.ts names a story that is not in scenarios/ nor scenarios/drafts/: ${item.card}`)
     for (const label of item.expect) {
       if (!book.entries.some((entry) => entry.label === label)) throw new Error(`cases.ts expects a note "${label}" that ${item.card} does not have.`)
     }

@@ -55,6 +55,7 @@ const visibleCharacters = computed(() => {
     </nav>
 
     <footer class="footer">
+      <UpdateButton />
       <ConnectionBadge />
       <div class="persona">
         <!-- With several personas, the whole block is a menu to switch between them -->

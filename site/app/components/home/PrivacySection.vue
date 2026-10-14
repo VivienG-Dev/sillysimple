@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Archive, Cloud, Folder, KeyRound, Lock, Volume2 } from '@lucide/vue'
+import { Archive, Cloud, Folder, KeyRound, Lock, RefreshCw, Volume2 } from '@lucide/vue'
 
 // What stays on the visitor's computer and what leaves it, said as the app says it in
 // Settings › Data & Privacy. Nothing is promised here that the app does not do.
@@ -26,6 +26,10 @@ const FACTS = [
     text: 'API keys are encrypted by your computer, and are never part of a backup.',
   },
   {
+    icon: RefreshCw,
+    text: 'To tell you about a new version, the app reads a small file on our server, with nothing about you in it. You can turn it off.',
+  },
+  {
     icon: Archive,
     text: 'A backup is an ordinary .zip file you can open by hand. “Erase everything” puts the app back as it was on the first day.',
   },
@@ -35,7 +39,7 @@ const FACTS = [
 <template>
   <section id="privacy" class="privacy" aria-labelledby="privacy-title">
     <div class="wrap layout">
-      <h2 id="privacy-title">No account. No SillySimple server. Nothing is ever sent to us.</h2>
+      <h2 id="privacy-title">No account. Nothing you write is ever sent to us.</h2>
       <ul class="facts">
         <li v-for="fact in FACTS" :key="fact.text">
           <component :is="fact.icon" :size="22" :stroke-width="2" aria-hidden="true" />

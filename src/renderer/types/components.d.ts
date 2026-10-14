@@ -39,6 +39,7 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     SceneBar: typeof import('./../components/SceneBar.vue')['default']
     SegmentedControl: typeof import('./../components/SegmentedControl.vue')['default']
+    UpdateButton: typeof import('./../components/UpdateButton.vue')['default']
     VoicePicker: typeof import('./../components/VoicePicker.vue')['default']
   }
 }

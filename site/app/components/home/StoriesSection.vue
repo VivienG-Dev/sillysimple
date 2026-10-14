@@ -57,8 +57,14 @@ const unseen = useSeen(shelf)
           <div :key="story.id" class="inside">
             <div class="about">
               <h3>{{ story.name }}</h3>
-              <p class="tagline">{{ story.tagline }}</p>
-              <p class="pitch">{{ pitch }}</p>
+              <p v-if="story.tagline" class="tagline">{{ story.tagline }}</p>
+              <!-- A partner's card: credited wherever it is shown, as promised to its author. -->
+              <p v-if="story.creator" class="credit">
+                by
+                <a v-if="story.creatorLink" :href="story.creatorLink" target="_blank" rel="noreferrer">{{ story.creator }}</a>
+                <template v-else>{{ story.creator }}</template>
+              </p>
+              <p v-if="pitch" class="pitch">{{ pitch }}</p>
               <ul class="tags" aria-label="Genres">
                 <li v-for="tag in story.tags" :key="tag">{{ tag }}</li>
               </ul>
@@ -74,6 +80,15 @@ const unseen = useSeen(shelf)
 </template>
 
 <style scoped>
+.credit {
+  font-size: var(--text-small);
+  opacity: 0.85;
+}
+.credit a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .stories {
   padding-block: var(--band);
   background: linear-gradient(to bottom, var(--page-2), var(--page-3));

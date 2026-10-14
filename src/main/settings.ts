@@ -79,6 +79,7 @@ export function merge(base: Settings, patch: SettingsPatch): Settings {
     appearance: { ...base.appearance, ...patch.appearance },
     adapt: { ...base.adapt, ...patch.adapt },
     voice: { ...base.voice, ...patch.voice },
+    updates: { ...base.updates, ...patch.updates },
     personas,
     activePersonaId,
   }

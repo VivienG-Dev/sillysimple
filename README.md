@@ -20,7 +20,19 @@ pnpm scene:replay # the same report again from the answers kept by scene:lab, wi
 pnpm build       # production build into out/
 pnpm dist        # check, build and package the installer for this system into dist/
 pnpm dist:all    # the same for macOS, Windows and Linux at once, from a Mac
+pnpm release     # put the installers of dist/ online and point the site's buttons at them
 ```
+
+**A new version, from start to finish** (on the Mac):
+
+```bash
+# 1. raise "version" in package.json (0.1.0 → 0.1.1)
+pnpm dist                                     # build, test, sign, notarize: dist/*.dmg
+pnpm release                                  # to downloads.sillysimple.app, and site/app/app.config.ts
+git commit -am "Release 0.1.1" && git push    # Coolify rebuilds the site with the new buttons
+```
+
+Then download the new `.dmg` from the site and open it, before telling anyone.
 
 Requires Node 22.12 or newer. To chat you need one of:
 
@@ -438,9 +450,45 @@ The version is the one in `package.json`. The first run downloads Electron for e
   needs Wine with 32-bit support. The AppImage anywhere.
 - **Checked**: the AppImage is made and starts under Linux; the Windows installer is made under
   Linux with the packager told to work as it does on a Mac; the choice between the three ways of
-  signing, with stand-ins for the Mac's tools. No installer was run on Windows, and nothing was
-  made, signed or notarized on a Mac yet: the first `pnpm dist:all` on Vivien's Mac is the test.
-- The app does not update itself: a new version is a new download (`publish: null`).
+  signing, with stand-ins for the Mac's tools. No installer was run on Windows yet.
+- **Signing took effect on Vivien's Mac on 14 October**: the first notarized `.dmg` (0.1.0).
+- **The app updates itself** from 0.1.1 on (`src/main/updates.ts`, electron-updater). The
+  packager writes `latest-mac.yml` (`latest.yml`, `latest-linux.yml`) beside the installers,
+  with a `.zip` of the Mac app that macOS replaces the app from; `pnpm release` sends them,
+  the `latest*.yml` last. An installed app reads that file at
+  `https://downloads.sillysimple.app` 15 s after launch and every 6 hours (Settings › Data &
+  Privacy › "Check for new versions", on by default), or when asked in Settings › Help. A new
+  version shows as a button at the foot of the sidebar: one click downloads it, the next
+  restarts into it. Nothing is downloaded without a click. On a Mac an update installs only if
+  it is signed with the same Developer ID. Not while developing (`pnpm dev`): there is nothing
+  to update.
+- **The icon on macOS 26**: an `.icns` alone is drawn small inside a grey square there.
+  `build/AppIcon.icon` (an Icon Composer document: the orange fill in `icon.json`, the bubble in
+  `Assets/bubble.svg`, drawn from `src/renderer/assets/brand/shapes.ts`) is compiled by
+  `actool` into `Assets.car` before the app is signed (`scripts/mac-icon.mjs`, `afterPack`).
+  It needs Xcode 26 or later; without it the build goes on with the old icon and says so.
+  `build/AppIcon.icon` opens in Icon Composer to adjust the glass, the shadow or the colours.
+
+### Putting a version online
+
+`pnpm release` (`scripts/release.mjs`), on the Mac, after `pnpm dist`:
+
+1. lists the installers of the version in `package.json` that are in `dist/`, and asks before
+   sending anything (`pnpm release mac` for some systems only, `--yes` without the question);
+2. refuses a Mac installer that macOS would not open (signed and notarized, asked of macOS
+   itself);
+3. copies each file over SSH into the server's downloads folder, under a temporary name renamed
+   once whole: nobody downloads half a file, and nothing on the server is deleted;
+4. checks that each one answers at `https://downloads.sillysimple.app/<file>` at its full size;
+5. writes those addresses in `site/app/app.config.ts` (`mac`, `macIntel`, `windows`, `linux`).
+
+Committing and pushing is left to you: the push is what makes Coolify rebuild the site.
+
+Where it goes: the server is `ovh-vps3`, a name of `~/.ssh/config` on the Mac (the key and the
+address stay there; `SILLYSIMPLE_SSH` names another). The folder is `/data/sillysimple-downloads`
+on the VPS, owned by `ubuntu`, mounted into an `nginx:alpine` resource of Coolify at
+`/usr/share/nginx/html`, under the domain `downloads.sillysimple.app` (covered by the `*` record
+at Infomaniak). `SILLYSIMPLE_DOWNLOADS_DIR` and `SILLYSIMPLE_DOWNLOADS_URL` change them.
 
 ### Adding a feature that needs the main process
 

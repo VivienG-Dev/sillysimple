@@ -14,6 +14,29 @@ const version = __APP_VERSION__
 
 const intro = ref<{ play: () => void } | null>(null)
 
+// A newer version: looked for by itself (Settings › Data & Privacy), or here by hand.
+const updates = useUpdatesStore()
+const checking = computed(() => updates.status.state === 'checking')
+const updateLine = computed(() => {
+  const now = updates.status
+  switch (now.state) {
+    case 'unavailable':
+      return ''
+    case 'idle':
+      return now.checkedAt ? 'This is the latest version.' : ''
+    case 'checking':
+      return 'Looking for a new version…'
+    case 'available':
+      return `Version ${now.version} is out.`
+    case 'downloading':
+      return `Downloading version ${now.version}… ${now.percent}%`
+    case 'ready':
+      return `Version ${now.version} is ready: restart the app to use it.`
+    case 'error':
+      return now.message
+  }
+})
+
 // The characters that come with the app, credited to the people who wrote them: some are
 // shared by their authors on the promise that they always are. Read from the cards
 // themselves (their `creator`), so a new card is credited here as soon as it is added.
@@ -208,6 +231,18 @@ const troubles = [
         <img :src="wordmark" alt="" height="40" draggable="false" />
       </button>
       <span class="version">Version {{ version }}</span>
+      <div v-if="updates.status.state !== 'unavailable'" class="update-line">
+        <span v-if="updateLine" :class="{ problem: updates.status.state === 'error' }" role="status">{{ updateLine }}</span>
+        <button v-if="updates.status.state === 'available' || (updates.status.state === 'error' && updates.version)" type="button" class="btn btn-small" @click="updates.download()">
+          Download
+        </button>
+        <button v-else-if="updates.status.state === 'ready'" type="button" class="btn btn-small btn-primary" @click="updates.install()">
+          Restart to update
+        </button>
+        <button v-else-if="updates.status.state !== 'downloading'" type="button" class="btn btn-small" :disabled="checking" @click="updates.check()">
+          Check for updates
+        </button>
+      </div>
     </footer>
   </div>
 </template>
@@ -328,5 +363,15 @@ dd {
   font-size: 12px;
   color: var(--text-faint);
   user-select: text;
+}
+.update-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.update-line .problem {
+  color: var(--danger-text);
 }
 </style>

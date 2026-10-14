@@ -157,7 +157,7 @@ export const HELP: HelpGroup[] = [
         id: 'what-leaves',
         question: 'What leaves my computer?',
         answer: [
-          'With a model on your computer: nothing you write. There is no account and no SillySimple server, so nothing is ever sent to us.',
+          'With a model on your computer: nothing you write. There is no account, and nothing you write is ever sent to us. The only thing the app asks of our server is the small file that says which version is the latest, to tell you when there is a new one; you can turn that off in Settings › Data & Privacy.',
           'With an online service, the conversation and the character’s card are sent to that service to write each reply. If you turn on reading aloud with an online voice, the text of a reply is sent to that voice service when it is read.',
         ],
       },

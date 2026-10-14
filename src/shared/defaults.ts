@@ -64,6 +64,8 @@ export const DEFAULT_SETTINGS: Settings = {
     elevenlabsNarrator: null,
     serverNarrator: null,
   },
+  // On: a new version brings fixes, and the check sends nothing about the user (see updates.ts).
+  updates: { check: true },
   personas: [{ id: 'default', name: 'You', description: '' }],
   activePersonaId: 'default',
 }

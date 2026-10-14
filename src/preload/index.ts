@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron'
 import type { SillyApi } from '@shared/api'
 import { IPC } from '@shared/ipc'
-import type { ChatEvent, EngineStatus, NoticeEvent, PlaceEvent } from '@shared/types'
+import type { ChatEvent, EngineStatus, NoticeEvent, PlaceEvent, UpdateStatus } from '@shared/types'
 
 // The preload script is the only code that can talk to both sides.
 // It exposes a small, fixed list of functions as `window.api`; the Vue app
@@ -122,6 +122,18 @@ const api: SillyApi = {
       const handler = (_event: IpcRendererEvent, place: PlaceEvent): void => listener(place)
       ipcRenderer.on(IPC.chatPlace, handler)
       return () => ipcRenderer.removeListener(IPC.chatPlace, handler)
+    },
+  },
+
+  updates: {
+    status: () => ipcRenderer.invoke(IPC.updatesStatus),
+    check: () => ipcRenderer.invoke(IPC.updatesCheck),
+    download: () => ipcRenderer.send(IPC.updatesDownload),
+    install: () => ipcRenderer.send(IPC.updatesInstall),
+    onStatus: (listener) => {
+      const handler = (_event: IpcRendererEvent, status: UpdateStatus): void => listener(status)
+      ipcRenderer.on(IPC.updatesEvent, handler)
+      return () => ipcRenderer.removeListener(IPC.updatesEvent, handler)
     },
   },
 }

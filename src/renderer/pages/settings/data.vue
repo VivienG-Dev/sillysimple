@@ -17,6 +17,10 @@ onMounted(refresh)
 
 const showFolder = (): Promise<void> => window.api.data.openFolder()
 
+function setCheckUpdates(event: Event): void {
+  void settingsStore.update({ updates: { check: (event.target as HTMLInputElement).checked } })
+}
+
 const count = (total: number, one: string, many: string): string => `${total.toLocaleString('en')} ${total === 1 ? one : many}`
 const contents = (item: Pick<DataSummary, 'characters' | 'chats' | 'messages'>): string =>
   [
@@ -140,8 +144,8 @@ async function eraseEverything(): Promise<void> {
     <section class="card">
       <h2 class="card-title">On this computer</h2>
       <p class="text">
-        Your characters, chats and settings are files in one folder on this computer. There is no account and no
-        SillySimple server: nothing is ever sent to us.
+        Your characters, chats and settings are files in one folder on this computer. There is no account, and
+        nothing you write is ever sent to us.
       </p>
       <div v-if="summary" class="folder">
         <div class="folder-text">
@@ -158,8 +162,19 @@ async function eraseEverything(): Promise<void> {
       <h2 class="card-title">What leaves this computer</h2>
       <p class="text leaves" :class="{ nothing: leaves.nothing }">{{ leaves.text }}</p>
       <p v-if="voiceLeaves" class="text leaves">{{ voiceLeaves }}</p>
+      <label class="toggle">
+        <input type="checkbox" aria-label="Check for new versions" :checked="settingsStore.updates.check" @change="setCheckUpdates" />
+        <span class="toggle-text">
+          <span class="toggle-title">Check for new versions</span>
+          <span class="toggle-hint">
+            At launch and every few hours, the app reads a small file at downloads.sillysimple.app that says which
+            version is the latest. Nothing about you or your chats is sent; like any website, the server sees the
+            address it is asked from. Nothing is downloaded until you click.
+          </span>
+        </span>
+      </label>
       <p class="hint">
-        This depends on where replies are written, which you choose in
+        Replies depend on where they are written, which you choose in
         <RouterLink to="/settings/connection">Connection</RouterLink>. API keys of online services are encrypted by
         this computer, and are never part of a backup.
       </p>
@@ -301,6 +316,33 @@ header p {
 .buttons {
   display: flex;
   gap: 10px;
+}
+
+.toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+.toggle input {
+  width: 16px;
+  height: 16px;
+  margin: 1px 0 0;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+.toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.toggle-title {
+  font-weight: 600;
+}
+.toggle-hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-faint);
 }
 
 .row {

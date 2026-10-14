@@ -14,6 +14,7 @@ import { authorPicture } from './authors'
 import { fetchWebMedia, webAddressOf } from './webMedia'
 import { createSense } from './sense'
 import { getSettings } from './settings'
+import { startUpdates } from './updates'
 import { BACKGROUND as BACKGROUND_FILE } from './userData'
 // The app's icon, for where the installed app's own icon does not show: the Dock while
 // developing (macOS), the window and the taskbar (Windows, Linux).
@@ -179,6 +180,8 @@ void app.whenReady().then(async () => {
   })
 
   registerIpcHandlers(db, createKeyStore(join(dataFolder, 'keys.json'), safeStorage), dataFolder, engine, sense)
+  // New versions of the app itself (see updates.ts).
+  startUpdates()
   createWindow()
 
   // macOS: clicking the dock icon reopens a window if none is left.

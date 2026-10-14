@@ -18,17 +18,27 @@ extraResources:
     filter:
       - '*.png'
       - '*.json'
+      # The stories still waiting for a picture stay out of the app (scenarios/drafts/PORTRAITS.md).
+      - '!drafts'
+      - '!drafts/**'
       # The partner authors: authors.json and their pictures (see src/main/authors.ts).
       - 'authors/*.png'
       - 'authors/*.jpg'
       - 'authors/*.webp'
       - 'authors/authors.json'
-# Nowhere to publish to, and no update file to write: the app does not update itself yet.
-publish: null
+# Where the app looks for its own updates (src/main/updates.ts): the folder `pnpm release`
+# fills. The packager uploads nothing (scripts/dist.mjs passes --publish never); this only
+# writes app-update.yml into the app, and latest-mac.yml / latest.yml / latest-linux.yml
+# beside the installers, which say which version is the latest.
+publish:
+  provider: generic
+  url: https://downloads.sillysimple.app
 # One name for every installer: SillySimple-0.1.0-mac-arm64.dmg, …-win-x64.exe, …-linux-x86_64.AppImage.
 artifactName: ${productName}-${version}-${os}-${arch}.${ext}
 # The icon: build/icon.png keeps the margin macOS icons have; build/icon-full.png fills
 # its square, as Windows and Linux expect. The installers' own formats are made from them.
+# Before an app is signed: the Mac icon for macOS 26 and later (see scripts/mac-icon.mjs).
+afterPack: scripts/mac-icon.mjs
 mac:
   icon: build/icon.png
   category: public.app-category.entertainment
@@ -40,6 +50,11 @@ mac:
   hardenedRuntime: true
   target:
     - target: dmg
+      arch:
+        - arm64
+        - x64
+    # What an installed app updates itself from: macOS replaces the app with the one in the .zip.
+    - target: zip
       arch:
         - arm64
         - x64

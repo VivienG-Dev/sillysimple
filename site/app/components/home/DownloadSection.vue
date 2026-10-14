@@ -6,8 +6,11 @@ import { Download } from '@lucide/vue'
 
 const config = useAppConfig()
 
+// The Mac has two installers: the button is for an Apple chip, which nearly every Mac sold
+// since 2021 has, and the Intel one is a small link under it. A browser cannot tell the two
+// Macs apart reliably, so the visitor picks.
 const PLATFORMS = [
-  { key: 'mac', name: 'Mac', file: 'A .dmg disk image' },
+  { key: 'mac', name: 'Mac', file: 'For an Apple chip (M1 or later)' },
   { key: 'windows', name: 'Windows', file: 'An installer' },
   { key: 'linux', name: 'Linux', file: 'An AppImage' },
 ] as const
@@ -45,6 +48,9 @@ watch(unseen, (now, before) => {
           </a>
           <span v-else class="pending">{{ platform.name }}</span>
           <span class="file">{{ config.downloads[platform.key] ? platform.file : 'Not out yet' }}</span>
+          <a v-if="platform.key === 'mac' && config.downloads.macIntel" class="file other" :href="config.downloads.macIntel">
+            Mac with an Intel chip? Get this one
+          </a>
         </li>
       </ul>
     </div>
@@ -94,5 +100,16 @@ watch(unseen, (now, before) => {
 }
 .file {
   font-size: var(--text-small);
+}
+/* The Intel Mac's installer: a plain link, under the line saying what the button is for. */
+.other {
+  margin-top: calc(var(--space-2) * -1);
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  opacity: 0.85;
+}
+.other:hover {
+  opacity: 1;
 }
 </style>

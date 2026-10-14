@@ -6,7 +6,10 @@ export default defineAppConfig({
    * the page then says the app is not out yet instead of showing a button that leads nowhere.
    */
   downloads: {
-    mac: '',
+    /** The Mac with an Apple chip (M1 or later): SillySimple-<version>-mac-arm64.dmg. */
+    mac: 'https://downloads.sillysimple.app/SillySimple-0.1.0-mac-arm64.dmg',
+    /** The Mac with an Intel chip: SillySimple-<version>-mac-x64.dmg. Shown as a smaller link under the Mac button. */
+    macIntel: 'https://downloads.sillysimple.app/SillySimple-0.1.0-mac-x64.dmg',
     windows: '',
     linux: '',
   },

@@ -15,6 +15,8 @@ export const useSettingsStore = defineStore('settings', () => {
   const adapt = computed(() => settings.value.adapt)
   /** Replies read aloud: the voice service and how it is used. */
   const voice = computed(() => settings.value.voice)
+  /** Whether the app looks for a new version of itself. */
+  const updates = computed(() => settings.value.updates)
   const personas = computed(() => settings.value.personas)
   /** The persona in use: who the user is in the chats right now. */
   const persona = computed(() => activePersona(settings.value))
@@ -70,6 +72,7 @@ export const useSettingsStore = defineStore('settings', () => {
     appearance,
     adapt,
     voice,
+    updates,
     personas,
     persona,
     load,

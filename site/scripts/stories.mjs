@@ -33,6 +33,24 @@ function cardInPng(file) {
   return JSON.parse(Buffer.from(text, 'base64').toString('utf8'))
 }
 
+/**
+ * A first message as the page can show it: a partner's card may hold HTML (a sound player,
+ * a styled block) that the app plays and the page would show as code. Tags are taken out.
+ */
+function plain(text) {
+  return text
+    .replace(/<(style|script|audio|video)\b[\s\S]*?(<\/\1\s*>|$)/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+/** The first line of a card's notes, as plain text: what the app shows as the tagline of a card that has none of its own. */
+function firstLine(notes) {
+  const line = plain(notes).split('\n').map((each) => each.trim()).find(Boolean) ?? ''
+  return line.length > 90 ? `${line.slice(0, 89).trimEnd()}…` : line
+}
+
 const files = readdirSync(source)
   .filter((name) => ['.json', '.png'].includes(extname(name)))
   // Of a.png and a.json, the picture is the one that counts, as in the app.
@@ -46,13 +64,16 @@ const stories = files.map((name) => {
   return {
     id,
     name: data.name,
-    tagline: data.extensions?.sillysimple?.tagline ?? '',
+    tagline: data.extensions?.sillysimple?.tagline ?? firstLine(data.creator_notes ?? ''),
     tags: data.tags ?? [],
     /** Where the story starts, with {{user}} and {{char}} still in it. */
     pitch: data.scenario ?? '',
     /** The character's first message. */
-    opening: data.first_mes ?? '',
+    opening: plain(data.first_mes ?? ''),
     openings: 1 + (data.alternate_greetings?.length ?? 0),
+    /** Who wrote the card, when it is a partner's: shown with the story, as promised to them. */
+    creator: data.creator?.trim() || null,
+    creatorLink: /^https?:\/\//.test(data.extensions?.sillysimple?.creatorLink ?? '') ? data.extensions.sillysimple.creatorLink : null,
     picture: existsSync(join(pictures, `${id}.webp`)) ? `/stories/${id}.webp` : null,
   }
 })

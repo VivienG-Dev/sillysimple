@@ -165,27 +165,37 @@ describe('playing a scenario', () => {
 })
 
 describe('the scenarios of this project', () => {
-  it('are all complete cards, with nothing left for the advice to say', async () => {
-    const folder = join(__dirname, '../../scenarios')
-    initScenarios(folder)
+  it('that come with the app all have a picture', async () => {
+    initScenarios(join(__dirname, '../../scenarios'))
     const scenarios = await listScenarios()
-    expect(scenarios.length).toBeGreaterThanOrEqual(8)
-    expect(new Set(scenarios.map((scenario) => scenario.name)).size).toBe(scenarios.length)
+    expect(scenarios.length).toBeGreaterThanOrEqual(1)
+    // Since 0.1.1, a story waits in scenarios/drafts until its picture is made.
+    for (const scenario of scenarios) expect(scenario.pictureUrl, scenario.id).toBeDefined()
+  })
+
+  it('are all complete cards, with nothing left for the advice to say', async () => {
+    // Those of the app, and those waiting for a picture: both are held to the same advice.
+    const all = []
+    for (const folder of [join(__dirname, '../../scenarios'), join(__dirname, '../../scenarios/drafts')]) {
+      initScenarios(folder)
+      for (const scenario of await listScenarios()) all.push({ scenario, file: (await scenarioFile(scenario.id))! })
+    }
+    expect(all.length).toBeGreaterThanOrEqual(8)
+    expect(new Set(all.map(({ scenario }) => scenario.name)).size).toBe(all.length)
 
     // The app's own: written for it, held to its own advice. A partner's card (it names
     // its creator) comes as its author wrote it, and is only checked to be credited.
-    for (const scenario of scenarios.filter((item) => item.creator)) {
+    for (const { scenario } of all.filter((item) => item.scenario.creator)) {
       expect(scenario.creator?.name.trim(), scenario.id).not.toBe('')
       expect(scenario.tagline, scenario.id).not.toBe('')
     }
 
-    for (const scenario of scenarios.filter((item) => !item.creator)) {
+    for (const { scenario, file } of all.filter((item) => !item.scenario.creator)) {
       expect(scenario.tagline, scenario.id).not.toBe('')
       expect(scenario.pitch, scenario.id).toContain('{{user}}')
       expect(scenario.greetings, scenario.id).toBeGreaterThan(1)
       expect(scenario.tags.length, scenario.id).toBeGreaterThan(0)
 
-      const file = (await scenarioFile(scenario.id))!
       const card = parseCardFile(basename(file), readFileSync(file))
       const notes = (card.lorebook?.entries ?? []).filter((entry) => entry.enabled && entry.content.trim())
       const tips = reviewCard({ ...card, loreCount: notes.length, loreKeys: notes.flatMap((entry) => entry.keys) })

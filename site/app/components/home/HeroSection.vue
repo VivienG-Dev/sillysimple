@@ -62,6 +62,10 @@ const glad = ref(false)
             See the stories
           </a>
         </div>
+        <p v-if="platform === 'mac' && config.downloads.mac && config.downloads.macIntel" class="soon">
+          The button is for a Mac with an Apple chip. With an Intel chip:
+          <a :href="config.downloads.macIntel">this one</a>.
+        </p>
         <p v-if="!isOut" class="soon">Not out yet. The first version is being prepared for Mac, Windows and Linux.</p>
       </div>
       <div class="face">
@@ -106,6 +110,11 @@ h1 {
 }
 .soon {
   font-weight: 400;
+}
+.soon a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* The icon, large. It comes in once, with a small bounce. */

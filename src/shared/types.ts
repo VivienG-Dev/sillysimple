@@ -434,6 +434,32 @@ export type SpeakOutcome =
   | { status: 'stopped' }
   | { status: 'error'; error: string }
 
+/** Whether the app looks for a new version of itself (Settings › Data & Privacy). */
+export interface UpdateSettings {
+  /** Once at launch and every few hours, read the small file that says which version is the latest. */
+  check: boolean
+}
+
+/**
+ * Where the app's own update stands (src/main/updates.ts):
+ *   unavailable   the app cannot update itself: while developing, or a Linux install that is not an AppImage
+ *   idle          nothing new, or not looked yet (`checkedAt` null)
+ *   checking      asking the server
+ *   available     a newer version is out, not downloaded: the user decides
+ *   downloading   on its way, `percent` from 0 to 100
+ *   ready         downloaded: restarting the app installs it
+ *   error         a check asked by hand, or a download, went wrong; `version` is the one
+ *                 that was on its way, when there was one (the download can be tried again)
+ */
+export type UpdateStatus =
+  | { state: 'unavailable' }
+  | { state: 'idle'; checkedAt: number | null }
+  | { state: 'checking' }
+  | { state: 'available'; version: string }
+  | { state: 'downloading'; version: string; percent: number }
+  | { state: 'ready'; version: string }
+  | { state: 'error'; message: string; version: string | null }
+
 export interface Settings {
   onboardingDone: boolean
   /** The guided tour of the chat screen was seen, or skipped. */
@@ -443,6 +469,7 @@ export interface Settings {
   appearance: AppearanceSettings
   adapt: AdaptSettings
   voice: VoiceSettings
+  updates: UpdateSettings
   personas: Persona[]
   /** The persona in use. See activePersona() in defaults.ts. */
   activePersonaId: string

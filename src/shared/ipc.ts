@@ -61,6 +61,11 @@ export const IPC = {
   voiceSpeak: 'voice:speak',
   voiceSample: 'voice:sample',
   voiceCancel: 'voice:cancel',
+  updatesStatus: 'updates:status',
+  updatesCheck: 'updates:check',
+  updatesDownload: 'updates:download',
+  updatesInstall: 'updates:install',
+  updatesEvent: 'updates:event',
 } as const
 
 /**

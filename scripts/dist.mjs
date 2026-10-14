@@ -86,7 +86,7 @@ for (const system of wanted) {
   const before = new Set(made())
   // Without a certificate, the Mac app is signed by nobody: the same settings, and three more.
   const config = system === 'mac' && plan?.way === 'adhoc' ? ['--config', 'electron-builder.adhoc.yml'] : []
-  if (run(`Packaging for ${NAMES[system]}`, 'pnpm', ['exec', 'electron-builder', `--${system}`, ...config], system === 'mac' ? plan?.env : {})) continue
+  if (run(`Packaging for ${NAMES[system]}`, 'pnpm', ['exec', 'electron-builder', `--${system}`, '--publish', 'never', ...config], system === 'mac' ? plan?.env : {})) continue
   failed.push(system)
   // What it left half made is not an installer.
   for (const name of made()) if (!before.has(name)) rmSync(join('dist', name), { recursive: true, force: true })
@@ -96,10 +96,12 @@ for (const system of wanted) {
 
 const INSTALLER = /\.(dmg|exe|AppImage)$/
 const files = existsSync('dist') ? readdirSync('dist').filter((name) => INSTALLER.test(name) && !name.includes('__uninstaller')) : []
-// Files the packager leaves for an app that updates itself, which this one does not do yet.
+// What the packager leaves that nobody needs. Kept: the files the app updates itself from
+// (latest*.yml, the Mac's .zip, and the .blockmap of the .zip and the .exe, which let an
+// update download only what changed). See scripts/release.mjs.
 if (existsSync('dist')) {
   for (const name of readdirSync('dist')) {
-    if (/\.blockmap$|^builder-(debug|effective-config)\.ya?ml$|^latest.*\.yml$|\.nsis\.7z$|__uninstaller/.test(name) || name === '.icon-ico' || name === '.icon-icns') {
+    if (/\.dmg\.blockmap$|^builder-(debug|effective-config)\.ya?ml$|\.nsis\.7z$|__uninstaller/.test(name) || name === '.icon-ico' || name === '.icon-icns') {
       rmSync(join('dist', name), { recursive: true, force: true })
     }
   }
@@ -120,6 +122,8 @@ for (const name of files.sort()) {
   console.log(`  ${name.padEnd(44)} ${size(statSync(path).size).padStart(7)}   ${WHO.find(([pattern]) => pattern.test(name))?.[1] ?? ''}`)
 }
 if (files.length === 0) console.log('  (nothing)')
+const updateFiles = existsSync('dist') ? readdirSync('dist').filter((name) => /^latest.*\.yml$|\.zip$|\.blockmap$/.test(name)) : []
+if (updateFiles.length > 0) console.log(`  For the app's own updates: ${updateFiles.sort().join(', ')}`)
 else writeFileSync(join('dist', 'SHA256SUMS.txt'), `${sums.join('\n')}\n`)
 
 // The Mac apps as macOS sees them, which is what counts: a plan is only a plan.

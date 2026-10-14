@@ -114,6 +114,7 @@ declare global {
   const useStickToBottom: typeof import('../composables/useStickToBottom').useStickToBottom
   const useTemplateRef: typeof import('vue').useTemplateRef
   const useTour: typeof import('../composables/useTour').useTour
+  const useUpdatesStore: typeof import('../stores/updates').useUpdatesStore
   const useVoiceStore: typeof import('../stores/voice').useVoiceStore
   const watch: typeof import('vue').watch
   const watchEffect: typeof import('vue').watchEffect
@@ -250,6 +251,7 @@ declare module 'vue' {
     readonly useStickToBottom: UnwrapRef<typeof import('../composables/useStickToBottom')['useStickToBottom']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
     readonly useTour: UnwrapRef<typeof import('../composables/useTour')['useTour']>
+    readonly useUpdatesStore: UnwrapRef<typeof import('../stores/updates')['useUpdatesStore']>
     readonly useVoiceStore: UnwrapRef<typeof import('../stores/voice')['useVoiceStore']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>
