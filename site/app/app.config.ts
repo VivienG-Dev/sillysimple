@@ -7,10 +7,10 @@ export default defineAppConfig({
    */
   downloads: {
     /** The Mac with an Apple chip (M1 or later): SillySimple-<version>-mac-arm64.dmg. */
-    mac: 'https://downloads.sillysimple.app/SillySimple-0.1.3-mac-arm64.dmg',
+    mac: 'https://downloads.sillysimple.app/SillySimple-0.1.4-mac-arm64.dmg',
     /** The Mac with an Intel chip: SillySimple-<version>-mac-x64.dmg. Shown as a smaller link under the Mac button. */
-    macIntel: 'https://downloads.sillysimple.app/SillySimple-0.1.3-mac-x64.dmg',
-    windows: 'https://downloads.sillysimple.app/SillySimple-0.1.3-win-x64.exe',
+    macIntel: 'https://downloads.sillysimple.app/SillySimple-0.1.4-mac-x64.dmg',
+    windows: 'https://downloads.sillysimple.app/SillySimple-0.1.4-win-x64.exe',
     linux: '',
   },
   /** The address of the site once it is online (https://…), for the picture shown when its link is shared. */
