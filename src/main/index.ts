@@ -27,7 +27,10 @@ const isWindows = process.platform === 'win32'
 
 // Must match --bg-app in the renderer, so the window never flashes white.
 const BACKGROUND = '#221915'
-const TITLEBAR_HEIGHT = 52
+// Windows draws its three buttons this tall: its usual title bar, as Discord's or VS Code's.
+// They scale with the height they are given, and at the app's 52 px they looked oversized.
+// Must match --window-controls-height in the renderer (base.css).
+const WINDOWS_CONTROLS_HEIGHT = 32
 
 app.setName('SillySimple')
 
@@ -68,7 +71,7 @@ function createWindow(): void {
     }),
     ...(isWindows && {
       titleBarStyle: 'hidden' as const,
-      titleBarOverlay: { color: BACKGROUND, symbolColor: '#a3a1b3', height: TITLEBAR_HEIGHT },
+      titleBarOverlay: { color: BACKGROUND, symbolColor: '#a3a1b3', height: WINDOWS_CONTROLS_HEIGHT },
     }),
     webPreferences: {
       preload: join(import.meta.dirname, '../preload/index.cjs'),

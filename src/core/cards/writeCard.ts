@@ -37,8 +37,8 @@ export function isGreeting(section: CardSection | null): boolean {
   return section === 'FIRST MESSAGE' || (OTHER_GREETINGS as readonly (CardSection | null)[]).includes(section)
 }
 
-/** How many tokens the model may write: a full card is around a thousand, and each greeting asked for on top adds some two hundred. */
-export const CARD_REPLY_TOKENS = 3000
+/** How many tokens the model may write: a full card is around twelve hundred, and each greeting asked for on top adds some two hundred. */
+export const CARD_REPLY_TOKENS = 3500
 /** A little above the chat's default: a character should not be the most expected one. */
 export const CARD_TEMPERATURE = 0.9
 const MAX_IDEA_LENGTH = 2000
@@ -58,10 +58,16 @@ The character's name only.
 One short line that sums the character up, under ten words.
 
 ### DESCRIPTION
-120 to 200 words, in the third person and the present tense: who they are, what they look like, where they come from, what they want, how they speak, how they move, and how they behave with {{user}}. Concrete details, no vague praise.
+220 to 320 words, in the third person and the present tense, in these parts, each starting on a new line, in this order:
+- One first sentence: the name, the age as a number, what they are or do.
+- Appearance: then three or four features, one per line, the one noticed first first. Each is written "Feature: what it looks like, and what it does or gives away when they feel something" (hair twisted round a finger when nervous, a scar hidden under a sleeve). The body as it plays in the story, not a list of measurements.
+- Voice: how they speak (the words they choose, their rhythm, a habit of speech) and how they move.
+- Past: three or four sentences on where they come from and what shaped them, ending on what is still unresolved.
+- With {{user}}: how they behave with {{user}}, what they want from them, and one thing they keep from them.
+Concrete details, no vague praise. Their traits come in the next section: do not list them here.
 
 ### PERSONALITY
-Four to six traits, one per line. Each trait is followed by one concrete thing the character does that shows it: a habit, a reaction, a small scene with {{user}} or with others. Never a bare adjective: the chat learns how to play a trait from what it does. Written like this:
+Five to seven traits, one per line. Each trait is followed by one concrete thing the character does that shows it: a habit, a reaction, a small scene with {{user}} or with others. Never a bare adjective: the chat learns how to play a trait from what it does. Written like this:
 Trait: what they do that shows it, in one sentence.
 Then one last line:
 Likes: two or three things. Dislikes: two or three things. Wants: what they want most.

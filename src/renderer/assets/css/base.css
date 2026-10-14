@@ -82,6 +82,8 @@ html[data-platform='darwin'] {
 }
 html[data-platform='win32'] {
   --window-controls-right: 140px;
+  /* The height Windows draws its three buttons at (WINDOWS_CONTROLS_HEIGHT in src/main/index.ts). */
+  --window-controls-height: 32px;
 }
 
 /* An area the window can be dragged by. Controls inside it stay clickable. */

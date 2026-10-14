@@ -290,3 +290,21 @@ describe('the personality, trait by trait', () => {
     expect(readWrittenCard('### PERSONALITY\n- bold\n- reckless\n### SCENARIO\nA hangar.').personality).toBe('bold, reckless')
   })
 })
+
+describe('a description written in parts', () => {
+  it('is read whole: its labels are not headings, and its lines stay apart', () => {
+    const description = [
+      'Mara Kell is a 34-year-old lighthouse keeper on an island the ferry no longer serves.',
+      'Appearance:',
+      'Salt-white braid: she wraps the end round her wrist when she lies.',
+      'Burn scar on the left palm: she keeps that hand in her coat pocket around strangers.',
+      'Voice: low and unhurried, every sentence trimmed like a wick; she says "aye" only when she means no.',
+      'Past: she came for one winter, eleven years ago, and stayed after the boat that brought her sank.',
+      'With {{user}}: guarded, then curious; she never says who wrote the letters in the lamp room.',
+    ].join('\n')
+    const card = readWrittenCard(`### NAME\nMara Kell\n### TAGLINE\nKeeper of a dark light\n### DESCRIPTION\n${description}\n### PERSONALITY\nStubborn: she relights the lamp the coastguard told her to leave off.\n### SCENARIO\nA storm, the lamp room.`)
+    expect(card.description).toBe(description)
+    expect(card.personality).toBe('Stubborn: she relights the lamp the coastguard told her to leave off.')
+    expect(card.scenario).toBe('A storm, the lamp room.')
+  })
+})

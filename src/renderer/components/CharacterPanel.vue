@@ -662,7 +662,7 @@ html[data-platform='win32'] .window-strip {
   top: 0;
   z-index: 3;
   flex-shrink: 0;
-  height: var(--titlebar-height);
+  height: var(--window-controls-height);
   /* The colour Windows paints behind its buttons (setTitleBarOverlay, from --bg-app). */
   background: var(--bg-app);
 }
