@@ -66,6 +66,10 @@ const glad = ref(false)
           The button is for a Mac with an Apple chip. With an Intel chip:
           <a :href="config.downloads.macIntel">this one</a>.
         </p>
+        <p v-if="platform === 'windows' && config.downloads.windows" class="soon">
+          Windows warns once, as for any app it does not know yet:
+          <NuxtLink to="/help/#windows-warning">More info › Run anyway</NuxtLink>.
+        </p>
         <p v-if="!isOut" class="soon">Not out yet. The first version is being prepared for Mac, Windows and Linux.</p>
       </div>
       <div class="face">

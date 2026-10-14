@@ -18,7 +18,7 @@ const ownEngine = computed(
   () => settingsStore.connection.kind === 'ollama' && engineStore.status !== null && engineStore.status.state !== 'yours',
 )
 /** What the app's own Ollama loads models with on this computer, when nothing is set by hand. */
-const ownAutomatic = computed(() => (engineStore.status ? engineContextLength(engineStore.status.memoryBytes) : null))
+const ownAutomatic = computed(() => (engineStore.status ? engineContextLength(engineStore.status.memoryBytes, engineStore.status.graphics) : null))
 
 // Common context lengths, for when the size is set by hand.
 const contextSizes = [2048, 4096, 8192, 16384, 32768, 65536, 131072]

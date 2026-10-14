@@ -63,8 +63,12 @@ function back(): void {
 
     <main class="content">
       <template v-if="author">
-        <section class="who">
-          <CharacterAvatar :name="author.name" :src="author.pictureUrl" :size="96" round />
+        <!-- Their banner, when they have one: their picture sits on its lower edge, as on their profiles. -->
+        <div v-if="author.bannerUrl" class="banner">
+          <img :src="author.bannerUrl" alt="" draggable="false" />
+        </div>
+        <section class="who" :class="{ 'under-banner': author.bannerUrl }">
+          <CharacterAvatar class="avatar" :name="author.name" :src="author.pictureUrl" :size="96" round />
           <div class="who-text">
             <span class="eyebrow">Partner author</span>
             <h1 class="title-serif">{{ author.name }}</h1>
@@ -145,10 +149,37 @@ function back(): void {
   flex-shrink: 0;
 }
 
+.banner {
+  height: clamp(140px, 22vw, 240px);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background: var(--bg-card);
+}
+.banner img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+}
+
 .who {
   display: flex;
   align-items: flex-start;
   gap: 22px;
+}
+/* Under a banner, the picture overlaps its lower edge, ringed in the page's colour. */
+.who.under-banner {
+  margin-top: -70px;
+  padding-left: 24px;
+}
+.who.under-banner .avatar {
+  flex-shrink: 0;
+  box-shadow: 0 0 0 5px var(--bg-app);
+  border-radius: 50%;
+}
+.who.under-banner .who-text {
+  padding-top: 76px;
 }
 .who-text {
   min-width: 0;

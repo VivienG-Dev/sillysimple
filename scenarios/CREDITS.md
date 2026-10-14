@@ -40,7 +40,8 @@ It is written in `scenarios/authors/authors.json`, one entry per partner:
     "name": "SzainX",
     "about": "A few words about them, as they want them. Line breaks are kept.",
     "links": ["https://chub.ai/users/szainx", { "label": "Ko-fi", "url": "https://ko-fi.com/…" }],
-    "picture": "szainx.png"
+    "picture": "szainx.png",
+    "banner": "szainx-banner.png"
   }
 ]
 ```
@@ -49,4 +50,6 @@ It is written in `scenarios/authors/authors.json`, one entry per partner:
   accents do not matter): that is how the page finds their characters.
 - `links`: up to 4, https only. An address alone is labelled with the site's name.
 - `picture`: a .png, .jpg or .webp file in `scenarios/authors/`. Without one, their initials.
+- `banner`: a wide picture across the top of their page (about 2.5 times as wide as tall), same
+  formats, same folder. Their picture then sits on its lower edge. Optional.
 - An author who is not in this file is still credited ("by …"), just without a page.

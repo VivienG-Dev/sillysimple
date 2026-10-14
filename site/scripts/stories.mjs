@@ -51,6 +51,16 @@ function firstLine(notes) {
   return line.length > 90 ? `${line.slice(0, 89).trimEnd()}…` : line
 }
 
+/** The first link of a partner's page in the app (scenarios/authors/authors.json), for their credit here. */
+function partnerLink(creator) {
+  const file = join(source, 'authors', 'authors.json')
+  if (!creator || !existsSync(file)) return null
+  const partner = JSON.parse(readFileSync(file, 'utf8')).find((each) => each.name?.toLowerCase() === creator.trim().toLowerCase())
+  const first = partner?.links?.[0]
+  const url = typeof first === 'string' ? first : first?.url
+  return /^https:\/\//.test(url ?? '') ? url : null
+}
+
 const files = readdirSync(source)
   .filter((name) => ['.json', '.png'].includes(extname(name)))
   // Of a.png and a.json, the picture is the one that counts, as in the app.
@@ -73,7 +83,7 @@ const stories = files.map((name) => {
     openings: 1 + (data.alternate_greetings?.length ?? 0),
     /** Who wrote the card, when it is a partner's: shown with the story, as promised to them. */
     creator: data.creator?.trim() || null,
-    creatorLink: /^https?:\/\//.test(data.extensions?.sillysimple?.creatorLink ?? '') ? data.extensions.sillysimple.creatorLink : null,
+    creatorLink: /^https?:\/\//.test(data.extensions?.sillysimple?.creatorLink ?? '') ? data.extensions.sillysimple.creatorLink : partnerLink(data.creator),
     picture: existsSync(join(pictures, `${id}.webp`)) ? `/stories/${id}.webp` : null,
   }
 })

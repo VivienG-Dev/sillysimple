@@ -51,6 +51,10 @@ watch(unseen, (now, before) => {
           <a v-if="platform.key === 'mac' && config.downloads.macIntel" class="file other" :href="config.downloads.macIntel">
             Mac with an Intel chip? Get this one
           </a>
+          <!-- The installer is not signed: say so before Windows does, in its own words. -->
+          <NuxtLink v-if="platform.key === 'windows' && config.downloads.windows" class="file other" to="/help/#windows-warning">
+            Windows warns once: More info › Run anyway
+          </NuxtLink>
         </li>
       </ul>
     </div>

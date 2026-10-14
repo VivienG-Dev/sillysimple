@@ -1,4 +1,4 @@
-import type { ModelInfo, ModelOffer, ModelTier } from '@shared/types'
+import type { GraphicsCard, ModelInfo, ModelOffer, ModelTier } from '@shared/types'
 import { sameOllamaModel } from '../providers/ollama'
 
 // The app's own chat models: three sizes of the same family, so that everything the app
@@ -21,6 +21,12 @@ export interface BuiltinModel {
   bytes: number
   /** Offered on computers with at least this much memory, in GiB. */
   needsMemory: number
+  /**
+   * On a PC: the memory of the graphics card it runs well with, in GiB. A little short of
+   * the model's whole size is fine: Ollama puts the last few layers on the processor, and
+   * replies stay quick. Far short, and most of the model runs on the processor.
+   */
+  needsGraphics: number
 }
 
 export const BUILTIN_MODELS: readonly BuiltinModel[] = [
@@ -32,6 +38,8 @@ export const BUILTIN_MODELS: readonly BuiltinModel[] = [
     blurb: 'Light and quick. Fine for a chat, weaker on long stories.',
     bytes: 4.6e9,
     needsMemory: 0,
+    // A 6 GB card.
+    needsGraphics: 5.5,
   },
   {
     tier: 'medium',
@@ -42,6 +50,8 @@ export const BUILTIN_MODELS: readonly BuiltinModel[] = [
     bytes: 8.0e9,
     // A "16 GB" computer reports a little less, more so when its graphics share that memory.
     needsMemory: 13.5,
+    // An 8 GB card, the most common: it holds nearly all of the model.
+    needsGraphics: 7.5,
   },
   {
     tier: 'large',
@@ -52,6 +62,8 @@ export const BUILTIN_MODELS: readonly BuiltinModel[] = [
     bytes: 18e9,
     // A "32 GB" computer. On 24 GB the model alone would take all the memory graphics may use.
     needsMemory: 29,
+    // A 16 GB card. Only 4B of its 26B are at work for each word, so a part on the processor costs less than for another model.
+    needsGraphics: 15,
   },
 ]
 
@@ -120,20 +132,30 @@ export interface Offers {
 
 /**
  * The app's models for a computer with this much memory: every one that fits, smallest
- * first, so that someone with room has the choice. The largest that fits is the one
- * recommended. `installed`: the models Ollama already holds.
+ * first, so that someone with room has the choice. `installed`: the models Ollama already holds.
+ *
+ * Which one is recommended:
+ * - on a Mac (`graphics` undefined): the largest that fits, its memory being shared;
+ * - on a PC: the largest that fits on its graphics card, and the smallest when it has none
+ *   or none fits. The others are still offered (they run, partly on the processor, slower),
+ *   and each says whether it fits on the card.
  */
-export function offersFor(memoryBytes: number, installed: readonly Pick<ModelInfo, 'id'>[] = []): Offers {
+export function offersFor(memoryBytes: number, installed: readonly Pick<ModelInfo, 'id'>[] = [], graphics?: GraphicsCard | null): Offers {
   const memory = memoryBytes / GIB
   const fitting = BUILTIN_MODELS.filter((model) => memory >= model.needsMemory)
-  const recommended = fitting.at(-1)
+  const onCard = (model: BuiltinModel): boolean => !!graphics && graphics.memoryBytes / GIB >= model.needsGraphics
+  const recommended = graphics === undefined ? fitting.at(-1) : (fitting.filter(onCard).at(-1) ?? fitting[0])
 
   return {
-    offers: fitting.map(({ needsMemory: _needs, ...model }) => ({
-      ...model,
-      recommended: model.id === recommended?.id,
-      installed: installed.some((item) => sameOllamaModel(item.id, model.id)),
-    })),
+    offers: fitting.map((builtin) => {
+      const { needsMemory: _memory, needsGraphics: _card, ...model } = builtin
+      return {
+        ...model,
+        recommended: model.id === recommended?.id,
+        installed: installed.some((item) => sameOllamaModel(item.id, model.id)),
+        fitsGraphics: graphics === undefined ? null : onCard(builtin),
+      }
+    }),
     tooLarge: BUILTIN_MODELS.length - fitting.length,
   }
 }
@@ -153,7 +175,9 @@ export function builtinModelBytes(id: string): number | null {
  * on most computers, which a roleplay chat fills in a few messages; a long context
  * costs memory, so it follows what the computer has.
  */
-export function engineContextLength(memoryBytes: number): number {
+export function engineContextLength(memoryBytes: number, graphics?: GraphicsCard | null): number {
+  // On a PC the context sits on the graphics card, next to the model.
+  if (graphics !== undefined) return graphics && graphics.memoryBytes / GIB >= 15 ? 16_384 : 8_192
   return memoryBytes / GIB >= 29 ? 16_384 : 8_192
 }
 

@@ -3,6 +3,7 @@ import { createPullTracker, sameOllamaModel } from '../providers/ollama'
 import { describeEngineDownloadError, describePullError, EngineMissingError, isAbort } from './errors'
 import { BUILTIN_MODELS, builtinModelBytes, cleanModelName, engineContextLength, isBuiltinModel, offersFor, SENSE_MODEL, SENSE_MODEL_ANYWHERE, senseModel, senseSupported } from './models'
 import { compareVersions, ENGINE_VERSION, enginePackage } from './release'
+import { readNvidiaSmi, readWindowsRegistry } from './graphics'
 
 const GIB = 2 ** 30
 
@@ -71,6 +72,35 @@ describe('the models offered for a computer', () => {
     expect(SENSE_MODEL_ANYWHERE.id).toBe('embeddinggemma-2:270m-bf16-text')
     for (const platform of ['darwin', 'win32', 'linux']) expect(senseSupported(platform, 'x64')).toBe(true)
     expect(senseSupported('freebsd', 'x64')).toBe(false)
+  })
+
+  it('on a PC, recommends what fits on the graphics card, not in the memory', () => {
+    const card = (gib: number) => ({ name: 'GeForce RTX', memoryBytes: gib * GIB })
+    const pc = (memory: number, graphics: { name: string; memoryBytes: number } | null) => offersFor(memory * GIB, [], graphics)
+    const pick = (offers: ReturnType<typeof pc>) => offers.offers.find((offer) => offer.recommended)?.tier
+
+    // 32 GB of memory and an 8 GB card (Vivien's PC): all three offered, the medium one recommended.
+    const laptop = pc(31.7, card(7.996))
+    expect(laptop.offers.map((offer) => offer.tier)).toEqual(['small', 'medium', 'large'])
+    expect(pick(laptop)).toBe('medium')
+    expect(laptop.offers.map((offer) => offer.fitsGraphics)).toEqual([true, true, false])
+
+    expect(pick(pc(32, card(16)))).toBe('large')
+    expect(pick(pc(32, card(24)))).toBe('large')
+    expect(pick(pc(16, card(24)))).toBe('medium') // The computer's memory still says what is offered.
+    expect(pick(pc(32, card(6)))).toBe('small')
+    expect(pick(pc(32, card(4)))).toBe('small') // Nothing fits on it: the smallest, the least slow.
+    expect(pick(pc(32, null))).toBe('small') // No card: the processor alone.
+    expect(pc(32, null).offers.every((offer) => offer.fitsGraphics === false)).toBe(true)
+
+    // A Mac: its memory is shared, and nothing is said of a card.
+    expect(offersFor(32 * GIB).offers.map((offer) => offer.fitsGraphics)).toEqual([null, null, null])
+  })
+
+  it('on a PC, gives the context room on the graphics card', () => {
+    expect(engineContextLength(32 * GIB, { name: 'x', memoryBytes: 8 * GIB })).toBe(8192)
+    expect(engineContextLength(32 * GIB, { name: 'x', memoryBytes: 16 * GIB })).toBe(16384)
+    expect(engineContextLength(32 * GIB, null)).toBe(8192)
   })
 
   it('gives more context to a computer with more memory', () => {
@@ -220,5 +250,42 @@ describe('the name of a model in Ollama', () => {
     expect(sameOllamaModel('gemma4:12b-it-q4_K_M', 'gemma4:12b-it-q4_k_m')).toBe(true)
     expect(sameOllamaModel('gemma4:12b', 'gemma4:26b')).toBe(false)
     expect(sameOllamaModel(undefined, 'gemma4')).toBe(false)
+  })
+})
+
+describe('the graphics card of a PC', () => {
+  const GIB = 2 ** 30
+
+  it('is read from nvidia-smi, in MiB, the largest when there are several', () => {
+    expect(readNvidiaSmi('NVIDIA GeForce RTX 4070 Laptop GPU, 8188\r\n')).toEqual({ name: 'NVIDIA GeForce RTX 4070 Laptop GPU', memoryBytes: 8188 * 2 ** 20 })
+    expect(readNvidiaSmi('NVIDIA GeForce GTX 1650, 4096\nNVIDIA GeForce RTX 3090, 24576\n')?.name).toBe('NVIDIA GeForce RTX 3090')
+    expect(readNvidiaSmi('')).toBeNull()
+    expect(readNvidiaSmi("'nvidia-smi' is not recognized as an internal or external command")).toBeNull()
+  })
+
+  it('is read from the Windows registry, with a 64-bit size, leaving out the chip in the processor', () => {
+    const answer = [
+      'HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000',
+      '    DriverDesc    REG_SZ    Intel(R) Iris(R) Xe Graphics',
+      '    HardwareInformation.qwMemorySize    REG_QWORD    0x8000000',
+      '',
+      'HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0001',
+      '    DriverDesc    REG_SZ    AMD Radeon RX 7800 XT',
+      '    HardwareInformation.qwMemorySize    REG_QWORD    0x400000000',
+      '',
+      'HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0001\\Settings',
+      '    Something    REG_DWORD    0x1',
+    ].join('\r\n')
+    expect(readWindowsRegistry(answer)).toEqual({ name: 'AMD Radeon RX 7800 XT', memoryBytes: 16 * GIB })
+  })
+
+  it('is read from an older driver, which writes 32 bits as four bytes', () => {
+    const answer = [
+      'HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000',
+      '    DriverDesc    REG_SZ    Old Card',
+      '    HardwareInformation.MemorySize    REG_BINARY    00000080',
+    ].join('\n')
+    expect(readWindowsRegistry(answer)).toEqual({ name: 'Old Card', memoryBytes: 2 * GIB })
+    expect(readWindowsRegistry('')).toBeNull()
   })
 })

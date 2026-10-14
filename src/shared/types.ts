@@ -534,6 +534,12 @@ export interface SenseStatus {
 /** The three sizes of chat model the app offers to download. */
 export type ModelTier = 'small' | 'medium' | 'large'
 
+/** A PC's graphics card: where a model runs quickly, as far as its own memory goes. */
+export interface GraphicsCard {
+  name: string
+  memoryBytes: number
+}
+
 /** One of the app's own chat models, as it is offered on this computer. */
 export interface ModelOffer {
   tier: ModelTier
@@ -550,6 +556,11 @@ export interface ModelOffer {
   recommended: boolean
   /** Already on this computer. */
   installed: boolean
+  /**
+   * On a PC: whether the model fits on the graphics card. When it does not, part of it runs
+   * on the processor, and replies are slower. Null on a Mac, whose memory is shared.
+   */
+  fitsGraphics: boolean | null
 }
 
 /** A download in progress: the engine itself, or a model. */
@@ -577,6 +588,11 @@ export interface EngineStatus {
   engineBytes: number
   /** How much memory this computer has. */
   memoryBytes: number
+  /**
+   * The graphics card models run on, on a PC: null when none was found (models then run on
+   * the processor alone), undefined on a Mac, whose memory is shared and counts as a whole.
+   */
+  graphics?: GraphicsCard | null
   /** The app's own models this computer can run, smallest first. */
   offers: ModelOffer[]
   /** How many of the app's models are not offered: they need more memory than there is. */
@@ -704,6 +720,8 @@ export interface Author {
   /** Where to find them: their page, their profile… At most a few, https only. */
   links: { label: string; url: string }[]
   pictureUrl?: string
+  /** A wide picture across the top of their page. */
+  bannerUrl?: string
   /** The scenarios they wrote, among those the app comes with. */
   scenarioIds: string[]
 }

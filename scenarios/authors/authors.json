@@ -2,7 +2,17 @@
   {
     "name": "SzainX",
     "about": "",
-    "links": [],
-    "picture": ""
+    "links": [
+      {
+        "label": "Character Tavern",
+        "url": "https://character-tavern.com/author/szainx"
+      },
+      {
+        "label": "Wyvern",
+        "url": "https://app.wyvern.chat/profiles/lV72jlUyKoaMN7lG9kyCK0OJkdk1"
+      }
+    ],
+    "picture": "szainx.webp",
+    "banner": "szainx-banner.webp"
   }
 ]

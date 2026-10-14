@@ -15,6 +15,18 @@ const engineStore = useEngineStore()
 const { confirm } = useConfirm()
 
 const status = computed(() => engineStore.status)
+
+/**
+ * What decides which model runs quickly. On a Mac, its memory (shared with the graphics);
+ * on a PC, the graphics card's own, and the computer's memory only for what does not fit on it.
+ */
+const hardware = computed(() => {
+  const now = status.value
+  if (!now) return ''
+  if (now.graphics === undefined) return `${formatMemory(now.memoryBytes)} of memory`
+  if (now.graphics === null) return `${formatMemory(now.memoryBytes)} of memory · no graphics card found`
+  return `${now.graphics.name.replace(/^NVIDIA\s+/i, '')} · ${formatMemory(now.graphics.memoryBytes)}`
+})
 const job = computed(() => engineStore.job)
 
 // What went wrong the last time this was on screen is old news.
@@ -129,8 +141,12 @@ async function remove(id: string, name: string, bytes?: number): Promise<void> {
       <div v-if="status.state !== 'unsupported'" class="models" role="radiogroup" aria-label="Model">
         <div class="head">
           <span class="eyebrow">Models for this {{ deviceName() }}</span>
-          <span class="memory">{{ formatMemory(status.memoryBytes) }} of memory</span>
+          <span class="memory" :title="status.graphics ? `${formatMemory(status.memoryBytes)} of memory` : undefined">{{ hardware }}</span>
         </div>
+        <p v-if="status.graphics === null" class="left-out">
+          Without a graphics card, models run on the processor alone: replies take a while. An online service, above,
+          is quicker on this {{ deviceName() }}.
+        </p>
 
         <div
           v-for="offer in status.offers"
@@ -155,6 +171,9 @@ async function remove(id: string, name: string, bytes?: number): Promise<void> {
                 <span v-if="offer.recommended" class="badge">Recommended</span>
               </span>
               <span class="blurb">{{ offer.blurb }}</span>
+              <span v-if="offer.fitsGraphics === false && status.graphics" class="blurb slower">
+                Larger than the graphics card: part of it runs on the processor, and replies are slower.
+              </span>
             </span>
           </label>
 
@@ -370,6 +389,9 @@ async function remove(id: string, name: string, bytes?: number): Promise<void> {
 .blurb {
   font-size: 12px;
   color: var(--text-dim);
+}
+.blurb.slower {
+  color: var(--text-faint);
 }
 .badge {
   padding: 1px 7px;

@@ -8,8 +8,9 @@ import { scenariosFolder } from './scenarios'
 // they are credited. Each one gets a small page in the app, reached from "by …" wherever
 // one of their characters is shown. They are written by hand in scenarios/authors/:
 //
-//   authors.json   [{ "name": "SzainX", "about": "…", "links": ["https://…", { "label": "Chub", "url": "https://…" }], "picture": "szainx.png" }]
+//   authors.json   [{ "name": "SzainX", "about": "…", "links": ["https://…", { "label": "Chub", "url": "https://…" }], "picture": "szainx.png", "banner": "szainx-banner.png" }]
 //   szainx.png     their picture, optional
+//   szainx-banner.png  a wide picture across the top of their page, optional
 //
 // Only `name` is needed, and it must be the `creator` written in their cards: that is how
 // their characters are found. See scenarios/CREDITS.md.
@@ -25,6 +26,7 @@ interface Written {
   about: string
   links: { label: string; url: string }[]
   picture?: string
+  banner?: string
 }
 
 /** "SzainX" -> "szainx", "Lady Ash" -> "lady-ash": the page's address. */
@@ -65,7 +67,8 @@ export function parseAuthors(json: unknown): Written[] {
       .filter((link) => link !== null)
       .slice(0, MAX_LINKS)
     const picture = text(item['picture'])
-    authors.push({ name, about: text(item['about']), links, ...(PICTURE.test(picture) && { picture }) })
+    const banner = text(item['banner'])
+    authors.push({ name, about: text(item['about']), links, ...(PICTURE.test(picture) && { picture }), ...(PICTURE.test(banner) && { banner }) })
   }
   return authors
 }
@@ -92,6 +95,7 @@ export async function listAuthors(scenarios: Scenario[]): Promise<Author[]> {
       about: author.about,
       links: author.links,
       ...(author.picture && pictures.has(author.picture) && { pictureUrl: `${PORTRAIT_SCHEME}://author/${encodeURIComponent(id)}` }),
+      ...(author.banner && pictures.has(author.banner) && { bannerUrl: `${PORTRAIT_SCHEME}://author-banner/${encodeURIComponent(id)}` }),
       scenarioIds: scenarios
         .filter((scenario) => scenario.creator && authorId(scenario.creator.name) === id)
         .map((scenario) => scenario.id),
@@ -99,8 +103,9 @@ export async function listAuthors(scenarios: Scenario[]): Promise<Author[]> {
   })
 }
 
-/** The picture of a partner author, or null. Only a file named in authors.json, in its folder. */
-export async function authorPicture(id: string): Promise<string | null> {
+/** The picture (or the banner) of a partner author, or null. Only a file named in authors.json, in its folder. */
+export async function authorPicture(id: string, which: 'picture' | 'banner' = 'picture'): Promise<string | null> {
   const author = (await readWritten()).find((item) => authorId(item.name) === id)
-  return author?.picture ? join(scenariosFolder(), FOLDER, author.picture) : null
+  const file = author?.[which]
+  return file ? join(scenariosFolder(), FOLDER, file) : null
 }

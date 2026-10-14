@@ -15,6 +15,7 @@ import { fetchWebMedia, webAddressOf } from './webMedia'
 import { createSense } from './sense'
 import { getSettings } from './settings'
 import { startUpdates } from './updates'
+import { findGraphicsCard } from './graphics'
 import { BACKGROUND as BACKGROUND_FILE } from './userData'
 // The app's icon, for where the installed app's own icon does not show: the Dock while
 // developing (macOS), the window and the taskbar (Windows, Linux).
@@ -137,7 +138,9 @@ void app.whenReady().then(async () => {
           ? await scenarioFile(id)
           : url.host === 'author'
             ? await authorPicture(id)
-            : await portraitFile(id)
+            : url.host === 'author-banner'
+              ? await authorPicture(id, 'banner')
+              : await portraitFile(id)
     if (!file) return new Response(null, { status: 404 })
     return net.fetch(pathToFileURL(file).toString()).catch(() => new Response(null, { status: 404 }))
   })
@@ -148,6 +151,8 @@ void app.whenReady().then(async () => {
     platform: process.platform,
     arch: process.arch,
     memoryBytes: totalmem(),
+    // On a PC the graphics card decides which model runs quickly; a Mac's memory is shared (see graphics.ts).
+    ...(!isMac && { graphics: findGraphicsCard(process.platform) }),
     busy: modelBusy,
     // A size set by hand in Settings › Generation: the app's own Ollama loads models with it.
     chosenContext: async () => {

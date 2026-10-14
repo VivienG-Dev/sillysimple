@@ -65,6 +65,15 @@ export const HELP: HelpGroup[] = [
         ],
       },
       {
+        id: 'windows-warning',
+        question: 'Windows says “Windows protected your PC”. Is it safe?',
+        answer: [
+          'The Windows installer is not signed yet: signing is a certificate bought each year, and SillySimple is a free app made by one person. Windows shows that blue screen for any app it does not know, whatever is inside.',
+          'To install it: click “More info”, then “Run anyway”. It installs for you alone, without asking for an administrator, and opens. Your browser may also warn that the file is rarely downloaded: keep it.',
+          'On a Mac there is no such warning: the app is checked by Apple, and macOS only asks once whether to open an app downloaded from the internet.',
+        ],
+      },
+      {
         id: 'offline',
         question: 'Does it work without the internet?',
         answer: [

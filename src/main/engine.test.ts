@@ -621,7 +621,8 @@ describe.runIf(runnable)('when the user runs an Ollama of their own', () => {
     await until(() => seen.some((status) => status.job?.model === 'gemma4:26b-a4b-it-q4_K_M' && status.job.step === 'model'))
     await yourOllama(models, yoursPort)
     await download
-    expect((await engine.status()).models).toHaveLength(2)
+    // Asked while one Ollama hands over to the other, the list may lag a moment (see below).
+    await until(async () => (await engine.status()).models.length === 2)
 
     // Once the download is over, theirs takes over.
     await until(() => !isRunning(own))

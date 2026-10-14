@@ -12,7 +12,7 @@ import { describeEngineDownloadError, describePullError, EngineMissingError, isA
 import { builtinModelBytes, engineContextLength, isEmbeddingModel, offersFor } from '@core/engine/models'
 import { compareVersions, enginePackage, type EnginePackage } from '@core/engine/release'
 import { deleteOllamaModel, listOllamaModels, ollamaVersion, pullOllamaModel, sameOllamaModel, type PullProgress } from '@core/providers/ollama'
-import type { EngineJob, EngineState, EngineStatus, ModelInfo } from '@shared/types'
+import type { EngineJob, EngineState, EngineStatus, GraphicsCard, ModelInfo } from '@shared/types'
 
 // "On this computer": replies come from Ollama, and there is only ever one.
 //
@@ -55,6 +55,11 @@ export interface EngineOptions {
   platform: string
   arch: string
   memoryBytes: number
+  /**
+   * On a PC, the graphics card, found in the background (src/main/graphics.ts): null when
+   * there is none. Left out on a Mac, whose memory is shared: the computer's memory counts.
+   */
+  graphics?: Promise<GraphicsCard | null>
   /** True while a reply is being written: the app's own Ollama is not stopped under it. */
   busy: () => boolean
   /** Called with the new status each time something changes, download progress included. */
@@ -431,12 +436,14 @@ export function createEngine(options: EngineOptions): Engine {
     const held: ModelInfo[] = url ? await listOllamaModels(url, AbortSignal.timeout(4000)).catch(() => []) : []
     const models = held.filter((model) => !isEmbeddingModel(model.id))
     const version = state === 'yours' ? yourVersion : (engine?.version ?? null)
+    const graphics = options.graphics ? await options.graphics.catch(() => null) : undefined
     last = {
       state,
       version,
       engineBytes: pkg?.bytes ?? 0,
       memoryBytes: options.memoryBytes,
-      ...offersFor(options.memoryBytes, models),
+      ...(graphics !== undefined && { graphics }),
+      ...offersFor(options.memoryBytes, models, graphics),
       models,
       job,
       problem,
@@ -604,7 +611,8 @@ export function createEngine(options: EngineOptions): Engine {
     const chosen = await options.chosenContext?.().catch(() => null)
     if (chosen && chosen > 0) return chosen
     const set = Number((options.env ?? process.env)['OLLAMA_CONTEXT_LENGTH'])
-    return set > 0 ? set : engineContextLength(options.memoryBytes)
+    const graphics = options.graphics ? await options.graphics.catch(() => null) : undefined
+    return set > 0 ? set : engineContextLength(options.memoryBytes, graphics)
   }
 
   async function plannedContext(): Promise<number | null> {

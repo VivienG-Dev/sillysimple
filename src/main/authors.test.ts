@@ -28,4 +28,10 @@ describe('partner authors', () => {
       { name: 'Ash', about: '', links: [] },
     ])
   })
+
+  it('keeps a banner the same way as the picture: a file of its folder, nothing else', () => {
+    expect(parseAuthors([{ name: 'SzainX', banner: 'szainx-banner.webp' }])[0]).toMatchObject({ banner: 'szainx-banner.webp' })
+    expect(parseAuthors([{ name: 'SzainX', banner: '../../escape.png' }])[0]).not.toHaveProperty('banner')
+    expect(parseAuthors([{ name: 'SzainX', banner: 'banner.gif' }])[0]).not.toHaveProperty('banner')
+  })
 })
