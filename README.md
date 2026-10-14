@@ -456,7 +456,8 @@ The version is the one in `package.json`. The first run downloads Electron for e
   packager writes `latest-mac.yml` (`latest.yml`, `latest-linux.yml`) beside the installers,
   with a `.zip` of the Mac app that macOS replaces the app from; `pnpm release` sends them,
   the `latest*.yml` last. An installed app reads that file at
-  `https://downloads.sillysimple.app` 15 s after launch and every 6 hours (Settings › Data &
+  `https://downloads.sillysimple.app` 15 s after launch, every 6 hours, and on coming back to the
+  window when the last look is more than 30 minutes old (Settings › Data &
   Privacy › "Check for new versions", on by default), or when asked in Settings › Help. A new
   version shows as a button at the foot of the sidebar: one click downloads it, the next
   restarts into it. Nothing is downloaded without a click. On a Mac an update installs only if

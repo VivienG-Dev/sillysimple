@@ -12,8 +12,10 @@ import { getSettings } from './settings'
 // and where its files are. Nothing about the user is sent: it is the download of a file,
 // and the server sees what any web server sees, the address it is asked from.
 //
-// When: 15 seconds after launch, then every 6 hours, while Settings › Data & Privacy
-// allows it ("Check for new versions", on by default). A check asked in Settings › Help
+// When: 15 seconds after launch, every 6 hours, and when the user comes back to the
+// window if the last look is more than 30 minutes old (an app left open all day hears of
+// a new version within the hour), while Settings › Data & Privacy allows it ("Check for
+// new versions", on by default). A check asked in Settings › Help
 // happens whatever that says. What is found is only shown: nothing is downloaded until the
 // user clicks, and the new version is installed when they restart the app, or when they
 // quit it once it is downloaded.
@@ -26,6 +28,11 @@ const { autoUpdater } = updater
 
 const FIRST_CHECK = 15_000
 const EVERY = 6 * 60 * 60 * 1000
+/** Coming back to the window looks again, but not more often than this. */
+const ON_RETURN_AFTER = 30 * 60 * 1000
+
+/** When the server was last asked, by any of the ways. */
+let lastLook = 0
 
 let status: UpdateStatus = { state: 'unavailable' }
 
@@ -55,6 +62,7 @@ async function check(byHand: boolean): Promise<UpdateStatus> {
   if (status.state === 'unavailable' || status.state === 'checking' || status.state === 'downloading' || status.state === 'ready') return status
   if (!byHand && !(await getSettings()).updates.check) return status
   const before = status
+  lastLook = Date.now()
   set({ state: 'checking' })
   try {
     const found = await autoUpdater.checkForUpdates()
@@ -116,4 +124,7 @@ export function startUpdates(): void {
   status = { state: 'idle', checkedAt: null }
   setTimeout(() => void check(false), FIRST_CHECK)
   setInterval(() => void check(false), EVERY)
+  app.on('browser-window-focus', () => {
+    if (lastLook > 0 && Date.now() - lastLook >= ON_RETURN_AFTER) void check(false)
+  })
 }

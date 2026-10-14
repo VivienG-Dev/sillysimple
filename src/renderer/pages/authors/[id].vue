@@ -63,12 +63,12 @@ function back(): void {
 
     <main class="content">
       <template v-if="author">
-        <!-- Their banner, when they have one: their picture sits on its lower edge, as on their profiles. -->
+        <!-- Their banner, when they have one, above who they are. -->
         <div v-if="author.bannerUrl" class="banner">
           <img :src="author.bannerUrl" alt="" draggable="false" />
         </div>
-        <section class="who" :class="{ 'under-banner': author.bannerUrl }">
-          <CharacterAvatar class="avatar" :name="author.name" :src="author.pictureUrl" :size="96" round />
+        <section class="who">
+          <CharacterAvatar :name="author.name" :src="author.pictureUrl" :size="96" round />
           <div class="who-text">
             <span class="eyebrow">Partner author</span>
             <h1 class="title-serif">{{ author.name }}</h1>
@@ -94,7 +94,7 @@ function back(): void {
           <div class="grid">
             <article v-for="scenario in theirs" :key="scenario.id" class="scenario">
               <span
-                class="picture title-serif"
+                class="cover title-serif"
                 :style="{ background: avatarColors(scenario.name).portraitBg, color: avatarColors(scenario.name).portraitFg }"
               >
                 <img v-if="scenario.pictureUrl" :src="scenario.pictureUrl" alt="" draggable="false" />
@@ -168,19 +168,6 @@ function back(): void {
   align-items: flex-start;
   gap: 22px;
 }
-/* Under a banner, the picture overlaps its lower edge, ringed in the page's colour. */
-.who.under-banner {
-  margin-top: -70px;
-  padding-left: 24px;
-}
-.who.under-banner .avatar {
-  flex-shrink: 0;
-  box-shadow: 0 0 0 5px var(--bg-app);
-  border-radius: 50%;
-}
-.who.under-banner .who-text {
-  padding-top: 76px;
-}
 .who-text {
   min-width: 0;
   display: flex;
@@ -246,7 +233,8 @@ h2 {
   border-radius: var(--radius-xl);
   overflow: hidden;
 }
-.picture {
+/* Not ".picture": that is the class of CharacterAvatar's own picture, which this page's styles would reach. */
+.cover {
   position: relative;
   flex: 0 0 170px;
   display: flex;
@@ -254,7 +242,7 @@ h2 {
   justify-content: center;
   font-size: 40px;
 }
-.picture img {
+.cover img {
   position: absolute;
   inset: 0;
   width: 100%;
