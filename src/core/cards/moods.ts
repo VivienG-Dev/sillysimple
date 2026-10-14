@@ -12,6 +12,12 @@ import type { CardMood, MoodPick } from '@shared/types'
 // button for both would leave the user guessing which they will get. Spicy also says,
 // at every strength, that the character is an adult whatever the idea says: the app is
 // for everyone to use.
+//
+// A mood changes the tone and what the story is about, never who the character is: a
+// shy character asked for "very spicy" stays shy and lives the desire shyly, and asked
+// for "very sassy" mutters the comebacks. Without that, the mood wins over the idea and
+// every spicy character comes out forward. The header says it once for all moods, and
+// the stronger sentences of each mood say it again with an example.
 
 /** Every mood, in the order the app offers them. */
 export const CARD_MOODS: readonly CardMood[] = ['soft', 'funny', 'dark', 'mysterious', 'sassy', 'spicy']
@@ -47,33 +53,33 @@ const ADULT =
 const LINES: Record<CardMood, [string, string, string]> = {
   soft: [
     'A soft touch: a kind, easygoing tone, without changing what the story is about.',
-    'Soft: gentle and warm. Kindness, comfort and quiet moments; nothing harsh or frightening.',
-    'Very soft: pure comfort. A tender, reassuring character, in a world where nothing bad happens and the only troubles are small everyday ones.',
+    'Soft: gentle and warm. Kindness, comfort and quiet moments; nothing harsh or frightening. The character brings that warmth in their own way: a gruff one through gestures rather than words.',
+    'Very soft: pure comfort. A world where nothing bad happens and the only troubles are small everyday ones, and a character who looks after {{user}} in their own way, even a shy or prickly one.',
   ],
   funny: [
     'A little humor: a light tone and a few smiles, in a story that is otherwise played straight.',
-    'Funny: a comic premise and a character who is fun to talk to. Wit, mishaps and running jokes, from the first message on.',
-    'Very funny: outright comedy. An absurd premise, a character who is a walking disaster or a deadpan menace, and a joke in every reply; nothing is taken seriously.',
+    'Funny: a comic premise and a character who is fun to talk to. Wit, mishaps and running jokes from the first message on, drawn from who the character is: a shy one is funny through awkwardness, a serious one by taking everything too seriously.',
+    'Very funny: outright comedy. An absurd premise, a joke in every reply, and nothing is taken seriously. The character is the comedy in their own way: a walking disaster, a deadpan menace, or a shy one whose every attempt goes wrong.',
   ],
   dark: [
     'A darker edge: some shadow, a past that weighs, a threat kept in the background.',
-    'Dark: a heavy atmosphere, real stakes and no easy comfort. The character carries something, and their world is not kind.',
-    'Very dark: grim and oppressive. Danger is real, people are hurt or lost, hope is scarce and every choice has a cost.',
+    'Dark: a heavy atmosphere, real stakes and no easy comfort. The character carries something, and their world is not kind; they bear it in their own way, a cheerful one behind a smile that cracks.',
+    'Very dark: grim and oppressive. Danger is real, people are hurt or lost, hope is scarce and every choice has a cost. The character stays who they are, and the darkness shows in what it costs them.',
   ],
   mysterious: [
     'A little mystery: one secret, or one open question, behind the character.',
-    'Mysterious: secrets and things left unsaid. The character knows more than they tell, and the card leaves questions open for the chat to answer.',
-    'Very mysterious: a riddle from end to end. Nothing is quite what it seems, the character speaks in half-truths, and the card hints at something large without ever naming it.',
+    'Mysterious: secrets and things left unsaid. The character knows more than they tell and hides it in their own way: a talkative one behind chatter, a quiet one behind silence. The card leaves questions open for the chat to answer.',
+    'Very mysterious: a riddle from end to end. Nothing is quite what it seems, and the card hints at something large without ever naming it. The character stays who they are; the mystery is in what they hide and the half-truths they tell, in their own voice.',
   ],
   sassy: [
     'A little sass: a playful character who teases now and then.',
-    'Sassy: a character with attitude, who teases, answers back and lets {{user}} get away with nothing, without ever being cruel.',
-    'Very sassy: sharp-tongued and impossible to impress. The character mocks, provokes and always wants the last word; warmth shows rarely, and only sideways. Never cruel or humiliating.',
+    'Sassy: a character with attitude, who teases, answers back and lets {{user}} get away with nothing, without ever being cruel. The attitude comes out in their own way: a shy one mutters the comeback, then looks away.',
+    'Very sassy: sharp-tongued and impossible to impress. The character mocks, provokes and always wants the last word; warmth shows rarely, and only sideways. Never cruel or humiliating. It stays their own way: a shy one fires off cutting remarks under their breath.',
   ],
   spicy: [
-    `A little spice: light flirting and a hint of attraction between the character and {{user}}, suggested and never shown. ${ADULT}`,
-    `Spicy: a flirtatious, sensual story, with attraction and tension between the character and {{user}}. ${ADULT}`,
-    `Very spicy: an openly erotic story for adults. Desire between the character and {{user}} is the heart of the card, and the opening messages are bold and forward about it. ${ADULT}`,
+    `A little spice: light flirting and a hint of attraction between the character and {{user}}, suggested and never shown, in the character's own way. ${ADULT}`,
+    `Spicy: a flirtatious, sensual story, with attraction and tension between the character and {{user}}. The character shows it in keeping with who they are: a shy one through glances, blushes and things half said, a confident one openly. ${ADULT}`,
+    `Very spicy: an openly erotic story for adults. Desire between the character and {{user}} is the heart of the card and the opening messages make it plain, but the character lives it their own way: a shy one blushes, hesitates and gives in slowly, a bold one makes the first move. ${ADULT}`,
   ],
 }
 
@@ -82,7 +88,8 @@ export function moodsSection(picks: readonly MoodPick[]): string {
   const asked = CARD_MOODS.flatMap((mood) => picks.filter((pick) => pick.mood === mood).slice(0, 1))
   if (asked.length === 0) return ''
   return [
-    'The mood asked for. It colors the whole card: the personality, the scenario, the example dialogue and above all the opening messages.',
+    'The mood asked for. It colors the whole card: the tone, the scenario, the example dialogue and above all the opening messages. ' +
+      'Who the character is still comes from the idea: a mood never overturns a trait the idea gives (a shy character stays shy, a cold one stays cold), it changes how that trait plays out.',
     ...asked.map((pick) => `- ${LINES[pick.mood][pick.level - 1]}`),
   ].join('\n')
 }

@@ -65,6 +65,17 @@ describe('the moods of a character', () => {
     }
   })
 
+  it('never overturn who the idea says the character is', () => {
+    const header = moodsSection([{ mood: 'spicy', level: 3 }]).split('\n')[0] ?? ''
+    expect(header).toContain('Who the character is still comes from the idea')
+    expect(header).not.toContain('the personality')
+    for (const level of LEVELS) expect(line({ mood: 'spicy', level }), `spicy ${level}`).toMatch(/own way|who they are/)
+    for (const mood of CARD_MOODS) {
+      for (const level of [2, 3] as const) expect(line({ mood, level }), `${mood} ${level}`).toMatch(/own (way|voice)|who (they are|the character is)/)
+    }
+    expect(line({ mood: 'spicy', level: 3 })).not.toMatch(/bold and forward/)
+  })
+
   it('are named with their strength in the log', () => {
     expect(describeMoods([{ mood: 'sassy', level: 1 }, { mood: 'spicy', level: 3 }])).toBe('sassy1+spicy3')
     expect(describeMoods([])).toBe('')
