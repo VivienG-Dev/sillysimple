@@ -644,7 +644,9 @@ describe.runIf(runnable)('when the user runs an Ollama of their own', () => {
 
     // The page never saw a download: no job, in any status it was sent.
     expect(seen.slice(told).every((status) => status.job === null)).toBe(true)
-    expect(await engine.has('embeddinggemma-2:270m-nvfp4-text')).toBe(true)
+    // Asked while one Ollama hands over to the other, the answer may lag a moment: the model is
+    // in the shared folder, and it is said so once the Ollama in use answers.
+    await until(() => engine.has('embeddinggemma-2:270m-nvfp4-text'))
     // Once it is over, theirs takes over.
     await until(() => !isRunning(own))
   })
