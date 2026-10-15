@@ -1,30 +1,45 @@
 <script setup lang="ts">
 import { ArrowRight } from '@lucide/vue'
 
-// "Is my computer enough?" The visitor says how much memory theirs has, and sees what the
-// app would offer them: the same three models, by the same rule, as the app itself
-// (src/core/engine/models.ts). When a model or its threshold changes there, change it here.
+// "Is my computer enough?" The visitor says what theirs is, and sees what the app would
+// offer them: the same three models, by the same rule, as the app itself (offersFor in
+// src/core/engine/models.ts). When a model or a threshold changes there, change it here.
 //
-// Memory decides which model fits, not how fast it writes: the page says what a model needs
-// to write at a pleasant speed, and promises nothing for a PC without a graphics card.
+// - What is offered: the models that fit. On a Mac, in its memory, shared with the chip that
+//   runs the model. On a PC, in its memory and its graphics card's together: the model is
+//   split between the two, most of it on the card.
+// - What is recommended: on a Mac, the largest offered. On a PC, the graphics card is what
+//   writes quickly: the largest offered that fits on the card itself (its VRAM), the
+//   smallest when none does. The others run partly on the processor, slower.
 
 const MODELS = [
-  { name: 'Gemma 4 · Small', variant: 'E2B', blurb: 'Light and quick. Fine for a chat, weaker on long stories.', download: '4.6 GB', needs: 8 },
-  { name: 'Gemma 4 · Medium', variant: '12B', blurb: 'A good balance: stays in character and writes with care.', download: '8 GB', needs: 16 },
-  { name: 'Gemma 4 · Large', variant: '26B A4B', blurb: 'The best writing of the three, and the heaviest.', download: '18 GB', needs: 32 },
+  { name: 'Gemma 4 · Small', variant: 'E2B', blurb: 'Light and quick. Fine for a chat, weaker on long stories.', download: '4.6 GB', needs: 8, card: 6 },
+  { name: 'Gemma 4 · Medium', variant: '12B', blurb: 'A good balance: stays in character and writes with care.', download: '8 GB', needs: 16, card: 8 },
+  { name: 'Gemma 4 · Large', variant: '26B A4B', blurb: 'The best writing of the three, and the heaviest.', download: '18 GB', needs: 32, card: 16 },
 ]
+const KINDS = [
+  { value: 'pc', label: 'Windows or Linux PC' },
+  { value: 'mac', label: 'Mac' },
+] as const
 const SIZES = [8, 16, 32]
+/** The memory of the graphics card, in GB; 0: none. */
+const CARDS = [0, 6, 8, 12, 16]
 
-/** The memory of the visitor's computer, in GB. It starts on the smallest: that is the point. */
-const memory = ref(8)
+/** It starts on the most common gaming PC: 16 GB, and a graphics card of 8 GB. */
+const kind = ref<'pc' | 'mac'>('pc')
+const memory = ref(16)
+const card = ref(8)
 
-/** Every model that fits is offered; the largest that fits is the one recommended. */
 const rows = computed(() => {
-  const fitting = MODELS.filter((model) => memory.value >= model.needs)
+  const total = memory.value + (kind.value === 'pc' ? card.value : 0)
+  const fitting = MODELS.filter((model) => total >= model.needs)
+  const onCard = (model: (typeof MODELS)[number]): boolean => kind.value === 'mac' || card.value >= model.card
+  const recommended = kind.value === 'mac' ? fitting.at(-1) : (fitting.filter(onCard).at(-1) ?? fitting[0])
   return MODELS.map((model) => ({
     ...model,
     fits: fitting.includes(model),
-    recommended: model === fitting.at(-1),
+    onCard: onCard(model),
+    recommended: model === recommended,
   }))
 })
 </script>
@@ -35,24 +50,46 @@ const rows = computed(() => {
       <div class="words">
         <h2 id="computer-title">A model that fits your computer.</h2>
         <p class="lead">
-          SillySimple looks at how much memory yours has, and only offers the models that fit. With 8 GB, that is the
-          small one.
+          <template v-if="kind === 'mac'">
+            On a Mac, the chip that writes shares the computer's memory: SillySimple offers the models that fit in it,
+            and recommends the largest.
+          </template>
+          <template v-else>
+            On a PC, the graphics card is what writes quickly: SillySimple recommends the largest model that fits on
+            it. The computer's memory and the card's, together, decide which ones can run at all.
+          </template>
         </p>
         <fieldset class="sizes">
-          <legend>How much does your computer have?</legend>
+          <legend>What is your computer?</legend>
+          <label v-for="item in KINDS" :key="item.value" class="size" :class="{ picked: kind === item.value }">
+            <input v-model="kind" class="sr-only" type="radio" name="kind" :value="item.value" />
+            {{ item.label }}
+          </label>
+        </fieldset>
+        <fieldset class="sizes">
+          <legend>How much memory does it have?</legend>
           <label v-for="size in SIZES" :key="size" class="size" :class="{ picked: memory === size }">
             <input v-model="memory" class="sr-only" type="radio" name="memory" :value="size" />
             {{ size }} GB<template v-if="size === 32"> or more</template>
           </label>
         </fieldset>
-        <p class="speed">
-          To write at a pleasant speed, a model needs a Mac with an Apple chip, or a PC with a graphics card. On a PC
-          without one, nothing is promised: there, an online service can write the replies, with a key of your own.
+        <fieldset v-if="kind === 'pc'" class="sizes">
+          <legend>And its graphics card?</legend>
+          <label v-for="size in CARDS" :key="size" class="size" :class="{ picked: card === size }">
+            <input v-model="card" class="sr-only" type="radio" name="card" :value="size" />
+            <template v-if="size === 0">None</template>
+            <template v-else>{{ size }} GB<template v-if="size === 16"> or more</template></template>
+          </label>
+        </fieldset>
+        <p v-if="kind === 'pc' && card === 0" class="speed">
+          Without a graphics card, nothing is promised: the model runs on the processor alone, and replies can be very
+          slow. There, an online service can write the replies, with a key of your own.
         </p>
+        <p v-else-if="kind === 'mac'" class="speed">A Mac with an Apple chip: on an older Mac with an Intel processor, nothing is promised.</p>
         <NuxtLink class="more" to="/help/#graphics-card">Do I need a graphics card?<ArrowRight :size="18" :stroke-width="2.4" aria-hidden="true" /></NuxtLink>
       </div>
 
-      <!-- Said out loud when another size is picked. -->
+      <!-- Said out loud when another answer is picked. -->
       <ul class="models" aria-live="polite" aria-label="What the app offers this computer">
         <li v-for="model in rows" :key="model.name" class="model" :class="{ fits: model.fits, recommended: model.recommended }">
           <div class="about">
@@ -62,9 +99,13 @@ const rows = computed(() => {
           </div>
           <p class="state">
             <span v-if="model.recommended" class="tag">Recommended</span>
-            <template v-else-if="model.fits">Offered too</template>
+            <template v-else-if="model.fits && model.onCard">Offered too</template>
+            <template v-else-if="model.fits">Offered, slower</template>
+            <template v-else-if="kind === 'pc'">Needs {{ model.needs }} GB in all</template>
             <template v-else>Needs {{ model.needs }} GB</template>
-            <span class="weight">{{ model.download }} to download</span>
+            <span class="weight">
+              <template v-if="model.fits && !model.onCard">Needs a {{ model.card }} GB card to be quick · </template>{{ model.download }} to download
+            </span>
           </p>
         </li>
       </ul>

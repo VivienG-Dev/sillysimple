@@ -87,7 +87,12 @@ describe('the models offered for a computer', () => {
 
     expect(pick(pc(32, card(16)))).toBe('large')
     expect(pick(pc(32, card(24)))).toBe('large')
-    expect(pick(pc(16, card(24)))).toBe('medium') // The computer's memory still says what is offered.
+    // What is offered: the computer's memory and the card's together, the model being split between them.
+    expect(pick(pc(16, card(16)))).toBe('large')
+    expect(pick(pc(16, card(24)))).toBe('large')
+    expect(pc(16, card(8)).offers.map((offer) => offer.tier)).toEqual(['small', 'medium']) // The large one would spill 10 GB.
+    expect(pick(pc(8, card(8)))).toBe('medium')
+    expect(pc(8, null).offers.map((offer) => offer.tier)).toEqual(['small'])
     expect(pick(pc(32, card(6)))).toBe('small')
     expect(pick(pc(32, card(4)))).toBe('small') // Nothing fits on it: the smallest, the least slow.
     expect(pick(pc(32, null))).toBe('small') // No card: the processor alone.

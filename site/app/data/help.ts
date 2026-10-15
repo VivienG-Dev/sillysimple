@@ -50,7 +50,7 @@ export const HELP: HelpGroup[] = [
         id: 'what-do-i-need',
         question: 'What do I need?',
         answer: [
-          'To run a model on your own computer: a Mac with an Apple chip, or a Windows or Linux PC with a graphics card. Then 8 GB of memory, and room on the disk for a model: about 5 GB for the smallest one on a Mac, and a few more on Windows and Linux, where the engine that runs models is larger.',
+          'To run a model on your own computer: a Mac with an Apple chip, or a Windows or Linux PC with a graphics card of 6 GB or more. Then 8 GB of memory, and room on the disk for a model: about 5 GB for the smallest one on a Mac, and a few more on Windows and Linux, where the engine that runs models is larger.',
           'On another computer, an online service can write the replies, with a key of your own. Nothing is downloaded then, and the computer hardly matters.',
           'No terminal, and nothing to install besides the app.',
         ],
@@ -60,6 +60,7 @@ export const HELP: HelpGroup[] = [
         question: 'Do I need a graphics card?',
         answer: [
           'On a Mac with an Apple chip, no: the chip does that work. On a PC, yes, if the model is to run on your computer: a graphics card is what makes replies come in a few seconds.',
+          'On a PC, what counts is the memory of the graphics card itself (its VRAM), not the computer’s: SillySimple recommends the largest model that fits on the card. About 6 GB for the small one, 8 GB for the medium one, 16 GB for the large one. Which models can run at all depends on the computer’s memory and the card’s together, as a model is split between the two: 16 GB of memory and a 16 GB card run the large one. One too large for the card still runs, partly on the processor, and slower.',
           'On a PC without one, nothing is promised. The model may still run on the processor alone, but replies can be very slow, and this has not been tried. There, let an online service write the replies, with a key of your own: see “Can replies come from Claude, OpenAI, Mistral or OpenRouter?” below.',
           'So far, SillySimple has run a model on one kind of computer only: a Mac with an Apple chip.',
         ],

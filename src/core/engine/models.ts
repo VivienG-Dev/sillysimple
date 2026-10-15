@@ -19,7 +19,11 @@ export interface BuiltinModel {
   blurb: string
   /** What is downloaded, and kept on disk. */
   bytes: number
-  /** Offered on computers with at least this much memory, in GiB. */
+  /**
+   * Offered on computers with at least this much memory, in GiB. On a Mac, its memory
+   * (shared with the chip that runs the model). On a PC, its memory and its graphics
+   * card's together: the model is split between the two, most of it on the card.
+   */
   needsMemory: number
   /**
    * On a PC: the memory of the graphics card it runs well with, in GiB. A little short of
@@ -134,6 +138,10 @@ export interface Offers {
  * The app's models for a computer with this much memory: every one that fits, smallest
  * first, so that someone with room has the choice. `installed`: the models Ollama already holds.
  *
+ * What fits: on a Mac, in its memory. On a PC, in its memory and its graphics card's
+ * together, as Ollama puts on the card what it can and the rest in memory: 16 GB of
+ * memory and a 16 GB card run the large model (Vivien, 15 October).
+ *
  * Which one is recommended:
  * - on a Mac (`graphics` undefined): the largest that fits, its memory being shared;
  * - on a PC: the largest that fits on its graphics card, and the smallest when it has none
@@ -141,7 +149,7 @@ export interface Offers {
  *   and each says whether it fits on the card.
  */
 export function offersFor(memoryBytes: number, installed: readonly Pick<ModelInfo, 'id'>[] = [], graphics?: GraphicsCard | null): Offers {
-  const memory = memoryBytes / GIB
+  const memory = (memoryBytes + (graphics?.memoryBytes ?? 0)) / GIB
   const fitting = BUILTIN_MODELS.filter((model) => memory >= model.needsMemory)
   const onCard = (model: BuiltinModel): boolean => !!graphics && graphics.memoryBytes / GIB >= model.needsGraphics
   const recommended = graphics === undefined ? fitting.at(-1) : (fitting.filter(onCard).at(-1) ?? fitting[0])
