@@ -30,6 +30,7 @@ export const IPC = {
   charactersVoice: 'characters:voice',
   windowColor: 'window:color',
   charactersDelete: 'characters:delete',
+  charactersExport: 'characters:export',
   scenariosList: 'scenarios:list',
   scenariosPlay: 'scenarios:play',
   authorsList: 'authors:list',

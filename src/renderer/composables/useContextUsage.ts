@@ -48,7 +48,8 @@ export function useContextUsage() {
 
     return {
       /** Tokens taken once the reply is written: what is sent, the room kept for the reply, and the safety margin. */
-      occupiedTokens: fit.usedTokens + reserved + margin,
+      // Messages left out: the context is full, whatever room the last one would leave.
+      occupiedTokens: fit.droppedCount > 0 ? contextSize : fit.usedTokens + reserved + margin,
       contextSize,
       /** Oldest messages the model no longer sees. */
       droppedCount: fit.droppedCount,

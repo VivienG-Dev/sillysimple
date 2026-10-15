@@ -67,6 +67,7 @@ const api: SillyApi = {
     // Stays in the preload: only Electron knows where a dropped File lives on disk.
     pathForFile: (file) => webUtils.getPathForFile(file),
     delete: (id) => ipcRenderer.invoke(IPC.charactersDelete, id),
+    export: (id) => ipcRenderer.invoke(IPC.charactersExport, id),
   },
 
   scenarios: {

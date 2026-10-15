@@ -29,7 +29,7 @@ const { sleep, portIsFree, requireBuiltApp, placeStandIn, openApp, firstLaunch, 
 const NAME = process.env.NAME_TYPED || 'Robin'
 const MODEL = 'Gemma 4 · Small'
 /** The story both apps start with. */
-const FIRST = 'Mordax'
+const FIRST = 'Suzu Amano'
 /** The character whose card is imported: not one of the stories that come with the app. */
 const CARD = {
   name: 'Juniper Vale',

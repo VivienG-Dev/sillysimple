@@ -1,6 +1,6 @@
-import { rename, rm, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { copyFile, rename, rm, writeFile } from 'node:fs/promises'
+import { extname, join } from 'node:path'
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { improveRequest, IMPROVE_REPLY_TOKENS, IMPROVE_TEMPERATURE, isTipId } from '@core/cards/reviewCard'
 import { CARD_REPLY_TOKENS, CARD_TEMPERATURE, cardRequest } from '@core/cards/writeCard'
 import { cleanMoods, describeMoods } from '@core/cards/moods'
@@ -477,6 +477,26 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
   })
 
   ipcMain.handle(IPC.charactersFavorite, (_event, id: string, favorite: boolean) => setFavorite(id, favorite === true))
+
+  // A copy of the card, where the user chooses: the very file the app keeps, so that it
+  // works in SillyTavern, on chub.ai… as it works here. Named after the character.
+  ipcMain.handle(IPC.charactersExport, async (event, id: string): Promise<boolean> => {
+    const file = await cardFile(String(id))
+    const character = file ? await getCharacter(String(id)) : null
+    if (!file || !character) throw new Error('This character is not in the folder any more.')
+    const extension = extname(file).toLowerCase()
+    const name = character.name.replace(/[\\/:*?"<>|]+/g, '').trim() || 'Character'
+    const window = BrowserWindow.fromWebContents(event.sender)
+    const options = {
+      title: `Export ${character.name}`,
+      defaultPath: join(app.getPath('downloads'), `${name}${extension}`),
+      filters: [{ name: 'Character card', extensions: [extension.slice(1)] }],
+    }
+    const chosen = await (window ? dialog.showSaveDialog(window, options) : dialog.showSaveDialog(options))
+    if (chosen.canceled || !chosen.filePath) return false
+    await copyFile(file, chosen.filePath)
+    return true
+  })
 
   ipcMain.handle(IPC.charactersColor, async (_event, id: string) => {
     const file = await portraitFile(id)

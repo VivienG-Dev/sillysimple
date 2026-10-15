@@ -14,7 +14,7 @@ let chatLooked: string | null = null
 </script>
 
 <script setup lang="ts">
-import { ArrowLeftRight, Heart, Lightbulb, Pencil, Plus, Volume2 } from '@lucide/vue'
+import { ArrowLeftRight, Check, Download, Heart, Lightbulb, Pencil, Plus, Volume2 } from '@lucide/vue'
 import { reviewCard } from '@core/cards/reviewCard'
 import { detectMood, type Mood } from '@core/mood/detectMood'
 import { applyMacros } from '@core/prompt/macros'
@@ -168,6 +168,19 @@ const toImprove = computed(
 
 // --- Long memory: what the chat remembers of its oldest messages ---------------------
 
+/** The card was just exported: the button says so for a moment. */
+const exported = ref(false)
+let exportedTimer = 0
+
+/** Saves a copy of the card where the user chooses (the computer's own window asks where). */
+async function exportCard(): Promise<void> {
+  const done = await window.api.characters.export(props.character.id).catch(() => false)
+  if (!done) return
+  exported.value = true
+  clearTimeout(exportedTimer)
+  exportedTimer = window.setTimeout(() => (exported.value = false), 2500)
+}
+
 /** Saved when the field loses focus, like the persona. */
 function saveMemory(event: Event): void {
   void chatStore.saveMemory((event.target as HTMLTextAreaElement).value.trim())
@@ -279,6 +292,18 @@ const extras = computed(() => cardExtras(props.character))
         >
           <Heart :size="15" :stroke-width="2" :fill="character.favorite ? 'currentColor' : 'none'" />
         </button>
+        <!-- A copy of the card, to share it or to use it in another app (SillyTavern, chub.ai…). -->
+        <button
+          type="button"
+          class="like export"
+          :class="{ done: exported }"
+          :aria-label="exported ? 'Card exported' : `Export ${character.name}'s card`"
+          :title="exported ? 'Card exported' : 'Export the card: to share it, or to use it in another app'"
+          @click="exportCard"
+        >
+          <Check v-if="exported" :size="15" :stroke-width="2.4" />
+          <Download v-else :size="15" :stroke-width="2" />
+        </button>
         <button type="button" class="btn btn-small" @click="characterEditor.open(character)">
           <Pencil :size="13" :stroke-width="2" />Edit
         </button>
@@ -377,7 +402,7 @@ const extras = computed(() => cardExtras(props.character))
           read at once, its oldest messages are summed up here instead of being forgotten.
         </p>
         <p v-else class="memory-note">
-          Long memory is turned off in
+          “Remember long chats” is turned off in
           <RouterLink to="/settings/generation">Settings › Generation</RouterLink>: in a long chat, the oldest messages
           are simply left out.
         </p>
@@ -713,6 +738,13 @@ html[data-platform='win32'] .window-strip {
 }
 .like.on {
   color: var(--like);
+}
+.like.export:hover {
+  color: var(--text);
+  transform: none;
+}
+.like.export.done {
+  color: var(--success-text);
 }
 .like.on svg {
   animation: like 0.36s cubic-bezier(0.3, 1.7, 0.5, 1);

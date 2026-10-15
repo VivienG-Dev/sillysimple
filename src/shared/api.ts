@@ -168,6 +168,11 @@ export interface SillyApi {
     setVoice(id: string, service: VoiceService, voice: VoiceChoice | null): Promise<Character>
     /** The main colour of a character's picture. Null without a picture, or for a grey one. */
     color(id: string): Promise<PictureColor | null>
+    /**
+     * Saves a copy of the character's card where the user chooses, to share it or to use
+     * it in another app. The card as it is saved, picture included. False when cancelled.
+     */
+    export(id: string): Promise<boolean>
     /** Where a dropped or picked file lives on disk. */
     pathForFile(file: File): string
     /** Moves the card file to the system trash and deletes the character's chats. */

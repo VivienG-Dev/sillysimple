@@ -1,48 +1,48 @@
 {
   "first-launch": {
-    "length": 27.1,
+    "length": 27,
     "steps": [
       {
         "at": 0,
         "label": "Open it"
       },
       {
-        "at": 6.4,
+        "at": 6.2,
         "label": "Say your name"
       },
       {
-        "at": 9.9,
+        "at": 9.7,
         "label": "Get a model"
       },
       {
-        "at": 18.5,
+        "at": 19.1,
         "label": "Pick a story"
       },
       {
-        "at": 22.2,
+        "at": 22.5,
         "label": "Start talking"
       }
     ]
   },
   "chat": {
-    "length": 15.9,
+    "length": 24.4,
     "steps": [
       {
         "at": 0,
         "label": "Write a line"
       },
       {
-        "at": 5.9,
+        "at": 6,
         "label": "The character answers"
       },
       {
-        "at": 9.4,
+        "at": 15.1,
         "label": "Another version"
       }
     ]
   },
   "import": {
-    "length": 13.6,
+    "length": 13.9,
     "steps": [
       {
         "at": 0,
@@ -59,18 +59,18 @@
     ]
   },
   "scene": {
-    "length": 20,
+    "length": 27,
     "steps": [
       {
         "at": 0,
         "label": "Add a character"
       },
       {
-        "at": 2.9,
+        "at": 2.7,
         "label": "Write to both"
       },
       {
-        "at": 15.1,
+        "at": 18.6,
         "label": "Make someone speak"
       }
     ]
@@ -93,6 +93,174 @@
       {
         "at": 15.7,
         "label": "Read it, then create"
+      }
+    ]
+  },
+  "share": {
+    "length": 13.4,
+    "steps": [
+      {
+        "at": 0,
+        "label": "Sign it with your name"
+      },
+      {
+        "at": 8.7,
+        "label": "Export the card"
+      },
+      {
+        "at": 10.7,
+        "label": "Share it anywhere"
+      }
+    ]
+  },
+  "persona": {
+    "length": 26,
+    "steps": [
+      {
+        "at": 0,
+        "label": "Say who you are"
+      },
+      {
+        "at": 9.4,
+        "label": "Make another persona"
+      },
+      {
+        "at": 19,
+        "label": "Switch who you are"
+      }
+    ]
+  },
+  "backup": {
+    "length": 22.2,
+    "steps": [
+      {
+        "at": 0,
+        "label": "Open Data & Privacy"
+      },
+      {
+        "at": 5.8,
+        "label": "Save a backup"
+      },
+      {
+        "at": 8.1,
+        "label": "See what it holds"
+      },
+      {
+        "at": 15.6,
+        "label": "Restore it"
+      }
+    ]
+  },
+  "online": {
+    "length": 31.8,
+    "steps": [
+      {
+        "at": 0,
+        "label": "Open Settings"
+      },
+      {
+        "at": 3.3,
+        "label": "Choose Online service"
+      },
+      {
+        "at": 6,
+        "label": "Get a key"
+      },
+      {
+        "at": 7.3,
+        "label": "Paste it"
+      },
+      {
+        "at": 11.3,
+        "label": "Choose a model, then Save"
+      },
+      {
+        "at": 18.8,
+        "label": "Chat as before"
+      }
+    ]
+  },
+  "voice": {
+    "length": 28.8,
+    "steps": [
+      {
+        "at": 0,
+        "label": "Open Settings › Voice"
+      },
+      {
+        "at": 4.6,
+        "label": "Choose ElevenLabs"
+      },
+      {
+        "at": 13.2,
+        "label": "Pick the character's voice"
+      },
+      {
+        "at": 20.4,
+        "label": "Read aloud"
+      }
+    ]
+  },
+  "steer": {
+    "length": 32.4,
+    "steps": [
+      {
+        "at": 0,
+        "label": "Something happens"
+      },
+      {
+        "at": 7.3,
+        "label": "Another version"
+      },
+      {
+        "at": 14.5,
+        "label": "Change a reply"
+      },
+      {
+        "at": 22,
+        "label": "More…"
+      }
+    ]
+  },
+  "memory": {
+    "length": 21.7,
+    "steps": [
+      {
+        "at": 0,
+        "label": "Watch the gauge"
+      },
+      {
+        "at": 2.1,
+        "label": "Remembering earlier messages…"
+      },
+      {
+        "at": 11.5,
+        "label": "Read the memory"
+      },
+      {
+        "at": 15.2,
+        "label": "Correct it"
+      }
+    ]
+  },
+  "improve": {
+    "length": 36.9,
+    "steps": [
+      {
+        "at": 0,
+        "label": "Read the advice"
+      },
+      {
+        "at": 5.9,
+        "label": "Let the model fix it"
+      },
+      {
+        "at": 13.3,
+        "label": "One trait per line"
+      },
+      {
+        "at": 23.4,
+        "label": "Add notes to the lorebook"
       }
     ]
   }

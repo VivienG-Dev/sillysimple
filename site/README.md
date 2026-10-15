@@ -135,6 +135,14 @@ named like it, in `scripts/film/`:
 | `import` | a character card imported in the Library, and its first chat | none | guide "Bring your SillyTavern characters" |
 | `character` | a character written by the model from one sentence | a real one | guide "A character from one sentence" |
 | `scene` | a second character brought into a chat, both answering | a real one | guide "Several characters in one scene" |
+| `steer` | Something happens, another version, a reply edited, More… | a real one | guide "Take the story where you want" |
+| `memory` | the gauge full, "Remembering earlier messages…", the memory read and corrected | a real one (a small context, set by the script) | guide "Long stories" |
+| `improve` | the advice on a thin character, its fix written by the model, traits, a lorebook note | a real one | guide "Make a character better" |
+| `online` | OpenRouter chosen, a key pasted, a model picked, a reply | none: OpenRouter is faked in the app's main process | guide "Replies from an online service" |
+| `voice` | ElevenLabs chosen, a voice for a character, a message read aloud | none: ElevenLabs is faked, the sound is silence | guide "Give a character a voice" |
+| `share` | the Author field, the card exported | none | guide "Share your character" |
+| `persona` | About you, a second persona, switching | none | guide "Who you are in the story" |
+| `backup` | a backup saved, then restored in a fresh app | none (the stand-in writes the chat that is saved) | guide "Keep your stories safe" |
 
 To make one (again):
 
@@ -166,6 +174,14 @@ Things to know:
   if it is not on the computer yet. Look at a film before keeping it: what the model writes
   is not known in advance. In `chat` the reply is shown at the speed it was written; in
   `character` the writing of the card is sped up, and the page says so.
+- **Each new script has its own data folder** (`.film/<film>-data`), so two can run side by
+  side. `steer` and `memory` copy the engine from `.film/chat-data` when it is there;
+  `improve` downloads it once into its own folder, and keeps it.
+- **Windows of the computer** (save, open) are not in the pictures: `share` and `backup`
+  replace them in the main process with a fixed path under `.film/`. `online` and `voice`
+  answer for OpenRouter and ElevenLabs the same way, so nothing real (key, network) is needed.
+- **The stories the scripts pick** are those of `scenarios/` (Suzu Amano, Ayaka). A script
+  that names a story moved to `scenarios/drafts` stops at the first launch.
 - The scripts were written on Linux, where they run without a screen. `chat.cjs`,
   `notes.cjs`, `character.cjs` and `scene.cjs` have been run on a Mac (7 and 8 October
   2026); `first-launch.cjs` and `import.cjs` have not. On a Mac they open the

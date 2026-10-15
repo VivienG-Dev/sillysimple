@@ -118,14 +118,31 @@ const file = (ending) => path.join(target, `${name}${ending}`)
 
 ffmpeg(...source, '-vf', picture, '-c:v', 'libx264', '-preset', 'slow', '-crf', '23', '-movflags', '+faststart', '-an', file('.mp4'))
 ffmpeg(...source, '-vf', picture, '-c:v', 'libvpx-vp9', '-crf', '36', '-b:v', '0', '-row-mt', '1', '-an', file('.webm'))
-ffmpeg('-ss', film.poster(starts, at).toFixed(2), '-i', file('.mp4'), '-frames:v', '1', '-quality', '86', file('-poster.webp'))
-
 // A part that lasts no time is not one (a reply whose mood did not show, for instance).
 const parts = steps.filter((step, index) => index === steps.length - 1 || steps[index + 1].at - step.at >= 0.4)
 
+// Written before the poster: the film is on the site even if its poster cannot be made.
 const films = fs.existsSync(listing) ? JSON.parse(fs.readFileSync(listing, 'utf8')) : {}
 films[name] = { length: Number(at.toFixed(1)), steps: parts }
 fs.writeFileSync(listing, `${JSON.stringify(films, null, 2)}\n`)
+
+// The poster. Some ffmpeg builds (Homebrew's, lately) write no WebP: the picture is then
+// taken as a PNG and turned into WebP by cwebp ("brew install webp"), if it is there.
+const posterAt = film.poster(starts, at).toFixed(2)
+try {
+  ffmpeg('-ss', posterAt, '-i', file('.mp4'), '-frames:v', '1', '-quality', '86', file('-poster.webp'))
+} catch {
+  const png = path.join(work, 'poster.png')
+  try {
+    ffmpeg('-ss', posterAt, '-i', file('.mp4'), '-frames:v', '1', png)
+    execFileSync('cwebp', ['-quiet', '-q', '86', png, '-o', file('-poster.webp')], { stdio: 'inherit' })
+    console.log('(This ffmpeg writes no WebP: the poster was made with cwebp.)')
+  } catch {
+    // The film plays all the same: it only shows nothing before it does.
+    console.error(`The poster (${name}-poster.webp) could not be made: this ffmpeg writes no WebP, and cwebp is not there. Install it ("brew install webp") and run this again.`)
+    process.exitCode = 1
+  }
+}
 
 const size = (ending) => `${(fs.statSync(file(ending)).size / 1e6).toFixed(1)} MB`
 console.log(`"${name}" lasts ${at.toFixed(1)} s: ${name}.mp4 ${size('.mp4')}, ${name}.webm ${size('.webm')}`)

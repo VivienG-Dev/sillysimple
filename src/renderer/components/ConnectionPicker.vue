@@ -297,7 +297,7 @@ onBeforeUnmount(() => window.api.engine.rest())
       <p class="provider-note">
         {{ provider.description }}
         <a :href="provider.keyUrl" target="_blank" rel="noreferrer">
-          Get a {{ provider.name }} key<ExternalLink :size="12" :stroke-width="2" />
+          Get your key from {{ provider.name }}<ExternalLink :size="12" :stroke-width="2" />
         </a>
       </p>
 
