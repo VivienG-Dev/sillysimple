@@ -1,4 +1,4 @@
-import type { Character, ChatRole, Persona, SceneDirection } from '@shared/types'
+import type { Character, ChatRole, Persona, Rewrite, SceneDirection } from '@shared/types'
 import { activateLorebook } from './lorebook'
 import { directionCue, GO_ON_CUE, OPEN_CUE } from './direction'
 import { applyMacros } from './macros'
@@ -6,6 +6,7 @@ import { memorySection } from './memory'
 import { storySection, tastesSection, type Tastes } from './notice'
 import { steadyNote } from './place'
 import { recallNote, type Recalled } from './recall'
+import { rewriteCue } from './rewrite'
 import { CONTINUE_CUE, lengthInstruction } from './replyLength'
 import { sceneHistory, sceneInstructions, type SceneMember, type SceneMessage } from './scene'
 
@@ -38,6 +39,11 @@ export interface BuildMessagesInput {
   /** For "something happens": the kinds of thing it may be, drawn by the caller (see `pickEvents`). */
   events?: readonly number[]
   /**
+   * Write the reply again the way the user asks, from the version on screen (`shown`),
+   * which is no longer in `history`. See rewrite.ts.
+   */
+  rewrite?: Rewrite & { shown: string }
+  /**
    * What is remembered of the chat's oldest messages (see memory.ts). `history` then
    * holds only the messages that come after them.
    */
@@ -58,6 +64,9 @@ export interface BuildMessagesInput {
   /** Old messages of the chat no longer in `history`, brought back because the chat returns to them (see recall.ts). */
   recalled?: readonly Recalled[]
 }
+
+/** The reply length a rewrite measures against when none is given. */
+const DEFAULT_REPLY_TOKENS = 300
 
 /** A lorebook may take up to this share of the model's context. */
 const LORE_SHARE = 0.25
@@ -125,6 +134,13 @@ export function buildMessages(input: BuildMessagesInput): LlmMessage[] {
   } else {
     const cue = input.continuing ? CONTINUE_CUE : direction || (ending ? GO_ON_CUE : OPEN_CUE)
     conversation.push({ role: 'user', content: cue })
+  }
+
+  // A rewrite: the version on screen, and what to change in it. After the direction the
+  // reply was written under, which still holds.
+  if (input.rewrite && !input.continuing) {
+    const asked = conversation.at(-1)!
+    asked.content = `${asked.content}\n\n${rewriteCue(input.rewrite, input.rewrite.shown, input.replyLength ?? DEFAULT_REPLY_TOKENS)}`
   }
 
   // Old moments the chat comes back to, word for word: at the end, so that the start of

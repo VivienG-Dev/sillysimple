@@ -25,6 +25,7 @@ import {
   type TranscriptLine,
 } from '@core/prompt/memory'
 import { isDirection, pickEvents } from '@core/prompt/direction'
+import { countWords, isRewrite, rewriteMaxTokens } from '@core/prompt/rewrite'
 import {
   addTastes,
   dueForNotice,
@@ -898,6 +899,13 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
     const eventKinds = direction === 'event' ? pickEvents(lastEvents.get(chat.id)) : undefined
     if (eventKinds) lastEvents.set(chat.id, eventKinds)
 
+    // A rewrite of the version on screen (shorter, longer, more feeling…), rather than a
+    // version written from nothing. It may need more room than the setting gives.
+    const rewrite = swipedMessage && isRewrite(request.rewrite) ? { ...request.rewrite, shown: swipedMessage.content } : undefined
+    const replyLimit = rewrite
+      ? { ...generation, maxTokens: rewriteMaxTokens(rewrite.kind, countWords(rewrite.shown), generation.maxTokens) }
+      : generation
+
     const others: Character[] = []
     for (const member of chat.members) {
       const other = member.characterId === speakerId ? null : await getCharacter(member.characterId)
@@ -969,6 +977,7 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
           continuing: continuedMessage !== null,
           direction,
           events: eventKinds,
+          rewrite,
           memory: memory.summary,
           story: adapt.followStory ? chat.story : undefined,
           tastes: adapt.learnTastes ? adapt : undefined,
@@ -977,7 +986,7 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
           loreByMeaning: loreCalled,
           recalled,
         }),
-        { contextSize, replyTokens: replyTokens(generation) },
+        { contextSize, replyTokens: replyTokens(replyLimit) },
       )
 
     // A memory that covers more messages than there are is out of date (it cannot be, but a
@@ -1068,7 +1077,7 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
         model,
         messages: fit.messages,
         temperature: generation.temperature,
-        maxTokens: replyTokens(generation),
+        maxTokens: replyTokens(replyLimit),
         thinking: generation.thinking,
         stop: inScene ? sceneStops(others, persona.name) : undefined,
         signal: controller.signal,

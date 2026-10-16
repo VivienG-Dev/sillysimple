@@ -608,6 +608,15 @@ export interface EngineStatus {
  * Asks for a reply in a chat. The main process saves the messages; the ids are
  * chosen by the UI so it can show them right away and keep the same ones after saving.
  */
+/** The ready-made ways to rewrite a reply, and the user's own words ('own'). */
+export type RewriteKind = 'shorter' | 'longer' | 'feeling' | 'dialogue' | 'own'
+
+/** How the user wants a reply written again. `note`: their own words, for 'own'. */
+export interface Rewrite {
+  kind: RewriteKind
+  note?: string
+}
+
 export interface GenerateRequest {
   requestId: string
   chatId: string
@@ -621,6 +630,11 @@ export interface GenerateRequest {
   continueReply?: boolean
   /** A stage direction for the new reply. Not for another version of a reply: that one keeps its own. */
   direction?: SceneDirection
+  /**
+   * With `newSwipe`: the new version rewrites the one on screen as the user asks
+   * (shorter, longer, more feeling…) instead of starting over. See src/core/prompt/rewrite.ts.
+   */
+  rewrite?: Rewrite
   /**
    * Which character of the chat replies. Left out: the chat's own character
    * (or, for a new version, the character who wrote the reply).

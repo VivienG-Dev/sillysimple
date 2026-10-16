@@ -1,4 +1,4 @@
-import type { SceneDirection } from '@shared/types'
+import type { RewriteKind, SceneDirection } from '@shared/types'
 import type { Mood } from './detectMood'
 
 // What the waiting row says before a reply starts (Vivien, 15 October: "l'indicateur,
@@ -9,7 +9,8 @@ import type { Mood } from './detectMood'
 // How the character is: the mood read for their last reply (src/core/mood/detectMood.ts),
 // the only thing the app knows before the new reply exists. It is a guess, so it colours
 // the first line only; the lines after it, while the wait goes on, are plain ones.
-// A stage direction ("Something happens"…) speaks first: that is what the user asked for.
+// A stage direction ("Something happens"…) or a rewrite ("shorter"…) speaks first: that
+// is what the user asked for.
 //
 // The lines never use a pronoun (the app does not know the character's) and never say
 // what the user does. Sober on purpose: one gesture, no adverbs, no jokes.
@@ -49,6 +50,15 @@ export const DIRECTION_LINES: Record<SceneDirection, string> = {
   time: 'Time passes…',
 }
 
+/** The first line when the reply is written again the way the user asked (see src/core/prompt/rewrite.ts). */
+export const REWRITE_LINES: Record<RewriteKind, string> = {
+  shorter: '{{char}} keeps it short…',
+  longer: '{{char}} takes more time…',
+  feeling: '{{char}} lets it show…',
+  dialogue: '{{char}} finds more to say…',
+  own: '{{char}} tries again…',
+}
+
 export interface WaitingFor {
   /** The name of the character about to speak. */
   name: string
@@ -56,6 +66,8 @@ export interface WaitingFor {
   mood?: Mood | null
   /** The stage direction the reply is written under, if any. */
   direction?: SceneDirection
+  /** The reply is written again the way the user asked: that comes first. */
+  rewrite?: RewriteKind
   /** For the tests, and to draw the same lines again for the same reply. */
   random?: () => number
 }
@@ -65,12 +77,12 @@ export interface WaitingFor {
  * the others are plain ones in an order of their own. The row goes through them and
  * then keeps going through the plain ones (see `lineAt`).
  */
-export function waitingLines({ name, mood, direction, random = Math.random }: WaitingFor): string[] {
+export function waitingLines({ name, mood, direction, rewrite, random = Math.random }: WaitingFor): string[] {
   const who = name.trim()
   if (!who) return ['Writing…']
   const pick = <T>(list: readonly T[]): T => list[Math.floor(random() * list.length) % list.length]!
 
-  const first = direction ? DIRECTION_LINES[direction] : mood ? pick(MOOD_LINES[mood]) : pick(PLAIN_LINES)
+  const first = rewrite ? REWRITE_LINES[rewrite] : direction ? DIRECTION_LINES[direction] : mood ? pick(MOOD_LINES[mood]) : pick(PLAIN_LINES)
   const rest = shuffle(PLAIN_LINES.filter((line) => line !== first), random)
   return [first, ...rest].map((line) => line.replaceAll('{{char}}', who))
 }

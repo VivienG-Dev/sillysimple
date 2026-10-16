@@ -97,6 +97,7 @@ const waiting = computed<string[]>(() => {
     name: speaker?.name ?? character.value?.name ?? '',
     mood: moodBefore(reply.characterId, reply.id),
     direction: reply.direction,
+    rewrite: reply.rewrite,
     random: seededRandom(`${reply.id}:${versions}`),
   })
 })
@@ -298,6 +299,7 @@ useStickToBottom(scroller, () => [rows.value.length, chatStore.streamingReply?.t
             :voice-problem="voiceStore.problem?.key === voiceStore.messageKey(row.id) ? voiceStore.problem.message : undefined"
             @speak="voiceStore.toggleMessage(row.id, row.content, speakerOf(row) ?? character)"
             @regenerate="chatStore.regenerate()"
+            @rewrite="(how) => chatStore.rewrite(how)"
             @continue="chatStore.continueReply()"
             @swipe="(index) => chatStore.selectSwipe(row.id, index)"
             @edit="(content) => chatStore.editMessage(row.id, content)"

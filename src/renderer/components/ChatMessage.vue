@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Check, ChevronLeft, ChevronRight, Copy, CornerDownRight, LoaderCircle, Pencil, RefreshCw, Trash2, Volume2 } from '@lucide/vue'
+import { Check, ChevronLeft, ChevronRight, Copy, CornerDownRight, LoaderCircle, Pencil, RefreshCw, Trash2, Volume2, WandSparkles } from '@lucide/vue'
 import { motion } from 'motion-v'
-import type { ChatMessage, ChatRole, SceneDirection } from '@shared/types'
+import type { ChatMessage, ChatRole, Rewrite, RewriteKind, SceneDirection } from '@shared/types'
 import { lineAt, WAITING_STEP } from '@core/mood/waiting'
 
 // One message. Used both for saved messages and for the reply being written (`streaming`).
@@ -47,6 +47,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   /** Write another version of this reply. */
   regenerate: []
+  /** Write this reply again, changed the way the user asks. */
+  rewrite: [how: Rewrite]
   /** Write the rest of this reply, which was cut short. */
   continue: []
   /** Show the version at this index. */
@@ -142,6 +144,50 @@ function onEditorKeydown(event: KeyboardEvent): void {
 const swipeIndex = computed(() => props.swipes?.index ?? 0)
 const swipeCount = computed(() => props.swipes?.count ?? 1)
 const onLastSwipe = computed(() => swipeIndex.value === swipeCount.value - 1)
+
+// --- Rewrite: the same reply, changed one way ------------------------------------
+// "Write another version" starts over; this keeps what happens and changes how it is
+// told (see src/core/prompt/rewrite.ts). The result is a new version, so the one it came
+// from is still a click away.
+
+const REWRITE_CHOICES: readonly { kind: Exclude<RewriteKind, 'own'>; label: string; hint: string }[] = [
+  { kind: 'shorter', label: 'Shorter', hint: 'The same reply, about half as long' },
+  { kind: 'longer', label: 'Longer', hint: 'The same moment, told in more detail' },
+  { kind: 'feeling', label: 'More feeling', hint: 'Show more of what the character feels' },
+  { kind: 'dialogue', label: 'More dialogue', hint: 'More spoken words, less description' },
+]
+
+const rewriteOpen = ref(false)
+const rewriteNote = ref('')
+const rewriteInput = ref<HTMLInputElement | null>(null)
+
+async function toggleRewrite(): Promise<void> {
+  rewriteOpen.value = !rewriteOpen.value
+  if (rewriteOpen.value) {
+    await nextTick()
+    rewriteInput.value?.focus()
+  }
+}
+
+function askRewrite(how: Rewrite): void {
+  if (props.busy) return
+  rewriteOpen.value = false
+  rewriteNote.value = ''
+  emit('rewrite', how)
+}
+
+function submitOwnRewrite(): void {
+  const note = rewriteNote.value.trim()
+  if (note) askRewrite({ kind: 'own', note })
+}
+
+// The choices go away when this is no longer the reply that can be rewritten.
+watch(
+  () => props.canRegenerate && !props.streaming,
+  (can) => {
+    if (!can) rewriteOpen.value = false
+  },
+)
 
 /** Past the last version, the arrow writes a new one, as in SillyTavern. */
 function nextSwipe(): void {
@@ -256,6 +302,19 @@ function nextSwipe(): void {
               <ChevronRight :size="14" :stroke-width="2.2" />
             </button>
           </div>
+          <!-- The same reply, changed one way -->
+          <button
+            v-if="canRegenerate && !streaming"
+            type="button"
+            class="continue"
+            :class="{ open: rewriteOpen }"
+            title="Write this reply again: shorter, longer, with more feeling…"
+            :aria-expanded="rewriteOpen"
+            :disabled="busy"
+            @click="toggleRewrite"
+          >
+            <WandSparkles :size="13" :stroke-width="2.2" />Rewrite
+          </button>
           <!-- The reply ran into the length limit: it stops in the middle of something. -->
           <button
             v-if="canContinue && !streaming"
@@ -269,6 +328,32 @@ function nextSwipe(): void {
           </button>
           <span v-if="caption" class="caption">{{ caption }}</span>
         </div>
+        <Transition name="rewrite">
+          <div v-if="rewriteOpen && canRegenerate && !streaming" class="rewrite" @keydown.esc="rewriteOpen = false">
+            <button
+              v-for="choice in REWRITE_CHOICES"
+              :key="choice.kind"
+              type="button"
+              class="rewrite-choice"
+              :title="choice.hint"
+              :disabled="busy"
+              @click="askRewrite({ kind: choice.kind })"
+            >
+              {{ choice.label }}
+            </button>
+            <form class="rewrite-own" @submit.prevent="submitOwnRewrite">
+              <input
+                ref="rewriteInput"
+                v-model="rewriteNote"
+                type="text"
+                maxlength="300"
+                placeholder="Or say how… (e.g. angrier, in the rain)"
+                aria-label="How to rewrite this reply"
+              />
+              <button type="submit" class="rewrite-go" :disabled="busy || !rewriteNote.trim()">Go</button>
+            </form>
+          </div>
+        </Transition>
         <p v-if="voiceProblem" class="voice-problem" role="alert">{{ voiceProblem }}</p>
       </template>
     </div>
@@ -609,6 +694,85 @@ function nextSwipe(): void {
   color: var(--text-ghost);
 }
 
+.continue.open {
+  background: var(--bg-selected);
+  border-color: var(--accent-strong);
+}
+.rewrite {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.rewrite-choice {
+  height: 28px;
+  padding: 0 12px;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+.rewrite-choice:hover:not(:disabled) {
+  background: var(--bg-selected);
+  color: var(--accent-soft);
+  border-color: var(--accent-strong);
+}
+.rewrite-own {
+  flex: 1 1 220px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  height: 28px;
+  padding: 0 3px 0 12px;
+  background: var(--bg-button);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+}
+.rewrite-own:focus-within {
+  border-color: var(--accent-strong);
+}
+.rewrite-own input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+}
+.rewrite-own input::placeholder {
+  color: var(--text-ghost);
+}
+.rewrite-go {
+  height: 22px;
+  padding: 0 10px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+.rewrite-go:disabled {
+  opacity: 0.4;
+}
+.rewrite-enter-active,
+.rewrite-leave-active {
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+.rewrite-enter-from,
+.rewrite-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
 @keyframes blink {
   50% {
     opacity: 0;
@@ -629,7 +793,9 @@ function nextSwipe(): void {
     animation: none;
   }
   .line-enter-active,
-  .line-leave-active {
+  .line-leave-active,
+  .rewrite-enter-active,
+  .rewrite-leave-active {
     transition: none;
   }
 }

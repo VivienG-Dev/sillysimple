@@ -1,4 +1,4 @@
-import type { Character, ChatMember, ChatMessage, ChatOutcome, ChatSummary, GenerateRequest, SceneDirection, TurnMode } from '@shared/types'
+import type { Character, ChatMember, ChatMessage, ChatOutcome, ChatSummary, GenerateRequest, Rewrite, RewriteKind, SceneDirection, TurnMode } from '@shared/types'
 
 // The conversation on screen. The main process owns the saved copy (SQLite):
 // this store loads a chat from it, and mirrors what changes while the app is open.
@@ -20,6 +20,8 @@ interface Streaming {
   remembering: boolean
   /** The stage direction the reply is written under, if any. */
   direction?: SceneDirection
+  /** The reply is the one on screen written again, the way the user asked. */
+  rewrite?: RewriteKind
 }
 
 export const useChatStore = defineStore('chat', () => {
@@ -60,6 +62,7 @@ export const useChatStore = defineStore('chat', () => {
           thinking: streaming.value.thinking,
           remembering: streaming.value.remembering,
           direction: streaming.value.direction,
+          rewrite: streaming.value.rewrite,
         }
       : null,
   )
@@ -430,6 +433,16 @@ export const useChatStore = defineStore('chat', () => {
     if (canRegenerate.value && chatId) await generate(chatId, { newSwipe: true })
   }
 
+  /**
+   * Writes the last reply again the way the user asks (shorter, longer, more feeling…):
+   * the model starts from the version on screen. It becomes a new version (swipe), so the
+   * one it came from stays a click away.
+   */
+  async function rewrite(how: Rewrite): Promise<void> {
+    const chatId = activeChatId.value
+    if (canRegenerate.value && chatId) await generate(chatId, { newSwipe: true, rewrite: toPlain(how) })
+  }
+
   /** Has the model write the rest of the last reply, which was cut short, in the same message. */
   async function continueReply(): Promise<void> {
     const chatId = activeChatId.value
@@ -473,7 +486,7 @@ export const useChatStore = defineStore('chat', () => {
 
   async function generate(
     chatId: string,
-    options: Pick<GenerateRequest, 'userMessage' | 'newSwipe' | 'continueReply' | 'speakerId' | 'direction'>,
+    options: Pick<GenerateRequest, 'userMessage' | 'newSwipe' | 'continueReply' | 'speakerId' | 'direction' | 'rewrite'>,
   ): Promise<ChatOutcome['status']> {
     const characterId = charactersStore.activeId
     const requestId = crypto.randomUUID()
@@ -490,7 +503,7 @@ export const useChatStore = defineStore('chat', () => {
     lookingAt.value = null // The panel goes back to following whoever speaks.
     // Another version of a reply follows the direction the reply was written under.
     const direction = options.newSwipe ? redone?.direction : options.direction
-    streaming.value = { requestId, messageId, chatId, characterId: speakerId, text: written, thinking: false, remembering: false, direction }
+    streaming.value = { requestId, messageId, chatId, characterId: speakerId, text: written, thinking: false, remembering: false, direction, rewrite: options.rewrite?.kind }
 
     const outcome = await window.api.chat.start({ requestId, chatId, replyId, ...options })
     streaming.value = null
@@ -524,6 +537,7 @@ export const useChatStore = defineStore('chat', () => {
     streamingReply,
     activeError,
     canRegenerate,
+    rewrite,
     canContinue,
     canRetry,
     canStartNew,

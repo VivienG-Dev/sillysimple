@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { MOODS } from './detectMood'
-import { DIRECTION_LINES, lineAt, MOOD_LINES, PLAIN_LINES, seededRandom, waitingLines } from './waiting'
+import { DIRECTION_LINES, lineAt, REWRITE_LINES, MOOD_LINES, PLAIN_LINES, seededRandom, waitingLines } from './waiting'
 
 describe('the lines of the wait', () => {
   it('name the character, and never use a pronoun or speak for the user', () => {
@@ -25,6 +25,10 @@ describe('the lines of the wait', () => {
 
   it('start with the stage direction when there is one, whatever the mood', () => {
     expect(waitingLines({ name: 'Lyra', mood: 'anger', direction: 'time' })[0]).toBe(DIRECTION_LINES.time)
+  })
+
+  it('start with the rewrite asked for, before anything else', () => {
+    expect(waitingLines({ name: 'Lyra', mood: 'anger', direction: 'time', rewrite: 'shorter' })[0]).toBe(REWRITE_LINES.shorter.replace('{{char}}', 'Lyra'))
   })
 
   it('start with a plain line when no mood is known, and never say the same thing twice in a row', () => {
