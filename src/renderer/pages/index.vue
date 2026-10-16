@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Plus, Sparkles, Trash2, UserPlus, X } from '@lucide/vue'
 import { applyMacros } from '@core/prompt/macros'
+import { detectMood, type Mood } from '@core/mood/detectMood'
+import { seededRandom, waitingLines } from '@core/mood/waiting'
 import { MAX_CHAT_MEMBERS, type Character, type ChatMessage as Message, type ChatSummary } from '@shared/types'
 
 // The chat screen: character list, conversation, character details.
@@ -63,6 +65,40 @@ const rows = computed<Row[]>(() => {
     })
   }
   return list
+})
+
+// --- Before the reply starts ------------------------------------------------------
+// The row says who is about to speak and how they are ("Lyra hesitates…"), from the mood
+// of their last reply (src/core/mood/waiting.ts). Only while nothing is written yet.
+
+const moodsStore = useMoodsStore()
+
+/** The mood of the last reply this character wrote before the one being written, if any is known. */
+function moodBefore(characterId: string, replyId: string): Mood | null {
+  if (!settingsStore.appearance.moods) return null
+  const chatId = chatStore.activeChatId
+  const own = character.value?.id
+  const before = chatStore.messages
+    .filter((message) => message.id !== replyId && message.role === 'assistant' && (message.characterId ?? own) === characterId)
+    .at(-1)
+  if (!before || !chatId) return null
+  // The panel has usually read it already, with the embedding model too; the words do otherwise.
+  const read = moodsStore.of(chatId, characterId, before.id)
+  return read !== undefined ? read : detectMood(before.content, { userName: settingsStore.persona.name })
+}
+
+const waiting = computed<string[]>(() => {
+  const reply = chatStore.streamingReply
+  if (!reply || reply.text) return []
+  const speaker = charactersStore.characters.find((item) => item.id === reply.characterId)
+  // Another version of a reply gets other lines than the last one did.
+  const versions = chatStore.messages.find((message) => message.id === reply.id)?.swipes?.count ?? 0
+  return waitingLines({
+    name: speaker?.name ?? character.value?.name ?? '',
+    mood: moodBefore(reply.characterId, reply.id),
+    direction: reply.direction,
+    random: seededRandom(`${reply.id}:${versions}`),
+  })
 })
 
 // --- Several characters in one chat ----------------------------------------------
@@ -249,6 +285,7 @@ useStickToBottom(scroller, () => [rows.value.length, chatStore.streamingReply?.t
             :streaming="row.streaming"
             :thinking="row.thinking"
             :remembering="row.remembering"
+            :waiting="row.streaming ? waiting : undefined"
             :direction="row.direction"
             :caption="caption(row)"
             :swipes="row.swipes"

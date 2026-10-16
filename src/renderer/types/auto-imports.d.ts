@@ -107,6 +107,7 @@ declare global {
   const useEngineStore: typeof import('../stores/engine').useEngineStore
   const useId: typeof import('vue').useId
   const useModel: typeof import('vue').useModel
+  const useMoodsStore: typeof import('../stores/moods').useMoodsStore
   const useRoute: typeof import('vue-router').useRoute
   const useRouter: typeof import('vue-router').useRouter
   const useSettingsStore: typeof import('../stores/settings').useSettingsStore
@@ -244,6 +245,7 @@ declare module 'vue' {
     readonly useEngineStore: UnwrapRef<typeof import('../stores/engine')['useEngineStore']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
+    readonly useMoodsStore: UnwrapRef<typeof import('../stores/moods')['useMoodsStore']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
     readonly useSettingsStore: UnwrapRef<typeof import('../stores/settings')['useSettingsStore']>

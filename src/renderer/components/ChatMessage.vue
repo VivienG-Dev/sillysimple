@@ -2,6 +2,7 @@
 import { Check, ChevronLeft, ChevronRight, Copy, CornerDownRight, LoaderCircle, Pencil, RefreshCw, Trash2, Volume2 } from '@lucide/vue'
 import { motion } from 'motion-v'
 import type { ChatMessage, ChatRole, SceneDirection } from '@shared/types'
+import { lineAt, WAITING_STEP } from '@core/mood/waiting'
 
 // One message. Used both for saved messages and for the reply being written (`streaming`).
 // It only shows things and reports what the user asks for; the page decides what happens.
@@ -17,6 +18,8 @@ const props = defineProps<{
   thinking?: boolean
   /** Old messages are being summed up before the reply is written. */
   remembering?: boolean
+  /** What to say while the reply has not started: "Lyra hesitates…", then plainer lines. */
+  waiting?: readonly string[]
   /** The stage direction this reply was written under ("Something happens", …). */
   direction?: SceneDirection
   /** e.g. "llama3.1:8b · 3.1 s" */
@@ -72,6 +75,29 @@ function onMediaError(event: Event): void {
   element.replaceWith(note)
 }
 const directed = computed(() => directionChoice(props.direction))
+
+// --- Before the first word ---------------------------------------------------------
+// One line at a time, the next one every few seconds, for as long as the model is silent.
+
+const waitStep = ref(0)
+let waitTimer: ReturnType<typeof setInterval> | undefined
+const waitingNow = computed(() => !!props.streaming && !props.content && !props.thinking && !props.remembering)
+watch(
+  waitingNow,
+  (now) => {
+    clearInterval(waitTimer)
+    waitStep.value = 0
+    if (now) waitTimer = setInterval(() => waitStep.value++, WAITING_STEP)
+  },
+  { immediate: true },
+)
+onBeforeUnmount(() => clearInterval(waitTimer))
+
+const waitLabel = computed(() => {
+  if (props.remembering) return 'Remembering earlier messages…'
+  if (props.thinking) return `${props.author || 'The model'} is thinking…`
+  return lineAt(props.waiting ?? [], waitStep.value) || 'Writing…'
+})
 
 // --- Copy ----------------------------------------------------------------------
 
@@ -200,10 +226,11 @@ function nextSwipe(): void {
       <template v-else>
         <!-- formatMessage() escapes the text before adding its own tags -->
         <div v-if="content" class="prose" :class="{ streaming }" @error.capture="onMediaError" v-html="html" />
-        <div v-else class="typing" :aria-label="remembering ? 'Remembering' : thinking ? 'Thinking' : 'Writing'">
+        <div v-else class="typing" role="status" :aria-label="waitLabel">
           <span class="dot" /><span class="dot" /><span class="dot" />
-          <span v-if="remembering" class="typing-label">Remembering earlier messages…</span>
-          <span v-else-if="thinking" class="typing-label">Thinking…</span>
+          <Transition name="line" mode="out-in">
+            <span :key="waitLabel" class="typing-label">{{ waitLabel }}</span>
+          </Transition>
         </div>
 
         <div v-if="(canSwipe && !streaming) || (canContinue && !streaming) || caption" class="foot">
@@ -489,7 +516,23 @@ function nextSwipe(): void {
 .typing-label {
   margin-left: 6px;
   font-size: 12px;
+  font-style: italic;
   color: var(--text-faint);
+}
+/* The next line comes up softly where the last one was. */
+.line-enter-active,
+.line-leave-active {
+  transition:
+    opacity 0.28s ease,
+    transform 0.28s ease;
+}
+.line-enter-from {
+  opacity: 0;
+  transform: translateY(3px);
+}
+.line-leave-to {
+  opacity: 0;
+  transform: translateY(-3px);
 }
 .typing .dot {
   width: 6px;
@@ -584,6 +627,10 @@ function nextSwipe(): void {
   .typing .dot,
   .prose.streaming :deep(p:last-child)::after {
     animation: none;
+  }
+  .line-enter-active,
+  .line-leave-active {
+    transition: none;
   }
 }
 </style>

@@ -89,6 +89,7 @@ function savePersona(key: 'name' | 'description', event: Event): void {
 // the same again after a reply that showed nothing. Opening a chat always shows the mood
 // of its last reply: that is setting the scene, not repeating.
 
+const moodsStore = useMoodsStore()
 const emote = ref<{ mood: Mood; id: number } | null>(null)
 let emoteTimer: ReturnType<typeof setTimeout> | undefined
 /** Counts the looks: an answer that comes back after a newer look was started is dropped. */
@@ -140,6 +141,8 @@ watch(
       .catch(() => detectMood(words.text, { userName }))
     // Another reply came, or another chat was opened, while this one was being read.
     if (mine !== look) return
+    // Kept for the waiting row of the next reply ("Lyra hesitates…").
+    if (chatStore.activeChatId) moodsStore.note(chatStore.activeChatId, props.character.id, words.messageId, mood)
     if (!isNews(words.who, words.messageId, mood) || !mood) return
     // A beat after the reply ends (or the chat opens), so it does not collide with what moves then.
     emoteTimer = setTimeout(
