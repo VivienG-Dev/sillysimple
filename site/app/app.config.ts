@@ -20,5 +20,5 @@ export default defineAppConfig({
    * Until then the page says the app is free, and does not call it open source: nobody could
    * go and look. With it, the top of the page, the foot and Help link to the code.
    */
-  repo: '',
+  repo: 'https://github.com/VivienG-Dev/sillysimple',
 })
