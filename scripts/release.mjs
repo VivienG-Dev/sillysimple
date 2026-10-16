@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 // Puts the installers of dist/ online, and the site's download buttons on them.
 //
-//   pnpm release          every installer in dist/ (pnpm dist wipes dist/ first, so they
-//                         are all from the last build); it lists them and asks first
+//   pnpm release          the Mac and Windows installers in dist/ (pnpm dist wipes dist/
+//                         first, so they are all from the last build); it lists them and asks first
 //   pnpm release mac      only some systems: mac, windows, linux
+//   pnpm release linux    Linux only goes online when named: it is not tested yet, and
+//                         pnpm dist:all makes it anyway (16 October: it went online by mistake)
 //   pnpm release --yes    without the question
 //
 // What it does, on this Mac:
@@ -43,6 +45,8 @@ const INSTALLERS = [
   { system: 'linux', key: 'linux', file: `SillySimple-${version}-linux-x86_64.AppImage`, who: 'Linux' },
 ]
 const SYSTEMS = ['mac', 'windows', 'linux']
+/** What goes online when no system is named. Linux is added to it once it has been tried. */
+const BY_DEFAULT = ['mac', 'windows']
 /** The file that tells the installed apps of a system which version is the latest. */
 const LATEST = { mac: 'latest-mac.yml', windows: 'latest.yml', linux: 'latest-linux.yml' }
 
@@ -74,7 +78,9 @@ const size = (bytes) => `${Math.round(bytes / 1e6)} MB`
 // --- 1. What goes online ---------------------------------------------------------------
 
 const present = INSTALLERS.filter((one) => existsSync(join('dist', one.file)))
-const chosen = asked.length > 0 ? present.filter((one) => asked.includes(one.system)) : present
+const chosen = present.filter((one) => (asked.length > 0 ? asked : BY_DEFAULT).includes(one.system))
+const leftOut = asked.length > 0 ? [] : present.filter((one) => !BY_DEFAULT.includes(one.system))
+if (leftOut.length > 0) console.log(`Left out unless named: ${leftOut.map((one) => one.file).join(', ')} (pnpm release ${[...new Set(leftOut.map((one) => one.system))].join(' ')})`)
 for (const system of asked) {
   if (!present.some((one) => one.system === system)) stop(`No ${system} installer of version ${version} in dist/. Make it first: pnpm dist (or pnpm dist:all).`)
 }

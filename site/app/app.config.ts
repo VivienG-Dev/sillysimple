@@ -11,7 +11,7 @@ export default defineAppConfig({
     /** The Mac with an Intel chip: SillySimple-<version>-mac-x64.dmg. Shown as a smaller link under the Mac button. */
     macIntel: 'https://downloads.sillysimple.app/SillySimple-0.1.7-mac-x64.dmg',
     windows: 'https://downloads.sillysimple.app/SillySimple-0.1.7-win-x64.exe',
-    linux: 'https://downloads.sillysimple.app/SillySimple-0.1.7-linux-x86_64.AppImage',
+    linux: '',
   },
   /** The address of the site once it is online (https://…), for the picture shown when its link is shared. */
   url: 'https://sillysimple.app',

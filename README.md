@@ -58,7 +58,7 @@ pnpm scene:replay # the same report again from the answers kept by scene:lab, wi
 pnpm build       # production build into out/
 pnpm dist        # check, build and package the installer for this system into dist/
 pnpm dist:all    # the same for macOS, Windows and Linux at once, from a Mac
-pnpm release     # put the installers of dist/ online and point the site's buttons at them
+pnpm release     # put the Mac and Windows installers of dist/ online (Linux only when named: pnpm release linux)
 ```
 
 **A new version, from start to finish** (on the Mac):
