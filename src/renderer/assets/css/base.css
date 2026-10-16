@@ -77,13 +77,16 @@ button:disabled {
 
 /* --- Window chrome ------------------------------------------------------- */
 
+/* The title bar (AppTitleBar) holds the window buttons. Its height must match main
+   (WINDOW_BAR_HEIGHT and trafficLightPosition in src/main/index.ts). */
 html[data-platform='darwin'] {
-  --window-controls-left: 76px;
+  --window-bar-height: 36px;
+  --window-controls-left: 78px;
 }
 html[data-platform='win32'] {
-  --window-controls-right: 140px;
-  /* The height Windows draws its three buttons at (WINDOWS_CONTROLS_HEIGHT in src/main/index.ts). */
-  --window-controls-height: 32px;
+  --window-bar-height: 32px;
+  /* Windows' three buttons, 46 px each */
+  --window-controls-right: 138px;
 }
 
 /* An area the window can be dragged by. Controls inside it stay clickable. */

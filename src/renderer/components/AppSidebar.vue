@@ -17,9 +17,6 @@ const visibleCharacters = computed(() => {
 
 <template>
   <aside class="sidebar">
-    <!-- Empty band: room for the macOS traffic lights, and a handle to drag the window -->
-    <div class="titlebar drag" />
-
     <label class="search">
       <Search :size="14" :stroke-width="2" />
       <input v-model="search" type="text" placeholder="Search characters" aria-label="Search characters" />
@@ -95,17 +92,12 @@ const visibleCharacters = computed(() => {
   border-right: 1px solid var(--border);
 }
 
-.titlebar {
-  height: var(--titlebar-height);
-  flex-shrink: 0;
-}
-
 .search {
   display: flex;
   align-items: center;
   gap: 8px;
   height: 32px;
-  margin: 0 12px 12px;
+  margin: 12px 12px;
   padding: 0 10px;
   background: var(--bg-field);
   border: 1px solid var(--border-field);

@@ -73,7 +73,8 @@ export function useCharacterColors(): void {
       if (colors) root.style.setProperty(name, colors[name]!)
       else root.style.removeProperty(name)
     }
-    window.api.setWindowColor(colors?.['--bg-app'] ?? design['--bg-app']!)
+    const color = (name: string): string => colors?.[name] ?? design[name]!
+    window.api.setWindowColor({ background: color('--bg-app'), bar: color('--bg-sidebar'), symbols: color('--text-dim') })
   }
 
   /** Colours already worked out, by picture (its address changes when the picture does) or by name. */

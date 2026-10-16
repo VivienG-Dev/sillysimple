@@ -246,10 +246,6 @@ const extras = computed(() => cardExtras(props.character))
 
 <template>
   <aside class="panel">
-    <!-- Windows draws its three buttons over the top right of the window: a strip of the
-         window's colour holds them, so they never sit on the picture. It stays put while the
-         panel scrolls under it. Not on a Mac, whose buttons are on the left. -->
-    <div class="window-strip drag" aria-hidden="true" />
     <div class="stage" :class="emote && `feels-${emote.mood}`">
       <!-- The picture is shown whole, at its own proportions: card art is usually a tall portrait. -->
       <div
@@ -258,8 +254,6 @@ const extras = computed(() => cardExtras(props.character))
         :class="{ 'has-picture': character.portraitUrl, arriving }"
         :style="{ background: colors.portraitBg, color: colors.portraitFg }"
       >
-        <!-- Only the top strip drags the window, so the rest of the picture scrolls normally -->
-        <div class="window-handle drag" />
         <img v-if="character.portraitUrl" :src="character.portraitUrl" alt="" draggable="false" />
         <span v-else class="portrait-initials">{{ initials(character.name) }}</span>
       </div>
@@ -681,25 +675,6 @@ const extras = computed(() => cardExtras(props.character))
   }
 }
 
-.window-strip {
-  display: none;
-}
-html[data-platform='win32'] .window-strip {
-  display: block;
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  flex-shrink: 0;
-  height: var(--window-controls-height);
-  /* The colour Windows paints behind its buttons (setTitleBarOverlay, from --bg-app). */
-  background: var(--bg-app);
-}
-
-.window-handle {
-  position: absolute;
-  inset: 0 0 auto;
-  height: var(--titlebar-height);
-}
 .portrait-initials {
   font-family: var(--font-prose);
   font-size: 64px;

@@ -133,8 +133,7 @@ function back(): void {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  /* On macOS the three window buttons sit at the left of this bar: Back leaves them some room. */
-  padding: 0 16px 0 calc(var(--window-controls-left) + 16px);
+  padding: 0 16px;
   border-bottom: 1px solid var(--border);
 }
 .content {

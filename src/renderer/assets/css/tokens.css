@@ -71,7 +71,9 @@
   --titlebar-height: 52px;
   --sidebar-width: 264px;
   --panel-width: 300px;
-  /* Room kept free for the window buttons; set per platform in base.css */
+  /* The window's title bar (AppTitleBar), above every screen; set per platform in base.css */
+  --window-bar-height: 32px;
+  /* Room kept free in it for the window buttons; set per platform in base.css */
   --window-controls-left: 0px;
   --window-controls-right: 0px;
 }

@@ -27,10 +27,12 @@ const isWindows = process.platform === 'win32'
 
 // Must match --bg-app in the renderer, so the window never flashes white.
 const BACKGROUND = '#221915'
-// Windows draws its three buttons this tall: its usual title bar, as Discord's or VS Code's.
-// They scale with the height they are given, and at the app's 52 px they looked oversized.
-// Must match --window-controls-height in the renderer (base.css).
-const WINDOWS_CONTROLS_HEIGHT = 32
+// The title bar's colours (--bg-sidebar, --text-dim), until the renderer sends its own.
+const BAR = '#1b1410'
+const BAR_SYMBOLS = '#a99489'
+// The app draws one thin title bar above every screen (AppTitleBar), as Discord or VS Code.
+// Must match --window-bar-height in the renderer (base.css): 32 px on Windows, 36 on macOS.
+const WINDOWS_BAR_HEIGHT = 32
 
 app.setName('SillySimple')
 
@@ -63,15 +65,15 @@ function createWindow(): void {
     show: false,
     backgroundColor: BACKGROUND,
     ...(!isMac && { icon: windowIcon }),
-    // The app draws its own top bar. macOS keeps the traffic lights on the left,
-    // Windows keeps its three buttons on the right.
+    // The app draws its own title bar. macOS keeps the traffic lights on its left,
+    // centred in its 36 px; Windows draws its three buttons on its right.
     ...(isMac && {
-      titleBarStyle: 'hiddenInset' as const,
-      trafficLightPosition: { x: 18, y: 18 },
+      titleBarStyle: 'hidden' as const,
+      trafficLightPosition: { x: 14, y: 12 },
     }),
     ...(isWindows && {
       titleBarStyle: 'hidden' as const,
-      titleBarOverlay: { color: BACKGROUND, symbolColor: '#a3a1b3', height: WINDOWS_CONTROLS_HEIGHT },
+      titleBarOverlay: { color: BAR, symbolColor: BAR_SYMBOLS, height: WINDOWS_BAR_HEIGHT },
     }),
     webPreferences: {
       preload: join(import.meta.dirname, '../preload/index.cjs'),

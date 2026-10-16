@@ -19,7 +19,7 @@ const sections = [
 <template>
   <div class="screen">
     <aside class="menu">
-      <div class="titlebar drag" />
+      <div class="titlebar" />
       <RouterLink to="/" class="back"><ChevronLeft :size="14" :stroke-width="2.2" />Back to chat</RouterLink>
 
       <nav aria-label="Settings sections">
@@ -33,7 +33,7 @@ const sections = [
     </aside>
 
     <main class="content">
-      <div class="titlebar drag" />
+      <div class="titlebar" />
       <div class="section">
         <RouterView />
       </div>
@@ -57,8 +57,9 @@ const sections = [
   border-right: 1px solid var(--border);
 }
 
+/* Breathing room under the window's title bar */
 .titlebar {
-  height: var(--titlebar-height);
+  height: 20px;
   flex-shrink: 0;
 }
 

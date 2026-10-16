@@ -240,7 +240,7 @@ async function finish(): Promise<void> {
 
 <template>
   <div class="screen">
-    <div class="titlebar drag" />
+    <div class="titlebar" />
 
     <ol class="steps" aria-label="Setup steps">
       <li v-for="(label, index) in steps" :key="label" :class="{ done: index < step, current: index === step }">
@@ -351,7 +351,7 @@ async function finish(): Promise<void> {
 
 .titlebar {
   align-self: stretch;
-  height: var(--titlebar-height);
+  height: 24px;
   flex-shrink: 0;
   margin: 0 -32px;
 }

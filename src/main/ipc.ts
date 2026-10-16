@@ -504,13 +504,14 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
     return file ? colorOfPicture(file) : null
   })
 
-  // The app's background follows the character on screen: the window's own background
-  // (seen while it is resized) and, on Windows, the strip behind its three buttons follow too.
-  ipcMain.on(IPC.windowColor, (event, color: string) => {
+  // The app's colours follow the character on screen: the window's own background (seen
+  // while it is resized) and, on Windows, the three buttons on the title bar (AppTitleBar).
+  ipcMain.on(IPC.windowColor, (event, colors: { background: string; bar: string; symbols: string }) => {
     const window = BrowserWindow.fromWebContents(event.sender)
-    if (!window || !/^#[0-9a-f]{6}$/i.test(color)) return
-    window.setBackgroundColor(color)
-    if (process.platform === 'win32') window.setTitleBarOverlay({ color })
+    const isColor = (value: unknown): value is string => typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)
+    if (!window || !isColor(colors?.background) || !isColor(colors.bar) || !isColor(colors.symbols)) return
+    window.setBackgroundColor(colors.background)
+    if (process.platform === 'win32') window.setTitleBarOverlay({ color: colors.bar, symbolColor: colors.symbols })
   })
 
   ipcMain.handle(IPC.charactersDelete, async (_event, id: string): Promise<void> => {

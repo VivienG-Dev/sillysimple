@@ -45,8 +45,11 @@ import type {
  */
 export interface SillyApi {
   platform: string
-  /** Tells the window the colour of the app's background, for its frame and its buttons (Windows). */
-  setWindowColor(color: string): void
+  /**
+   * Tells the window the app's colours: its background (seen while it is resized) and, on
+   * Windows, the title bar's colour and the colour of the three buttons drawn on it.
+   */
+  setWindowColor(colors: { background: string; bar: string; symbols: string }): void
 
   settings: {
     get(): Promise<Settings>

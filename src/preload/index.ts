@@ -9,7 +9,7 @@ import type { ChatEvent, EngineStatus, NoticeEvent, PlaceEvent, UpdateStatus } f
 
 const api: SillyApi = {
   platform: process.platform,
-  setWindowColor: (color) => ipcRenderer.send(IPC.windowColor, color),
+  setWindowColor: (colors) => ipcRenderer.send(IPC.windowColor, colors),
 
   settings: {
     get: () => ipcRenderer.invoke(IPC.settingsGet),

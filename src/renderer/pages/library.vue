@@ -410,8 +410,7 @@ function onDrop(event: DragEvent): void {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Equal padding on both sides keeps the tabs centered next to the window buttons */
-  padding: 0 max(var(--window-controls-left), var(--window-controls-right), 16px);
+  padding: 0 16px;
   border-bottom: 1px solid var(--border);
 }
 
