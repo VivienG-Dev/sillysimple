@@ -1,10 +1,48 @@
-# SillySimple
+<p align="center">
+  <img src="docs/assets/icon.png" alt="" width="112" height="112" />
+</p>
 
-A simple desktop app for AI roleplay chat, with local models or an online service. A friendlier
-alternative to SillyTavern: no terminal, a clean interface, and compatibility with its character cards.
+<h1 align="center">SillySimple</h1>
 
-Built with Electron, Vue 3 and Vite. Free software, under the GNU General Public License: see
-[Licence](#licence) at the end.
+<p align="center">
+  <b>SillyTavern, but simple.</b><br />
+  Chat with AI characters on your own computer. No account, no terminal, nothing to set up.
+</p>
+
+<p align="center">
+  <a href="https://sillysimple.app"><b>Download for macOS and Windows</b></a>
+  &nbsp;·&nbsp;
+  <a href="CHANGELOG.md">What's new</a>
+  &nbsp;·&nbsp;
+  <a href="#licence">GPL-3.0</a>
+</p>
+
+<p align="center">
+  <img src="docs/assets/screenshot.jpg" alt="SillySimple: a chat with a character, the list of characters on the left and the character's card on the right" width="900" />
+</p>
+
+## What it is
+
+A desktop app for AI roleplay chat, made for people who never opened a terminal. It keeps what
+makes SillyTavern great, character cards, lorebooks, personas, and leaves out the setup.
+
+- **Runs on your computer.** On first launch it picks a model that fits your graphics card,
+  downloads it and runs it. Your chats never leave your computer.
+- **Or your own setup.** Ollama, LM Studio, KoboldCpp, llama.cpp or any OpenAI-compatible
+  server, or an API key for Claude, OpenAI, Mistral or OpenRouter.
+- **Your SillyTavern cards work.** Drop PNG or JSON cards (V2 and V3, from SillyTavern, TavernAI
+  or chub.ai) and they are in your library, with their greetings and lorebooks.
+- **Ready-to-play stories.** A few scenarios come with the app: pick one and start talking.
+- **Made for the story.** Several characters in one chat, replies you can rewrite (shorter,
+  longer, more feeling), a backdrop that follows the mood, replies read aloud.
+
+Free and open source, under the GNU General Public License v3.
+
+---
+
+# For developers
+
+Built with Electron, Vue 3 and Vite. Everything below is about working on the app itself.
 
 ## Commands
 
