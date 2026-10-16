@@ -549,6 +549,10 @@ onBeforeUnmount(() => window.api.engine.rest())
 }
 
 .models {
+  /* Each model's radio is hidden (.sr-only, absolute): placed against this box, it scrolls
+     with the list. Without it, the radio of a model far down a long list (OpenRouter has
+     hundreds) sat far below the window, and choosing it scrolled the whole app out of sight. */
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 4px;

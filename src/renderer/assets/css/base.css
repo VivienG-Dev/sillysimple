@@ -10,11 +10,18 @@ html,
 body,
 #app {
   height: 100%;
+  /* The window never scrolls as a whole, not even when the browser would bring a focused
+     element into view (overflow: hidden still lets it): only the panes inside it scroll. */
+  overflow: clip;
+}
+/* What is positioned without a positioned parent is placed against the app, so it is clipped
+   with it, instead of against the page, which it could make scroll. */
+#app {
+  position: relative;
 }
 
 body {
   margin: 0;
-  overflow: hidden;
   background: var(--bg-app);
   color: var(--text);
   font-family: var(--font-ui);

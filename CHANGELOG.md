@@ -4,7 +4,7 @@ What changes from one version of SillySimple to the next. The installers are on
 [sillysimple.app](https://sillysimple.app); an installed app finds new versions by itself
 (Settings › Data & Privacy › Check for new versions).
 
-## 0.1.7 (not released yet)
+## 0.1.7
 
 ### New
 
@@ -13,6 +13,12 @@ What changes from one version of SillySimple to the next. The installers are on
   moments of long chats) used to stay off. Settings › Connection can now run it on your
   computer anyway. Off by default, since it takes a download (the size is shown first);
   nothing more leaves your computer for it.
+
+### Fixed
+
+- **Choosing a model from a long list no longer blanks the window.** With OpenRouter,
+  picking a model far down its list made the whole app slide out of the window, leaving
+  an empty screen.
 
 ## 0.1.6
 
