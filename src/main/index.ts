@@ -184,7 +184,13 @@ void app.whenReady().then(async () => {
     supported: senseSupported(process.platform, process.arch) || process.env['SILLYSIMPLE_SENSE'] === '1',
     wanted: async () => {
       const { appearance, connection, generation } = await getSettings()
-      return { on: appearance.moods && appearance.moodsByMeaning, local: connection.kind === 'ollama', lore: generation.loreByMeaning, recall: generation.recallByMeaning }
+      return {
+        on: appearance.moods && appearance.moodsByMeaning,
+        local: connection.kind === 'ollama',
+        anywhere: generation.meaningAnywhere,
+        lore: generation.loreByMeaning,
+        recall: generation.recallByMeaning,
+      }
     },
     log: (line) => console.log(line),
   })

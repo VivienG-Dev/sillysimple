@@ -281,6 +281,13 @@ export interface GenerationSettings {
    * that model runs, with replies from this computer.
    */
   recallByMeaning: boolean
+  /**
+   * Run the app's small model on this computer even when replies come from elsewhere
+   * (another server, an online service), for the three above. It takes the app's own
+   * Ollama, downloaded once, unless the user runs one (see src/main/sense.ts). Off by
+   * default: someone who chose an online service did not ask for a download.
+   */
+  meaningAnywhere: boolean
 }
 
 export interface AppearanceSettings {
@@ -539,6 +546,15 @@ export interface SenseStatus {
   /** The model's name and size, to say what is downloaded. */
   model: string
   bytes: number
+  /** The model's name in Ollama ("embeddinggemma-2:…"), as `ollama list` shows it. */
+  id: string
+  /** While downloading: the engine that runs it, or the model itself. */
+  step: 'engine' | 'model' | null
+  /**
+   * With replies from elsewhere: about how much it would download to run here (the app's
+   * own Ollama when none is there, and the model), in bytes. Null otherwise.
+   */
+  toFetch: number | null
 }
 
 /** The three sizes of chat model the app offers to download. */

@@ -140,7 +140,8 @@ function resetSystemPrompt(): void {
           <span class="toggle-hint">
             A summary keeps the story, not every detail. When the chat comes back to something said long ago (a
             promise, a gift, a name), the app finds those old messages and gives them to the model again, as they were
-            written. It uses the small model that reads moods, when replies come from this computer.
+            written. It uses the small model that reads moods, when it runs on this computer (with replies from
+            elsewhere, see Settings › Connection).
           </span>
         </span>
       </label>
@@ -172,7 +173,8 @@ function resetSystemPrompt(): void {
           <span class="toggle-hint">
             A lorebook note is given to the model when one of its keywords comes up in the chat. With this, it is given
             too when the chat talks about it in other words: "your granny" for a note about the grandmother. It uses the
-            small model that reads moods, when replies come from this computer; elsewhere the keywords work alone.
+            small model that reads moods, when it runs on this computer (with replies from elsewhere, see Settings ›
+            Connection); otherwise the keywords work alone.
           </span>
         </span>
       </label>

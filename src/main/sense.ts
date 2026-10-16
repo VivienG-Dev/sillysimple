@@ -15,8 +15,11 @@ import type { Engine } from './engine'
 // Ollama too old), the mood is read from the words alone, as before. Nothing here can
 // stop a reply or show an error to the user: a reading that fails is a reading by words.
 //
-// Nothing is started for it: it only works with an Ollama that runs anyway, because a
-// reply was just written by it.
+// With replies from this computer, nothing is started for it: it only works with an Ollama
+// that runs anyway, because a reply was just written by it. With replies from elsewhere,
+// it only works when the user asked for it (Settings › Connection, generation.meaningAnywhere):
+// then the app starts an Ollama for it, its own (downloaded once, quietly) unless the user
+// runs one, and keeps it running while the app is open.
 
 /**
  * How long a reply waits for its mood to be read by meaning. Past it, what the words say
@@ -42,7 +45,7 @@ const MAX_FAILURES = 3
 const REMEMBERED = 200
 
 export interface SenseOptions {
-  engine: Pick<Engine, 'current' | 'has' | 'fetchQuietly' | 'hold' | 'rest'>
+  engine: Pick<Engine, 'current' | 'has' | 'fetchQuietly' | 'hold' | 'rest' | 'wake' | 'installQuietly' | 'missingBytes'>
   /** False on computers whose Ollama cannot run the model (see `senseSupported`). */
   supported: boolean
   /** Which file of the model (see `senseModel`). The compressed one, for a Mac with an Apple chip, when left out. */
@@ -50,9 +53,10 @@ export interface SenseOptions {
   /**
    * What the settings say now: whether moods are read by meaning (`on`), whether lorebook
    * notes are called by meaning (`lore`), whether old moments of a chat are brought back
-   * (`recall`), and whether replies come from this computer.
+   * (`recall`), whether replies come from this computer, and whether the model is to run
+   * here all the same when they do not (`anywhere`).
    */
-  wanted: () => Promise<{ on: boolean; local: boolean; lore?: boolean; recall?: boolean }>
+  wanted: () => Promise<{ on: boolean; local: boolean; anywhere?: boolean; lore?: boolean; recall?: boolean }>
   log?: (line: string) => void
   patienceMs?: number
   timeoutMs?: number
@@ -88,8 +92,9 @@ export function createSense(options: SenseOptions): SenseService {
   /** The moods as the model sees them. Null until it was asked, and again when the model is gone. */
   let sense: Sense | null = null
   let preparing: Promise<void> | null = null
-  /** From 0 to 1 while the model downloads. */
+  /** From 0 to 1 while the model downloads, or the engine that runs it. */
   let progress: number | null = null
+  let step: 'engine' | 'model' | null = null
   /** Readings waiting to know whether the model has to be downloaded first: they do not wait for a download. */
   const waiting = new Set<() => void>()
   /** Why it cannot work with the Ollama that runs now. Looked at again each time. */
@@ -124,12 +129,51 @@ export function createSense(options: SenseOptions): SenseService {
     retryAt = 0
   }
 
+  /** True when the model is to run here: replies from this computer, or asked for anyway. */
+  const here = (asked: { local: boolean; anywhere?: boolean }): boolean => asked.local || asked.anywhere === true
+
+  /**
+   * The Ollama to ask. With replies from this computer, the one that runs, if any. With
+   * replies from elsewhere, one is started for the model, within `waitMs`: a reply does not
+   * wait long for an Ollama to start, it is read by words meanwhile.
+   */
+  async function serverNow(waitMs: number): Promise<{ url: string; version: string } | null> {
+    const running = await options.engine.current()
+    if (running) return running
+    const asked = await options.wanted()
+    if (asked.local || !asked.anywhere) return null
+    return Promise.race([options.engine.wake(), wait(waitMs).then(() => null)])
+  }
+
   /** Has the model downloaded if need be, then asks it where each mood is. */
   function prepare(): Promise<void> {
     preparing ??= (async () => {
       if (gaveUp || Date.now() < retryAt) return
       let server = await options.engine.current()
-      if (!server) return
+      if (!server) {
+        // Replies from elsewhere, and the model asked for all the same: an Ollama is started
+        // for it, the app's own downloaded first when there is none.
+        const asked = await options.wanted()
+        if (asked.local || !asked.anywhere) return
+        if ((await options.engine.missingBytes()) > 0) {
+          progress = 0
+          step = 'engine'
+          for (const told of waiting) told()
+          try {
+            await options.engine.installQuietly((fraction) => (progress = fraction))
+          } catch (error) {
+            failed(error, 'the download of the engine', false)
+            return
+          } finally {
+            progress = null
+            step = null
+          }
+          const again = await options.wanted()
+          if (again.local || !again.anywhere) return
+        }
+        server = await options.engine.wake()
+        if (!server) return
+      }
       // A build made by hand says 0.0.0: whoever runs one knows what is in it.
       outdated =
         server.version !== '0.0.0' && compareVersions(server.version, about.needsOllama) < 0
@@ -142,6 +186,7 @@ export function createSense(options: SenseOptions): SenseService {
       try {
         if (!(await options.engine.has(model))) {
           progress = 0
+          step = 'model'
           for (const told of waiting) told()
           log(`mood: downloading ${model} (${Math.round(about.bytes / 1e6)} MB), to read moods by meaning`)
           try {
@@ -153,11 +198,12 @@ export function createSense(options: SenseOptions): SenseService {
             return
           } finally {
             progress = null
+            step = null
           }
 
           // A download takes a while: the settings may have changed, and the Ollama in use too.
-          const { on, local, lore, recall } = await options.wanted()
-          if (!(on || lore || recall) || !local) return
+          const asked = await options.wanted()
+          if (!(asked.on || asked.lore || asked.recall) || !here(asked)) return
           server = await options.engine.current()
           if (!server) return
         }
@@ -174,9 +220,10 @@ export function createSense(options: SenseOptions): SenseService {
         }
       } finally {
         release()
-        // Replies come from elsewhere now: the app's own Ollama, kept for the download, has nothing left to do.
-        const { local } = await options.wanted().catch(() => ({ local: true }))
-        if (!local) await options.engine.rest().catch(() => {})
+        // Replies come from elsewhere now: the app's own Ollama, kept for the download, has
+        // nothing left to do. Unless the model is to run here all the same.
+        const asked = await options.wanted().catch(() => ({ local: true }))
+        if (!here(asked)) await options.engine.rest().catch(() => {})
       }
     })()
       .catch((error: unknown) => failed(error, 'getting ready', false))
@@ -201,7 +248,7 @@ export function createSense(options: SenseOptions): SenseService {
 
     const pieces = cutReply(text, userName)
     if (pieces.length === 0) return senseMood(known, [])
-    const server = await options.engine.current()
+    const server = await serverNow(timeoutMs)
     if (!server) return null
     const release = options.engine.hold()
     try {
@@ -222,15 +269,15 @@ export function createSense(options: SenseOptions): SenseService {
   /** True when the settings ask for moods read by meaning, here and now. */
   async function wanted(): Promise<boolean> {
     if (!options.supported || gaveUp) return false
-    const { on, local } = await options.wanted()
-    return on && local
+    const asked = await options.wanted()
+    return asked.on && here(asked)
   }
 
   /** True when the settings ask for the model for anything, here and now. */
   async function wantedAtAll(): Promise<boolean> {
     if (!options.supported || gaveUp) return false
-    const { on, local, lore, recall } = await options.wanted()
-    return (on || lore === true || recall === true) && local
+    const asked = await options.wanted()
+    return (asked.on || asked.lore === true || asked.recall === true) && here(asked)
   }
 
   function warm(): void {
@@ -244,7 +291,7 @@ export function createSense(options: SenseOptions): SenseService {
     try {
       if (texts.length === 0 || !options.supported || gaveUp) return null
       const asked = await options.wanted()
-      if (!asked[use] || !asked.local) return null
+      if (!asked[use] || !here(asked)) return null
       if (!sense) {
         // The first question loads the model: it is waited for, within `waitMs`. A download
         // is not: the keywords answer alone meanwhile.
@@ -255,7 +302,7 @@ export function createSense(options: SenseOptions): SenseService {
         waiting.delete(told)
       }
       if (!sense || Date.now() < retryAt) return null
-      const server = await options.engine.current()
+      const server = await serverNow(waitMs)
       if (!server) return null
       const release = options.engine.hold()
       try {
@@ -321,16 +368,31 @@ export function createSense(options: SenseOptions): SenseService {
   }
 
   async function status(): Promise<SenseStatus> {
-    const info = { model: about.name, bytes: about.bytes }
-    const stands = (state: SenseStatus['state'], extra: Partial<SenseStatus> = {}): SenseStatus => ({ state, progress: null, problem: null, ...info, ...extra })
+    const info = { model: about.name, bytes: about.bytes, id: model }
+    const stands = (state: SenseStatus['state'], extra: Partial<SenseStatus> = {}): SenseStatus => ({
+      state,
+      progress: null,
+      problem: null,
+      step: null,
+      toFetch: null,
+      ...info,
+      ...extra,
+    })
 
     if (!options.supported) return stands('unsupported')
-    const { on, local } = await options.wanted()
-    if (!on) return stands('off')
-    if (!local) return stands('elsewhere')
+    const asked = await options.wanted()
+    // First, whatever the moods say: the settings of the connection show it, to tell how much it would download.
+    if (!here(asked)) return stands('elsewhere', { toFetch: await toFetch() })
+    if (!asked.on) return stands('off')
     if (gaveUp) return stands('failed', { problem })
-    if (progress !== null) return stands('downloading', { progress })
-    if (!(await options.engine.current())) return stands('asleep')
+    if (progress !== null) return stands('downloading', { progress, step })
+    if (!(await options.engine.current())) {
+      if (asked.local) return stands('asleep')
+      // Run here for replies from elsewhere: it is started now, as it would be for the next reply.
+      if (!sense && !preparing) void prepare()
+      if (problem && Date.now() < retryAt) return stands('failed', { problem })
+      return stands('preparing')
+    }
     if (sense && !problem) return stands('ready')
     // Between two tries: what went wrong is said, and it is tried again by itself.
     if (problem && Date.now() < retryAt) return stands('failed', { problem })
@@ -338,6 +400,13 @@ export function createSense(options: SenseOptions): SenseService {
     if (!sense && !preparing) void prepare()
     if (outdated) return stands('failed', { problem: outdated })
     return stands(sense ? 'ready' : 'preparing')
+  }
+
+  /** About how much running the model here would download: the engine when none is there, and the model. */
+  async function toFetch(): Promise<number> {
+    const engine = await options.engine.missingBytes().catch(() => 0)
+    const held = engine === 0 && (await options.engine.has(model).catch(() => false))
+    return engine + (held ? 0 : about.bytes)
   }
 
   return { mood, status, warm, embed }

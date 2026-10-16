@@ -481,6 +481,36 @@ describe.runIf(runnable)("the app's own Ollama", () => {
   })
 })
 
+describe.runIf(runnable)("the app's own Ollama, for the small model only", () => {
+  it('is downloaded without a word to the page, then started by wake', async () => {
+    const { engine, folder, seen } = await setup()
+    expect(await engine.missingBytes()).toBeGreaterThan(0)
+    // Nothing to start yet, and wake never downloads.
+    expect(await engine.wake()).toBeNull()
+
+    const fractions: number[] = []
+    await engine.installQuietly((fraction) => fractions.push(fraction))
+    expect(fractions.at(-1)).toBe(1)
+    expect(existsSync(join(folder, '9.9.9', '.complete'))).toBe(true)
+    expect(await engine.missingBytes()).toBe(0)
+    // The page saw no download of its own.
+    expect(seen.some((status) => status.job !== null)).toBe(false)
+
+    const server = await engine.wake()
+    expect(server?.version).toBe('9.9.9-fake')
+    expect((await engine.status()).state).toBe('running')
+  })
+
+  it("downloads nothing when the user's Ollama answers", async () => {
+    const { engine, folder, models, yoursPort } = await setup()
+    await yourOllama(models, yoursPort)
+    expect(await engine.missingBytes()).toBe(0)
+    await engine.installQuietly()
+    expect(existsSync(join(folder, '9.9.9'))).toBe(false)
+    expect((await engine.wake())?.url).toBe(`http://127.0.0.1:${yoursPort}`)
+  })
+})
+
 describe.runIf(runnable)('downloading a model', () => {
   it('can be stopped, and leaves nothing half done', async () => {
     const { engine, seen } = await setup({ pullMs: 60 })

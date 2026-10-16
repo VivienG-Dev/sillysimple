@@ -112,7 +112,7 @@ const senseLine = computed<{ text: string; ok?: boolean } | null>(() => {
     case 'asleep':
       return { text: 'Starts with the next reply' }
     case 'elsewhere':
-      return { text: `Only when replies come from this ${deviceName()}` }
+      return { text: 'Off with replies from elsewhere' }
     default:
       return null
   }
@@ -220,7 +220,13 @@ function setCharacterColors(event: Event): void {
           <span class="toggle-hint">
             A small model of the app's own ({{ sense.model }}, {{ formatBytes(sense.bytes) }}) reads what a reply feels like
             when no telling word is in it, in any language. It runs on this {{ deviceName() }} next to the chat model,
-            and the app downloads it once, by itself.
+            and the app downloads it once, by itself. If you run Ollama yourself, it is kept in yours and shows in
+            <code>ollama list</code> as {{ sense.id }}.
+          </span>
+          <span v-if="sense.state === 'elsewhere' && settingsStore.appearance.moods" class="toggle-hint">
+            Replies come from elsewhere, so it does not run.
+            <RouterLink to="/settings/connection">Settings › Connection</RouterLink> can run it on this
+            {{ deviceName() }} anyway.
           </span>
           <span v-if="sense.state === 'failed'" class="toggle-hint problem">
             It does not work right now, so the mood is read from the words alone. {{ sense.problem }}
@@ -327,6 +333,11 @@ header p {
 }
 .toggle-hint.problem {
   color: var(--warning-text);
+}
+.toggle-hint code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
 }
 .toggle.dimmed {
   opacity: 0.55;

@@ -310,8 +310,10 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
 
   ipcMain.handle(IPC.settingsUpdate, async (_event, patch: SettingsPatch) => {
     const settings = await updateSettings(patch)
-    // Replies now come from elsewhere: the app's own Ollama has nothing left to do.
-    if (patch.connection && settings.connection.kind !== 'ollama') void engine.rest().catch(() => {})
+    // Replies now come from elsewhere: the app's own Ollama has nothing left to do, unless
+    // it runs the app's small model (generation.meaningAnywhere). Turning that off ends it too.
+    const resting = settings.connection.kind !== 'ollama' && !settings.generation.meaningAnywhere
+    if ((patch.connection || patch.generation?.meaningAnywhere === false) && resting) void engine.rest().catch(() => {})
     // A context size set by hand is also what the app's own Ollama loads models with.
     if (patch.generation && ('autoContext' in patch.generation || 'contextSize' in patch.generation)) {
       void engine.contextChanged().catch(() => {})
@@ -396,7 +398,7 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
   ipcMain.on(IPC.engineRest, () => {
     // Only when replies really come from elsewhere: that is read here, not taken from the page.
     void getSettings()
-      .then(({ connection }) => (connection.kind === 'ollama' ? undefined : engine.rest()))
+      .then(({ connection, generation }) => (connection.kind === 'ollama' || generation.meaningAnywhere ? undefined : engine.rest()))
       .catch(() => {})
   })
 

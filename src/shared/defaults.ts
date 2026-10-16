@@ -34,6 +34,7 @@ export const DEFAULT_SETTINGS: Settings = {
     keepPlace: true,
     loreByMeaning: true,
     recallByMeaning: true,
+    meaningAnywhere: false,
   },
   appearance: {
     characterColors: true,

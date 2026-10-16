@@ -52,7 +52,7 @@ interface Setup {
   engine: Engine
   lines: string[]
   /** What the settings say; a test changes it as a user would. */
-  wanted: { on: boolean; local: boolean; lore: boolean; recall: boolean }
+  wanted: { on: boolean; local: boolean; anywhere: boolean; lore: boolean; recall: boolean }
   /** How many times the engine was told replies come from elsewhere. */
   rests: { count: number }
 }
@@ -85,7 +85,7 @@ async function setup(
   cleanups.push(() => engine.stop())
 
   const lines: string[] = []
-  const wanted = { on: true, local: true, lore: false, recall: false }
+  const wanted = { on: true, local: true, anywhere: false, lore: false, recall: false }
   const rests = { count: 0 }
   const sense = createSense({
     engine: {
@@ -230,6 +230,33 @@ describe('where the model cannot be of use', () => {
     expect(status.problem).toContain('0.40.0')
     expect(status.problem).toContain('0.39.2')
     expect(await engine.has(MODEL)).toBe(false)
+  })
+})
+
+describe('with replies from elsewhere, when asked to run here all the same', () => {
+  it('says how much it would download, then runs and keeps the engine awake', async () => {
+    const { sense, wanted, rests } = await setup()
+    wanted.local = false
+    const before = await sense.status()
+    expect(before.state).toBe('elsewhere')
+    // An Ollama answers already: only the model is missing.
+    expect(before.toFetch).toBe(SENSE_MODEL.bytes)
+
+    wanted.anywhere = true
+    await ready(sense)
+    expect(await sense.mood(FOND)).toEqual({ mood: 'love', by: 'meaning' })
+    expect((await sense.status()).toFetch).toBeNull()
+    expect(rests.count).toBe(0)
+  })
+
+  it('lets the engine rest again once it is turned off', async () => {
+    const { sense, wanted, rests } = await setup({ ollama: { FAKE_PULL_MS: '60' } })
+    wanted.local = false
+    wanted.anywhere = true
+    await until(async () => (await sense.status()).state === 'downloading')
+    wanted.anywhere = false
+    await until(() => rests.count > 0)
+    expect((await sense.status()).state).toBe('elsewhere')
   })
 })
 

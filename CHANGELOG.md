@@ -4,6 +4,16 @@ What changes from one version of SillySimple to the next. The installers are on
 [sillysimple.app](https://sillysimple.app); an installed app finds new versions by itself
 (Settings › Data & Privacy › Check for new versions).
 
+## 0.1.7 (not released yet)
+
+### New
+
+- **The small model with online replies too.** With replies from another server or an
+  online service, the app's small model (moods by meaning, lorebook notes by meaning, old
+  moments of long chats) used to stay off. Settings › Connection can now run it on your
+  computer anyway. Off by default, since it takes a download (the size is shown first);
+  nothing more leaves your computer for it.
+
 ## 0.1.6
 
 ### New

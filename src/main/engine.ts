@@ -108,6 +108,19 @@ export interface Engine {
   /** True when the Ollama in use holds this model. False when none runs. */
   has(model: string): Promise<boolean>
   /**
+   * The Ollama to use, started if need be: the user's when it answers, the app's own
+   * otherwise. Null when there is neither and the app's own is not downloaded: this never
+   * downloads. For the app's small model when replies come from elsewhere (see sense.ts).
+   */
+  wake(): Promise<{ url: string; version: string } | null>
+  /**
+   * Downloads the app's own Ollama without a word to the page, when none is there to use:
+   * for the app's small model, not for chatting. Throws a sentence to log when it cannot.
+   */
+  installQuietly(onProgress?: (fraction: number) => void): Promise<void>
+  /** What `installQuietly` would download, in bytes: 0 when an Ollama is there already. */
+  missingBytes(): Promise<number>
+  /**
    * The context the app's own Ollama loads every model with. Ollama only tells it once a
    * model is in memory; the app knows it before, since it sets it. Null when replies come
    * from the user's Ollama, whose setting is theirs and cannot be read.
@@ -479,9 +492,14 @@ export function createEngine(options: EngineOptions): Engine {
 
     try {
       let base: string
+      // The small model may be getting the engine already (installQuietly): one download of it is enough.
+      await installingQuietly?.catch(() => {})
       if (!(await yours(0)) && !(await installed())) {
         if (!pkg) throw new Error('There is no Ollama for this kind of computer. Use another server or an online service.')
-        await install(pkg, model, signal)
+        const engine = pkg
+        await install(engine, signal, (step, doneBytes) =>
+          setJob(step === 'engine' ? { model, step, doneBytes, totalBytes: engine.bytes } : { model, step, doneBytes: 0, totalBytes: 0 }),
+        )
         setJob({ model, step: 'starting', doneBytes: 0, totalBytes: 0 })
       }
       try {
@@ -539,7 +557,8 @@ export function createEngine(options: EngineOptions): Engine {
 
   // --- Installing the app's own Ollama ------------------------------------------------
 
-  async function install(engine: EnginePackage, model: string, signal: AbortSignal): Promise<void> {
+  /** `report`: where the installation stands, as the download goes and when it is unpacked. */
+  async function install(engine: EnginePackage, signal: AbortSignal, report: (step: 'engine' | 'unpacking', doneBytes: number) => void): Promise<void> {
     await mkdir(options.folder, { recursive: true })
     // Under its own name, extension included: some tools only open a ".zip" that is called one.
     const archive = join(options.folder, `download-${engine.file}`)
@@ -552,10 +571,10 @@ export function createEngine(options: EngineOptions): Engine {
         throw new Error(`Installing the model engine takes about ${gigabytes(needed)} and the disk has ${gigabytes(free)} free. Free some space, then try again.`)
       }
 
-      await fetchArchive(engine, archive, (doneBytes) => setJob({ model, step: 'engine', doneBytes, totalBytes: engine.bytes }), signal)
+      await fetchArchive(engine, archive, (doneBytes) => report('engine', doneBytes), signal)
       signal.throwIfAborted()
 
-      setJob({ model, step: 'unpacking', doneBytes: 0, totalBytes: 0 })
+      report('unpacking', 0)
       await checkArchive(engine, archive, signal)
       const target = join(options.folder, engine.version)
       const staging = `${target}.unpacking`
@@ -654,7 +673,50 @@ export function createEngine(options: EngineOptions): Engine {
     }
   }
 
+  /** The engine being downloaded for the small model, so that a download from the page waits for it. */
+  let installingQuietly: Promise<void> | null = null
+
+  async function wake(): Promise<{ url: string; version: string } | null> {
+    try {
+      await address()
+    } catch (error) {
+      if (!(error instanceof EngineMissingError) && !isAbort(error)) log(`engine: ${describe(error)}`)
+      return null
+    }
+    return current()
+  }
+
+  async function missingBytes(): Promise<number> {
+    if ((await yours()) || (await installed())) return 0
+    return pkg?.bytes ?? 0
+  }
+
+  function installQuietly(onProgress?: (fraction: number) => void): Promise<void> {
+    installingQuietly ??= (async () => {
+      if ((await yours(0)) || (await installed())) return
+      if (!pkg) throw new Error('There is no Ollama for this kind of computer.')
+      // A download from the page is getting it already: the small model waits for its turn.
+      if (job) throw new Error('Another download is under way.')
+      const engine = pkg
+      const controller = new AbortController()
+      quiet.add(controller)
+      try {
+        log(`engine: downloading the app's own Ollama ${engine.version} (${Math.round(engine.bytes / 1e6)} MB) for the small model`)
+        await install(engine, controller.signal, (step, doneBytes) => onProgress?.(step === 'engine' ? Math.min(1, doneBytes / engine.bytes) : 1))
+        await emit().catch(() => {})
+      } finally {
+        quiet.delete(controller)
+      }
+    })().finally(() => {
+      installingQuietly = null
+    })
+    return installingQuietly
+  }
+
   return {
+    wake,
+    installQuietly,
+    missingBytes,
     baseUrl: address,
     status,
     download,
