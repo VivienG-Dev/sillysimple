@@ -311,6 +311,11 @@ export interface AppearanceSettings {
    */
   styledText: boolean
   /**
+   * A few slow, blurred patches of colour behind the chat that follow the mood of the
+   * character's last reply (see src/core/mood/ambiance.ts).
+   */
+  ambiance: boolean
+  /**
    * What sits behind the chat: nothing, the picture of the character one is talking to
    * (blurred), or one picture of the user's own, kept as background.webp in the data folder.
    */

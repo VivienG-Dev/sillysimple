@@ -3,6 +3,7 @@ import { activateLorebook } from './lorebook'
 import { directionCue, GO_ON_CUE, OPEN_CUE } from './direction'
 import { applyMacros } from './macros'
 import { memorySection } from './memory'
+import { NARRATION_NOTE } from './narration'
 import { storySection, tastesSection, type Tastes } from './notice'
 import { steadyNote } from './place'
 import { recallNote, type Recalled } from './recall'
@@ -30,6 +31,8 @@ export interface BuildMessagesInput {
   useCardPrompts?: boolean
   /** The model's context size. Only used to keep the lorebook to a fair share of it. */
   contextSize?: number
+  /** Tell the model that the user's narration is not speech (see narration.ts). */
+  readNarration?: boolean
   /** The "Reply length" setting, in tokens: the model is told to aim for it. Left out: it is not told. */
   replyLength?: number
   /** The last reply was cut short and the model is asked to write the rest of it. */
@@ -110,6 +113,7 @@ export function buildMessages(input: BuildMessagesInput): LlmMessage[] {
     memorySection(input.memory ?? ''),
     storySection(input.story),
     tastesSection(input.tastes),
+    input.readNarration ? NARRATION_NOTE : '',
     input.replyLength ? lengthInstruction(input.replyLength) : '',
   ]
 

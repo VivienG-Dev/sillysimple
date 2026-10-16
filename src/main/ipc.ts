@@ -974,6 +974,7 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
           useCardPrompts: generation.useCardPrompts,
           contextSize,
           replyLength: generation.maxTokens,
+          readNarration: true,
           continuing: continuedMessage !== null,
           direction,
           events: eventKinds,

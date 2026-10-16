@@ -65,6 +65,10 @@ async function setWebMedia(event: Event): Promise<void> {
   await settingsStore.update({ appearance: { webMedia: (event.target as HTMLInputElement).checked } })
 }
 
+async function setAmbiance(event: Event): Promise<void> {
+  await settingsStore.update({ appearance: { ambiance: (event.target as HTMLInputElement).checked } })
+}
+
 async function setStyledText(event: Event): Promise<void> {
   await settingsStore.update({ appearance: { styledText: (event.target as HTMLInputElement).checked } })
 }
@@ -220,6 +224,20 @@ function setCharacterColors(event: Event): void {
           </span>
           <span v-if="sense.state === 'failed'" class="toggle-hint problem">
             It does not work right now, so the mood is read from the words alone. {{ sense.problem }}
+          </span>
+        </span>
+      </label>
+    </section>
+
+    <section class="card">
+      <label class="toggle">
+        <input type="checkbox" :checked="settingsStore.appearance.ambiance" @change="setAmbiance" />
+        <span class="toggle-text">
+          <span class="toggle-title">Light that follows the mood</span>
+          <span class="toggle-hint">
+            A few soft patches of colour drift slowly behind the chat and take the mood of the character's last
+            reply: warm when they smile, blue when they are sad, red when they are angry. The change fades over a few
+            seconds.
           </span>
         </span>
       </label>

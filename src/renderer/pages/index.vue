@@ -95,6 +95,17 @@ function moodBefore(characterId: string, replyId: string): Mood | null {
   return read !== undefined ? read : detectMood(before.content, { userName: settingsStore.persona.name })
 }
 
+/** The mood of the last reply in the chat, for the light of the scene behind it (see ChatBackdrop). */
+const sceneMood = computed<Mood | null>(() => {
+  if (!settingsStore.appearance.ambiance) return null
+  const chatId = chatStore.activeChatId
+  const last = chatStore.messages.filter((message) => message.role === 'assistant').at(-1)
+  if (!last || !chatId) return null
+  const speakerId = last.characterId ?? character.value?.id ?? ''
+  const read = moodsStore.of(chatId, speakerId, last.id)
+  return read !== undefined ? read : detectMood(last.content, { userName: settingsStore.persona.name })
+})
+
 const waiting = computed<string[]>(() => {
   const reply = chatStore.streamingReply
   if (!reply || reply.text) return []
@@ -215,7 +226,7 @@ useStickToBottom(scroller, () => [rows.value.length, chatStore.streamingReply?.t
     <AppSidebar />
 
     <main v-if="character" class="chat" :class="{ 'with-backdrop': settingsStore.appearance.background !== 'none' }">
-      <ChatBackdrop :character="character" />
+      <ChatBackdrop :character="character" :mood="sceneMood" />
       <header class="header drag">
         <div class="heading">
           <span class="name">{{ character.name }}</span>
