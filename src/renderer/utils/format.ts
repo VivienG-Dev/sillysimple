@@ -31,13 +31,19 @@ function mediaHtml(markdownAlt: string | undefined, markdownSource: string | und
   return `<img class="media-picture" src="${address}" alt="${escapeHtml(alt)}" loading="lazy" referrerpolicy="no-referrer" />`
 }
 
+// What is said out loud, between quotes: "…", “…” or « … ». On one line, the quotes kept.
+// (Escaped first, so a straight quote reads &quot; here.)
+const SPOKEN = /&quot;[^\n]*?&quot;|“[^”\n]*”|«[^»\n]*»/g
+
 /**
- * Turns roleplay text into safe HTML: *actions* become italics, blank lines become paragraphs.
+ * Turns roleplay text into safe HTML: *actions* become italics, **words** bold, blank lines
+ * paragraphs, and what is said between quotes is marked (`say`) so it can be told apart
+ * from the telling, unless `styled` is false (Settings › Appearance).
  * The text is escaped first, so nothing a model writes can inject markup; pictures and
  * sounds (see MEDIA) are rebuilt by the app, and left out when `media` is false.
  * (To be replaced by a real Markdown renderer when messages need more than this.)
  */
-export function formatMessage(text: string, options: { media?: boolean } = {}): string {
+export function formatMessage(text: string, options: { media?: boolean; styled?: boolean } = {}): string {
   const media: string[] = []
   const marked = text
     .replace(/\u0000/g, '')
@@ -55,8 +61,10 @@ export function formatMessage(text: string, options: { media?: boolean } = {}): 
     .map((paragraph) => paragraph.trim())
     .filter(Boolean)
     .map((paragraph) => {
-      const withActions = paragraph.replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
-      const withMedia = withActions.replace(/\u0000(\d+)\u0000/g, (_, index: string) => media[Number(index)] ?? '')
+      const withBold = paragraph.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+      const withActions = withBold.replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
+      const withSpeech = options.styled === false ? withActions : withActions.replace(SPOKEN, '<span class="say">$&</span>')
+      const withMedia = withSpeech.replace(/\u0000(\d+)\u0000/g, (_, index: string) => media[Number(index)] ?? '')
       return `<p>${withMedia.replace(/\n/g, '<br>')}</p>`
     })
     .join('')

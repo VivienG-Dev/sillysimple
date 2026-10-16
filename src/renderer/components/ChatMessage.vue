@@ -22,6 +22,8 @@ const props = defineProps<{
   waiting?: readonly string[]
   /** The stage direction this reply was written under ("Something happens", …). */
   direction?: SceneDirection
+  /** In a chat with several characters: the colour of this one, on the name and what they say. */
+  speakerColor?: string
   /** e.g. "llama3.1:8b · 3.1 s" */
   caption?: string
   /** The versions of this reply, when it has several. */
@@ -60,7 +62,9 @@ const emit = defineEmits<{
 }>()
 
 const settingsStore = useSettingsStore()
-const html = computed(() => formatMessage(props.content, { media: settingsStore.appearance.webMedia }))
+const html = computed(() =>
+  formatMessage(props.content, { media: settingsStore.appearance.webMedia, styled: settingsStore.appearance.styledText }),
+)
 
 /**
  * A picture or a sound from the web that could not be had (the site refuses it, or it is
@@ -200,6 +204,7 @@ function nextSwipe(): void {
   <motion.article
     class="message"
     :class="role"
+    :style="speakerColor ? { '--speaker': speakerColor } : undefined"
     :initial="{ opacity: 0, y: 8 }"
     :animate="{ opacity: 1, y: 0 }"
     :transition="{ duration: 0.22, ease: 'easeOut' }"
@@ -395,7 +400,7 @@ function nextSwipe(): void {
 }
 .author {
   font-weight: 700;
-  color: var(--accent-soft);
+  color: var(--speaker, var(--accent-soft));
 }
 /* The stage direction the reply was written under. */
 .directed {
@@ -522,6 +527,18 @@ function nextSwipe(): void {
 }
 .prose :deep(em) {
   color: var(--text-action);
+}
+.prose :deep(strong) {
+  font-weight: 700;
+  color: var(--text);
+}
+/* What is said out loud: brighter than the telling, with a touch of the character's colour
+   (the app's accent, or the speaker's own in a chat with several characters). */
+.prose :deep(.say) {
+  color: color-mix(in oklab, var(--text) 74%, var(--speaker, var(--accent-soft)));
+}
+.message.user .prose :deep(.say) {
+  color: var(--text);
 }
 /* Pictures and sounds a card puts in its messages (see formatMessage) */
 .prose :deep(.media-picture),

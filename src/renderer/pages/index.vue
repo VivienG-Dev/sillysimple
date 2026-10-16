@@ -72,6 +72,14 @@ const rows = computed<Row[]>(() => {
 // of their last reply (src/core/mood/waiting.ts). Only while nothing is written yet.
 
 const moodsStore = useMoodsStore()
+const { colorOf } = useSpeakerColors()
+
+/** In a chat with several characters, each one's name and words have a colour of their own. */
+function speakerColorOf(row: Row): string | undefined {
+  if (!chatStore.isScene || row.role !== 'assistant') return undefined
+  const speaker = speakerOf(row)
+  return speaker ? colorOf(speaker) : undefined
+}
 
 /** The mood of the last reply this character wrote before the one being written, if any is known. */
 function moodBefore(characterId: string, replyId: string): Mood | null {
@@ -289,6 +297,7 @@ useStickToBottom(scroller, () => [rows.value.length, chatStore.streamingReply?.t
             :waiting="row.streaming ? waiting : undefined"
             :direction="row.direction"
             :caption="caption(row)"
+            :speaker-color="speakerColorOf(row)"
             :swipes="row.swipes"
             :can-swipe="canSwipe(row)"
             :can-regenerate="row.id === lastReplyId"

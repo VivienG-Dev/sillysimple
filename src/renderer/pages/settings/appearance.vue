@@ -65,6 +65,10 @@ async function setWebMedia(event: Event): Promise<void> {
   await settingsStore.update({ appearance: { webMedia: (event.target as HTMLInputElement).checked } })
 }
 
+async function setStyledText(event: Event): Promise<void> {
+  await settingsStore.update({ appearance: { styledText: (event.target as HTMLInputElement).checked } })
+}
+
 async function setMoods(event: Event): Promise<void> {
   await settingsStore.update({ appearance: { moods: (event.target as HTMLInputElement).checked } })
   void lookAtSense()
@@ -216,6 +220,19 @@ function setCharacterColors(event: Event): void {
           </span>
           <span v-if="sense.state === 'failed'" class="toggle-hint problem">
             It does not work right now, so the mood is read from the words alone. {{ sense.problem }}
+          </span>
+        </span>
+      </label>
+    </section>
+
+    <section class="card">
+      <label class="toggle">
+        <input type="checkbox" :checked="settingsStore.appearance.styledText" @change="setStyledText" />
+        <span class="toggle-text">
+          <span class="toggle-title">Set dialogue apart</span>
+          <span class="toggle-hint">
+            What a character says between quotes takes a touch of their colour, so it stands out from the
+            telling. Actions between asterisks stay in italics either way.
           </span>
         </span>
       </label>

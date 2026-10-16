@@ -306,6 +306,11 @@ export interface AppearanceSettings {
    */
   webMedia: boolean
   /**
+   * Tell what is said apart from the telling: words between quotes take a touch of the
+   * character's colour (see formatMessage). Off: one colour for the text, actions in italics.
+   */
+  styledText: boolean
+  /**
    * What sits behind the chat: nothing, the picture of the character one is talking to
    * (blurred), or one picture of the user's own, kept as background.webp in the data folder.
    */

@@ -40,6 +40,7 @@ export const DEFAULT_SETTINGS: Settings = {
     moods: true,
     moodsByMeaning: true,
     webMedia: true,
+    styledText: true,
     background: 'character',
     backgroundStrength: 50,
     backgroundVersion: 0,

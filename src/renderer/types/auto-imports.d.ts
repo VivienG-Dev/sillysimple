@@ -84,6 +84,7 @@ declare global {
   const shallowReadonly: typeof import('vue').shallowReadonly
   const shallowRef: typeof import('vue').shallowRef
   const shortcutKey: typeof import('../utils/platform').shortcutKey
+  const speakerColor: typeof import('../composables/useSpeakerColors').speakerColor
   const storeToRefs: typeof import('pinia').storeToRefs
   const toPlain: typeof import('../utils/format').toPlain
   const toRaw: typeof import('vue').toRaw
@@ -112,6 +113,7 @@ declare global {
   const useRouter: typeof import('vue-router').useRouter
   const useSettingsStore: typeof import('../stores/settings').useSettingsStore
   const useSlots: typeof import('vue').useSlots
+  const useSpeakerColors: typeof import('../composables/useSpeakerColors').useSpeakerColors
   const useStickToBottom: typeof import('../composables/useStickToBottom').useStickToBottom
   const useTemplateRef: typeof import('vue').useTemplateRef
   const useTour: typeof import('../composables/useTour').useTour
@@ -222,6 +224,7 @@ declare module 'vue' {
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
     readonly shortcutKey: UnwrapRef<typeof import('../utils/platform')['shortcutKey']>
+    readonly speakerColor: UnwrapRef<typeof import('../composables/useSpeakerColors')['speakerColor']>
     readonly storeToRefs: UnwrapRef<typeof import('pinia')['storeToRefs']>
     readonly toPlain: UnwrapRef<typeof import('../utils/format')['toPlain']>
     readonly toRaw: UnwrapRef<typeof import('vue')['toRaw']>
@@ -250,6 +253,7 @@ declare module 'vue' {
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
     readonly useSettingsStore: UnwrapRef<typeof import('../stores/settings')['useSettingsStore']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
+    readonly useSpeakerColors: UnwrapRef<typeof import('../composables/useSpeakerColors')['useSpeakerColors']>
     readonly useStickToBottom: UnwrapRef<typeof import('../composables/useStickToBottom')['useStickToBottom']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
     readonly useTour: UnwrapRef<typeof import('../composables/useTour')['useTour']>

@@ -30,4 +30,15 @@ describe('formatMessage', () => {
   it('leaves pictures and sounds out when they are turned off', () => {
     expect(formatMessage('Hi\n\n![](https://img.example/a.png)', { media: false })).toBe('<p>Hi</p>')
   })
+
+  it('marks what is said between quotes, whichever quotes, and not when turned off', () => {
+    expect(formatMessage('*smiles* "Hi." She waits.')).toBe('<p><em>smiles</em> <span class="say">&quot;Hi.&quot;</span> She waits.</p>')
+    expect(formatMessage('“Oui ?” « Non. »')).toBe('<p><span class="say">“Oui ?”</span> <span class="say">« Non. »</span></p>')
+    expect(formatMessage('"Hi."', { styled: false })).toBe('<p>&quot;Hi.&quot;</p>')
+  })
+
+  it('reads **bold** before *italics*, and leaves a quote that is still open alone', () => {
+    expect(formatMessage('**Stop!** *runs*')).toBe('<p><strong>Stop!</strong> <em>runs</em></p>')
+    expect(formatMessage('"Wait, I')).toBe('<p>&quot;Wait, I</p>')
+  })
 })
