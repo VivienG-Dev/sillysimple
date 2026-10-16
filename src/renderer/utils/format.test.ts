@@ -41,4 +41,13 @@ describe('formatMessage', () => {
     expect(formatMessage('**Stop!** *runs*')).toBe('<p><strong>Stop!</strong> <em>runs</em></p>')
     expect(formatMessage('"Wait, I')).toBe('<p>&quot;Wait, I</p>')
   })
+
+  it('shows a long paragraph written all between asterisks as plain telling, and keeps a short one an action', () => {
+    const long = 'The word "dirty" hangs in the air, thick and heavy, while the rain keeps on against the window.'
+    expect(formatMessage(`*${long}*\n\n*nods*`)).toBe(
+      '<p>The word <span class="say">&quot;dirty&quot;</span> hangs in the air, thick and heavy, while the rain keeps on against the window.</p>' +
+        '<p><em>nods</em></p>',
+    )
+    expect(formatMessage(`"Hi." *${long}*`)).toContain('<em>')
+  })
 })

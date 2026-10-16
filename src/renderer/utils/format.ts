@@ -31,6 +31,11 @@ function mediaHtml(markdownAlt: string | undefined, markdownSource: string | und
   return `<img class="media-picture" src="${address}" alt="${escapeHtml(alt)}" loading="lazy" referrerpolicy="no-referrer" />`
 }
 
+/** A paragraph that is all one action: between asterisks from start to end. */
+const WHOLE_ACTION = /^\*([^*\n]+)\*$/
+/** From this many characters on, such a paragraph is narration, not an action. */
+const TOLD_LENGTH = 80
+
 // What is said out loud, between quotes: "…", “…” or « … ». On one line, the quotes kept.
 // (Escaped first, so a straight quote reads &quot; here.)
 const SPOKEN = /&quot;[^\n]*?&quot;|“[^”\n]*”|«[^»\n]*»/g
@@ -62,7 +67,12 @@ export function formatMessage(text: string, options: { media?: boolean; styled?:
     .filter(Boolean)
     .map((paragraph) => {
       const withBold = paragraph.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
-      const withActions = withBold.replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
+      // A whole paragraph between asterisks is not an action slipped into a line: it is how
+      // that model writes its narration. In italics and dimmed it tires the eye over a long
+      // reply (Vivien, 16 October), so it is shown as plain telling. A short one ("*nods*")
+      // stays an action.
+      const told = withBold.match(WHOLE_ACTION)
+      const withActions = told && told[1]!.length >= TOLD_LENGTH ? told[1]! : withBold.replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
       const withSpeech = options.styled === false ? withActions : withActions.replace(SPOKEN, '<span class="say">$&</span>')
       const withMedia = withSpeech.replace(/\u0000(\d+)\u0000/g, (_, index: string) => media[Number(index)] ?? '')
       return `<p>${withMedia.replace(/\n/g, '<br>')}</p>`
