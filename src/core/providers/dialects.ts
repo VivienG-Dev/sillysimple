@@ -191,7 +191,7 @@ export async function listModels(target: ProviderTarget, signal?: AbortSignal): 
       return (await get('models'))
         .filter((model) => typeof model['id'] === 'string' && !NOT_CHAT.test(model['id']))
         .sort((a, b) => Number(b['created'] ?? 0) - Number(a['created'] ?? 0))
-        .map((model) => modelInfo(model['id']))
+        .map((model) => modelInfo(model['id'], undefined, openAiContextLength(String(model['id']))))
         .filter(isModel)
 
     case 'mistral': {
@@ -216,6 +216,24 @@ const NOT_CHAT = /embedding|whisper|tts|dall-e|image|audio|realtime|transcribe|m
 
 function bearer(target: ProviderTarget): Record<string, string> {
   return target.apiKey ? { Authorization: `Bearer ${target.apiKey}` } : {}
+}
+
+/**
+ * OpenAI's list of models does not say how much each one reads: what its documentation
+ * says, by family. Null for one it does not know, which then takes the size set by hand.
+ * The app reads at most 32k in automatic mode anyway (AUTO_CONTEXT_LIMIT), so the families
+ * only need to be right on which side of that they fall.
+ */
+export function openAiContextLength(id: string): number | null {
+  const name = id.toLowerCase().replace(/^ft:/, '')
+  if (/^gpt-5/.test(name)) return 400_000
+  if (/^gpt-4\.1/.test(name)) return 1_047_576
+  if (/^(o1|o3|o4)(-|$)/.test(name)) return 200_000
+  if (/^(gpt-4o|chatgpt-4o|gpt-4-turbo|gpt-4-\d{4}-preview|gpt-4\.5)/.test(name)) return 128_000
+  if (/^gpt-4-32k/.test(name)) return 32_768
+  if (/^gpt-4(-\d{4})?$/.test(name)) return 8192
+  if (/^gpt-3\.5-turbo/.test(name)) return 16_385
+  return null
 }
 
 function modelInfo(id: unknown, name?: unknown, contextLength?: unknown): ModelInfo | null {

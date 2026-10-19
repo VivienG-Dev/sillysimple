@@ -14,9 +14,14 @@ import { estimateTokens } from './context'
 
 /** The memory may take up to this share of the context… */
 const MEMORY_SHARE = 0.15
-/** …within these bounds, in tokens: enough to be useful, never so much that it crowds the chat out. */
+/** …never less than this, in tokens: enough to be useful… */
 const MEMORY_MIN_TOKENS = 200
-const MEMORY_MAX_TOKENS = 700
+/**
+ * …and never more than a ceiling that grows with the context: 700 tokens up to 8k (a
+ * small local model, where the chat itself needs the room), then a sixteenth of the
+ * context, up to 2000 at 32k (an online model: a long story is summed up less tightly).
+ */
+const MEMORY_CEILING = { least: 700, most: 2000, share: 1 / 16 }
 
 /** After a fold, the messages kept as they are fill at most this share of the room for messages. */
 const KEEP_SHARE = 0.5
@@ -28,7 +33,8 @@ const WORDS_PER_TOKEN = 0.65
 
 /** How many tokens the memory of a chat may take, for a model that reads `contextSize`. */
 export function memoryTokens(contextSize: number): number {
-  return Math.round(Math.min(MEMORY_MAX_TOKENS, Math.max(MEMORY_MIN_TOKENS, contextSize * MEMORY_SHARE)))
+  const ceiling = Math.min(MEMORY_CEILING.most, Math.max(MEMORY_CEILING.least, contextSize * MEMORY_CEILING.share))
+  return Math.round(Math.min(ceiling, Math.max(MEMORY_MIN_TOKENS, contextSize * MEMORY_SHARE)))
 }
 
 /**

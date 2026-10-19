@@ -11,7 +11,7 @@ import { EngineMissingError } from '@core/engine/errors'
 import type { EnginePackage } from '@core/engine/release'
 import { ollamaVersion } from '@core/providers/ollama'
 import type { EngineStatus } from '@shared/types'
-import { createEngine, type Engine, type EngineOptions } from './engine'
+import { createEngine, strayPids, type Engine, type EngineOptions } from './engine'
 
 // The engine is tried for real: a small web server plays GitHub and hands out an archive,
 // which is unpacked with the computer's tar, and the program inside is started and
@@ -752,5 +752,20 @@ describe.runIf(runnable)('when the user runs an Ollama of their own', () => {
     expect(url).not.toBe(`http://127.0.0.1:${yoursPort}/v1`)
     expect(await ollamaVersion(url)).toBe('9.9.9-fake')
     expect((await engine.status()).state).toBe('running')
+  })
+})
+
+describe('what the app ends when it starts its own Ollama', () => {
+  it("finds the processes of its own Ollama, and only those", () => {
+    const folder = '/Users/someone/Library/Application Support/SillySimple/engine'
+    const listing = [
+      `  412 ${folder}/0.40.0/ollama serve`,
+      ` 9001 ${folder}/0.40.0/ollama runner --model /Users/someone/.ollama/models/blobs/sha256-abc --port 53122`,
+      `  733 /Applications/Ollama.app/Contents/Resources/ollama serve`,
+      `  734 /usr/local/bin/ollama runner --port 50000`,
+      ` 1200 ${folder}-old/ollama serve`,
+      '',
+    ].join('\n')
+    expect(strayPids(listing, folder)).toEqual([412, 9001])
   })
 })

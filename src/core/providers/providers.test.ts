@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { LlmMessage } from '../prompt/buildMessages'
-import { joinUrl, listModels, type ProviderTarget } from './dialects'
+import { joinUrl, listModels, openAiContextLength, type ProviderTarget } from './dialects'
 import { HttpError } from './httpError'
 import { describeConnectionError, describeEmptyReply, testConnection } from './index'
 import { ollamaHost } from './ollama'
@@ -480,5 +480,17 @@ describe('describeEmptyReply', () => {
 
   it('falls back to a plain message when nothing explains it', () => {
     expect(describeEmptyReply({ sawThinking: false, finishReason: 'stop' })).toBe('The model sent back an empty reply.')
+  })
+})
+
+describe("OpenAI's context lengths, which its list does not give", () => {
+  it('knows the families, and leaves the others to the size set by hand', () => {
+    expect(openAiContextLength('gpt-5-mini')).toBe(400_000)
+    expect(openAiContextLength('gpt-4.1-nano')).toBe(1_047_576)
+    expect(openAiContextLength('gpt-4o-2024-08-06')).toBe(128_000)
+    expect(openAiContextLength('o4-mini')).toBe(200_000)
+    expect(openAiContextLength('gpt-4')).toBe(8192)
+    expect(openAiContextLength('gpt-3.5-turbo-0125')).toBe(16_385)
+    expect(openAiContextLength('davinci-002')).toBeNull()
   })
 })

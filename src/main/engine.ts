@@ -282,6 +282,9 @@ export function createEngine(options: EngineOptions): Engine {
       }
       await rm(serverFile, { force: true })
     }
+    // Whatever else still runs from the app's own Ollama: what an app that was ended hard
+    // (a crash, a restart while developing) could not stop. Nothing else runs from there.
+    await endStrays(options.folder)
     if (quitting) throw abortError()
 
     const context = await wantedContext()
@@ -301,6 +304,10 @@ export function createEngine(options: EngineOptions): Engine {
       },
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
+      // A process group of its own (macOS, Linux): Ollama runs each loaded model in a process
+      // of its own, and the whole group is ended together (see terminateNow). Ended one by
+      // one, the server could go and leave those behind, each holding its model in memory.
+      detached: !isWindows,
     })
 
     // What Ollama says goes to a file, for when something has to be understood later.
@@ -415,17 +422,44 @@ export function createEngine(options: EngineOptions): Engine {
   /** Asks an Ollama the app started to end, without waiting. `hard`: it did not listen the first time. */
   function terminateNow(pid: number, hard = false): void {
     if (!pid) return
-    try {
-      if (isWindows) {
+    if (isWindows) {
+      try {
         // Ollama runs each model in a process of its own: the whole family goes.
         spawnSync('taskkill', ['/pid', String(pid), '/T', '/F'], { windowsHide: true, timeout: 4000 })
-      } else {
-        // SIGTERM: Ollama unloads its models and ends by itself.
-        process.kill(pid, hard ? 'SIGKILL' : 'SIGTERM')
+      } catch {
+        // Already gone.
       }
-    } catch {
-      // Already gone.
+      return
     }
+    // SIGTERM: Ollama unloads its models and ends by itself. Sent to its process group, so
+    // that the processes it runs its models in go too, even if it ends before them.
+    const signal = hard ? 'SIGKILL' : 'SIGTERM'
+    try {
+      process.kill(-pid, signal)
+    } catch {
+      // No group of that number (one started by an older version of the app): the process alone.
+      try {
+        process.kill(pid, signal)
+      } catch {
+        // Already gone.
+      }
+    }
+  }
+
+  /**
+   * Ends every process that runs a program of `folder`: the app's own Ollama only, never
+   * the user's. macOS and Linux; on Windows taskkill /T already takes a whole family.
+   */
+  async function endStrays(folder: string): Promise<void> {
+    if (isWindows) return
+    const listed = spawnSync('ps', ['-axo', 'pid=,command='], { encoding: 'utf8', timeout: 4000 })
+    if (listed.status !== 0 || !listed.stdout) return
+    const strays = strayPids(listed.stdout, folder).filter((pid) => pid !== process.pid)
+    if (strays.length === 0) return
+    log(`engine: ending ${strays.length} process(es) of the app's own Ollama left running (${strays.join(', ')})`)
+    for (const pid of strays) terminateNow(pid)
+    await waitUntil(() => strays.every((pid) => !isRunning(pid)), STOP_TIMEOUT_MS)
+    for (const pid of strays) if (isRunning(pid)) terminateNow(pid, true)
   }
 
   // --- Status -----------------------------------------------------------------------
@@ -903,6 +937,17 @@ function freePort(preferred: number): Promise<number> {
       })
     })
   return tryPort(preferred).catch(() => tryPort(0))
+}
+
+/** The processes of a `ps -axo pid=,command=` listing whose program is in `folder`. */
+export function strayPids(listing: string, folder: string): number[] {
+  const inside = folder.endsWith('/') ? folder : `${folder}/`
+  const pids: number[] = []
+  for (const line of listing.split('\n')) {
+    const match = /^\s*(\d+)\s+(.*)$/.exec(line)
+    if (match && match[2]!.startsWith(inside)) pids.push(Number(match[1]))
+  }
+  return pids
 }
 
 function isRunning(pid: number): boolean {

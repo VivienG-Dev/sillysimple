@@ -14,6 +14,10 @@ describe('how large a memory may be', () => {
     expect(memoryTokens(4096)).toBe(614)
     expect(memoryTokens(2048)).toBe(307)
     expect(memoryTokens(1024)).toBe(200) // 15 % would be 154: never less than this.
+    // A larger context lets the memory grow: a sixteenth of it, up to 2000 tokens.
+    expect(memoryTokens(16384)).toBe(1024)
+    expect(memoryTokens(32768)).toBe(2000)
+    expect(memoryTokens(131072)).toBe(2000)
     expect(memoryReplyTokens(4096)).toBeGreaterThan(memoryTokens(4096))
   })
 })

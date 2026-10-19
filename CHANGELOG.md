@@ -4,6 +4,23 @@ What changes from one version of SillySimple to the next. The installers are on
 [sillysimple.app](https://sillysimple.app); an installed app finds new versions by itself
 (Settings › Data & Privacy › Check for new versions).
 
+## 0.1.8 (not released yet)
+
+### Better
+
+- **Longer memory with large models.** The summary of a long chat used to stay under 700
+  tokens whatever the model. It now grows with what the model can read: up to 2000 tokens
+  with a 32k model, so a long story is summed up less tightly.
+- **OpenAI models get their full context.** OpenAI does not say how much its models read,
+  so the app fell back to 8k. It now knows the families (GPT-5, GPT-4.1, GPT-4o, o-series)
+  and uses up to 32k with them, as with the other services.
+
+### Fixed
+
+- **No more Ollama processes left behind.** The app's own Ollama could leave processes
+  running after the app was closed, each holding a model in memory, and they piled up.
+  It is now ended as a whole, and anything left by an earlier run is ended when it starts.
+
 ## 0.1.7
 
 ### New

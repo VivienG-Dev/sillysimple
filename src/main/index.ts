@@ -174,6 +174,14 @@ void app.whenReady().then(async () => {
   // The app's own Ollama never outlives the app.
   app.on('will-quit', () => engine.stopNow())
   process.on('exit', () => engine.stopNow())
+  // Ended by a signal (closed from a terminal, restarted while developing): Node does not
+  // say "exit" then, so the engine is stopped here, and the app quits as it would.
+  for (const signal of ['SIGTERM', 'SIGINT', 'SIGHUP'] as const) {
+    process.on(signal, () => {
+      engine.stopNow()
+      app.quit()
+    })
+  }
 
   // What a text means, for the mood of a reply: the app's own small model, where it can run (see sense.ts).
   const sense = createSense({
