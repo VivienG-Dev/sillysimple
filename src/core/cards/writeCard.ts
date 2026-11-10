@@ -41,7 +41,8 @@ export function isGreeting(section: CardSection | null): boolean {
 export const CARD_REPLY_TOKENS = 3500
 /** A little above the chat's default: a character should not be the most expected one. */
 export const CARD_TEMPERATURE = 0.9
-const MAX_IDEA_LENGTH = 2000
+/** How long the idea in "Describe your character" may be: room for a detailed brief (about 2,500 tokens), still small next to the card it asks for. */
+export const MAX_IDEA_LENGTH = 8000
 
 const INSTRUCTIONS = `You write character cards for a roleplay chat app. The user gives you an idea, sometimes only a few words; you turn it into a complete, vivid character who is fun to talk to. Fill in what the idea leaves open with specific, surprising choices rather than the most expected ones.
 

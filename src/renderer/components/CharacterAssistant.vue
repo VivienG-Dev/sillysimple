@@ -2,7 +2,7 @@
 import { Check, Crown, Dices, Feather, Flame, KeyRound, Moon, PartyPopper, Sparkles, Square } from '@lucide/vue'
 import type { Component } from 'vue'
 import { CARD_MOODS, MAX_MOOD_LEVEL, MAX_MOODS } from '@core/cards/moods'
-import { readWrittenCard, type CardSection, type WrittenCard } from '@core/cards/writeCard'
+import { MAX_IDEA_LENGTH, readWrittenCard, type CardSection, type WrittenCard } from '@core/cards/writeCard'
 import type { CardMood, MoodPick } from '@shared/types'
 
 // "Describe your character": the user writes a sentence, picks a mood or two if they
@@ -31,6 +31,19 @@ const settingsStore = useSettingsStore()
 const model = computed(() => settingsStore.connection.model || 'the model')
 
 const idea = ref('')
+/** The count only shows once the idea gets near the limit. */
+/**
+ * The idea box opens up only while it is being typed in. Once the user moves on to the
+ * card below (or the model starts writing), it folds back to two lines so the editor keeps
+ * its room; a height pulled by hand is dropped at the same time.
+ */
+const ideaFocused = ref(false)
+const ideaOpen = computed(() => ideaFocused.value && !busy.value)
+function foldIdea(event: FocusEvent): void {
+  ideaFocused.value = false
+  ;(event.target as HTMLTextAreaElement).style.height = ''
+}
+const ideaCount = computed(() => (idea.value.length >= MAX_IDEA_LENGTH * 0.75 ? `${idea.value.length.toLocaleString('en')} / ${MAX_IDEA_LENGTH.toLocaleString('en')}` : ''))
 
 // "Use my tastes": offered once the app has learned something about how the user plays
 // (Settings › Adapts to you). The character is then written with those tags in mind.
@@ -234,13 +247,16 @@ defineExpose({ stop })
       <textarea
         v-model="idea"
         class="field"
+        :class="{ open: ideaOpen }"
         rows="2"
-        maxlength="2000"
+        :maxlength="MAX_IDEA_LENGTH"
         aria-label="Describe your character"
         placeholder="A sarcastic librarian in a steampunk city who secretly sells forbidden books"
         :disabled="busy"
         autofocus
         @keydown.enter.exact.prevent="idea.trim() && write()"
+        @focus="ideaFocused = true"
+        @blur="foldIdea"
       />
       <button v-if="busy" type="button" class="btn" @click="stop">
         <Square :size="12" :stroke-width="2.4" />Stop
@@ -250,6 +266,7 @@ defineExpose({ stop })
         <template v-else>{{ wroteOnce ? 'Write again' : 'Write it for me' }}</template>
       </button>
     </div>
+    <p v-if="ideaCount" class="count" :class="{ full: idea.length >= MAX_IDEA_LENGTH }" aria-live="polite">{{ ideaCount }}</p>
 
     <div class="moods" role="group" aria-label="Mood">
       <span class="hint">Mood:</span>
@@ -594,19 +611,43 @@ defineExpose({ stop })
 
 .row {
   display: flex;
-  align-items: stretch;
+  align-items: flex-end;
   gap: 8px;
 }
 .row textarea {
   flex: 1;
-  min-height: 0;
+  field-sizing: content;
+  min-height: calc(2lh + 22px);
+  /* Folded: two lines, the rest scrolls. */
+  max-height: calc(2lh + 22px);
+  overflow-y: auto;
   resize: none;
   background: var(--bg-panel);
+  transition: max-height 0.2s ease;
+}
+/* While typed in: grows with the idea, and can be pulled taller by its corner. */
+.row textarea.open {
+  max-height: 35vh;
+  resize: vertical;
+}
+@media (prefers-reduced-motion: reduce) {
+  .row textarea {
+    transition: none;
+  }
 }
 .row .btn {
-  height: auto;
+  height: 38px;
   gap: 6px;
   flex-shrink: 0;
+}
+.count {
+  margin: -4px 0 0;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+.count.full {
+  color: var(--warning-text);
 }
 
 /* Moods: pills that pop like a bubble when pressed. Each has its own color once on, deeper with each press. */

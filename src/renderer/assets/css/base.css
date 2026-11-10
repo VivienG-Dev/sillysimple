@@ -193,7 +193,8 @@ html[data-platform='win32'] {
 textarea.field {
   height: auto;
   padding: 10px;
-  resize: none;
+  /* Long texts (descriptions, greetings, prompts): the user can pull the box taller. */
+  resize: vertical;
   line-height: 1.5;
 }
 

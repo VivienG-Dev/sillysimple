@@ -14,6 +14,12 @@ What changes from one version of SillySimple to the next. The installers are on
 - **OpenAI models get their full context.** OpenAI does not say how much its models read,
   so the app fell back to 8k. It now knows the families (GPT-5, GPT-4.1, GPT-4o, o-series)
   and uses up to 32k with them, as with the other services.
+- **Room for a detailed character idea.** *Describe your character* took 2,000 characters
+  at most; it now takes 8,000, with a count that shows up near the limit. The box grows as
+  you write and can be pulled taller by its corner, then folds back to two lines when you
+  move on to the card, so the editor below keeps its room. Shift + Enter goes to a new line.
+- **Taller boxes in the character editor.** Description, personality, greetings and the
+  other long fields can now be pulled taller by their corner.
 
 ### Fixed
 
