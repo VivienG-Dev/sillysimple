@@ -2,6 +2,7 @@ import { copyFile, rename, rm, writeFile } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { improveRequest, IMPROVE_REPLY_TOKENS, IMPROVE_TEMPERATURE, isTipId } from '@core/cards/reviewCard'
+import { withoutComments } from '@core/prompt/comments'
 import { CARD_REPLY_TOKENS, CARD_TEMPERATURE, cardRequest, storyOf } from '@core/cards/writeCard'
 import { cleanMoods, describeMoods } from '@core/cards/moods'
 import { isAbort } from '@core/engine/errors'
@@ -372,7 +373,7 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
 
   ipcMain.handle(IPC.moodRead, (_event, text: unknown, userName: unknown): Promise<MoodReading> =>
     // A reply is a few thousand letters at most; the end is what says how it ends.
-    sense.mood(String(text ?? '').slice(-MAX_MOOD_TEXT), typeof userName === 'string' ? userName.slice(0, 80) : undefined),
+    sense.mood(withoutComments(String(text ?? '')).slice(-MAX_MOOD_TEXT), typeof userName === 'string' ? userName.slice(0, 80) : undefined),
   )
 
   ipcMain.handle(IPC.moodStatus, (): Promise<SenseStatus> => sense.status())

@@ -51,3 +51,10 @@ describe('formatMessage', () => {
     expect(formatMessage(`"Hi." *${long}*`)).toContain('<em>')
   })
 })
+
+describe('formatMessage and HTML comments', () => {
+  it('does not show a comment, nor the pictures inside it', () => {
+    const html = formatMessage('She waves.\n\n<!-- For the model only:\n![a](https://example.com/a.png)\n-->', { media: true })
+    expect(html).toBe('<p>She waves.</p>')
+  })
+})

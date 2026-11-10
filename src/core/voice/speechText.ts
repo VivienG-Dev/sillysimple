@@ -1,3 +1,4 @@
+import { withoutComments } from '@core/prompt/comments'
 // What is read aloud is not what is written. Roleplay prose is full of signs meant for
 // the eye: *asterisks* around what a character does, quotes around what they say, the
 // odd bit of Markdown. A voice reads all of that out, or stumbles on it.
@@ -16,7 +17,7 @@ const BETWEEN_ASTERISKS = /\*([^*\n]*)\*/g
 
 /** What is never read out: code, links' addresses, macros that were not filled in, the signs that open a line. */
 function prepare(message: string): string {
-  return message
+  return withoutComments(message)
     .replace(/\r\n?/g, '\n')
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/<(style|script)\b[\s\S]*?<\/\1\s*>/gi, ' ')

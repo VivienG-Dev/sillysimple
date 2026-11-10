@@ -1,3 +1,4 @@
+import { withoutComments } from '@core/prompt/comments'
 // The mood of a reply, read from its text, to show it on the character's picture as a
 // small manga-style symbol (a "!" for surprise, a drop of sweat for unease…).
 //
@@ -137,7 +138,8 @@ const ENOUGH = 0.55
  * The mood of a reply, or null when its text gives no clear sign of one.
  * `userName`: the name the user plays under; what the text says of them is not counted.
  */
-export function detectMood(text: string, options: { userName?: string } = {}): Mood | null {
+export function detectMood(message: string, options: { userName?: string } = {}): Mood | null {
+  const text = withoutComments(message) // Notes for the model say nothing of how the character feels.
   const length = text.length
   if (length === 0) return null
 

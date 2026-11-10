@@ -1,3 +1,4 @@
+import { withoutComments } from '@core/prompt/comments'
 import { replyWords } from '@core/prompt/replyLength'
 import { PORTRAIT_SCHEME } from '@shared/ipc'
 import type { Character } from '@shared/types'
@@ -44,13 +45,15 @@ const SPOKEN = /&quot;[^\n]*?&quot;|“[^”\n]*”|«[^»\n]*»/g
  * Turns roleplay text into safe HTML: *actions* become italics, **words** bold, blank lines
  * paragraphs, and what is said between quotes is marked (`say`) so it can be told apart
  * from the telling, unless `styled` is false (Settings › Appearance).
+ * HTML comments (<!-- … -->) are for the model and are not shown.
  * The text is escaped first, so nothing a model writes can inject markup; pictures and
  * sounds (see MEDIA) are rebuilt by the app, and left out when `media` is false.
  * (To be replaced by a real Markdown renderer when messages need more than this.)
  */
 export function formatMessage(text: string, options: { media?: boolean; styled?: boolean } = {}): string {
   const media: string[] = []
-  const marked = text
+  // Comments are for the model only, pictures inside them included.
+  const marked = withoutComments(text)
     .replace(/\u0000/g, '')
     .replace(MEDIA, (_whole, markdownAlt?: string, markdownSource?: string, tag?: string, attributes?: string) => {
       // Turned off, or an address that is not https: nothing is shown, not even the code.

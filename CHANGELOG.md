@@ -37,6 +37,10 @@ What changes from one version of SillySimple to the next. The installers are on
 
 ### Fixed
 
+- **Hidden notes in cards stay hidden.** Some cards hold notes for the model between
+  `<!--` and `-->`. They showed in the chat, pictures inside them included. As in
+  SillyTavern, they are now only for the model: not shown, not read aloud, not taken for
+  the character's mood.
 - **No more Ollama processes left behind.** The app's own Ollama could leave processes
   running after the app was closed, each holding a model in memory, and they piled up.
   It is now ended as a whole, and anything left by an earlier run is ended when it starts.
