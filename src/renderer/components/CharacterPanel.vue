@@ -14,7 +14,7 @@ let chatLooked: string | null = null
 </script>
 
 <script setup lang="ts">
-import { ArrowLeftRight, Check, Download, Heart, Lightbulb, Pencil, Plus, Volume2 } from '@lucide/vue'
+import { ArrowLeftRight, Check, Download, Heart, Lightbulb, Pencil, Plus, UserRoundPlus, Volume2 } from '@lucide/vue'
 import { reviewCard } from '@core/cards/reviewCard'
 import { detectMood, type Mood } from '@core/mood/detectMood'
 import { applyMacros } from '@core/prompt/macros'
@@ -309,6 +309,13 @@ const extras = computed(() => cardExtras(props.character))
       <div v-if="character.tags.length" class="tags">
         <span v-for="tag in character.tags" :key="tag" class="tag">{{ tag }}</span>
       </div>
+
+      <!-- Someone else from this character's story: their mother, a rival… written from this card. -->
+      <button type="button" class="in-story" @click="characterEditor.openInStory(character)">
+        <UserRoundPlus :size="14" :stroke-width="2" />
+        <span>New character from {{ character.name }}'s story</span>
+        <span class="in-story-hint">a parent, a rival, a friend…</span>
+      </button>
 
       <button v-if="toImprove > 0" type="button" class="to-improve" @click="characterEditor.open(character)">
         <Lightbulb :size="13" :stroke-width="2" />
@@ -765,6 +772,33 @@ const extras = computed(() => cardExtras(props.character))
 }
 .tagline {
   font-size: 12px;
+  color: var(--text-faint);
+}
+
+.in-story {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 7px;
+  padding: 7px 10px;
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-muted);
+  text-align: left;
+}
+.in-story:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 10%, transparent);
+}
+.in-story svg {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.in-story-hint {
   color: var(--text-faint);
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cardRequest, isGreeting, readWrittenCard } from './writeCard'
+import { cardRequest, isGreeting, readWrittenCard, storyOf } from './writeCard'
 
 const ANSWER = `### NAME
 Mara Venn
@@ -306,5 +306,50 @@ describe('a description written in parts', () => {
     expect(card.description).toBe(description)
     expect(card.personality).toBe('Stubborn: she relights the lamp the coastguard told her to leave off.')
     expect(card.scenario).toBe('A storm, the lamp room.')
+  })
+})
+
+describe('a character from another one\'s story', () => {
+  const sophie = {
+    name: 'Sophie',
+    tagline: 'A baker who never sleeps',
+    description: '{{char}} runs the night bakery on Quai Lune with {{user}}.',
+    personality: '',
+    scenario: '',
+    firstMessage: '*{{char}} dusts flour off her hands.*',
+    lorebook: {
+      name: '',
+      entries: [
+        { content: 'Her brother Tom left for the sea.', enabled: true },
+        { content: 'Turned off note', enabled: false },
+      ],
+    },
+  } as unknown as Parameters<typeof storyOf>[0]
+
+  it('reads the card with the character\'s name in place of {{char}}, and keeps {{user}}', () => {
+    const story = storyOf(sophie)
+    expect(story.description).toBe('Sophie runs the night bakery on Quai Lune with {{user}}.')
+    expect(story.firstMessage).toBe('*Sophie dusts flour off her hands.*')
+    expect(story.notes).toEqual(['Her brother Tom left for the sea.'])
+  })
+
+  it('puts the card before the idea, and keeps the instructions as they are', () => {
+    const [system, user] = cardRequest('her mother', undefined, [], storyOf(sophie))
+    expect(system?.content).toBe(cardRequest('x')[0]?.content)
+    expect(user?.content).toContain("<Sophie's card>")
+    expect(user?.content).toContain('Quai Lune')
+    expect(user?.content).not.toContain('Turned off note')
+    expect(user?.content.indexOf("<Sophie's card>")).toBeLessThan(user?.content.indexOf('The idea: her mother') ?? -1)
+  })
+
+  it('asks for someone from the story when there is no idea', () => {
+    const [, user] = cardRequest('', undefined, [], storyOf(sophie))
+    expect(user?.content).toContain("someone from Sophie's story")
+  })
+
+  it('keeps a long card within its room', () => {
+    const long = storyOf({ ...sophie, description: 'word '.repeat(5000) } as typeof sophie)
+    const [, user] = cardRequest('her rival', undefined, [], long)
+    expect(user?.content.length).toBeLessThan(6000)
   })
 })

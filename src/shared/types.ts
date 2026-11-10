@@ -740,6 +740,8 @@ export interface WriteCharacterRequest {
   moods?: MoodPick[]
   /** Write the character with the user's tastes in mind ("Use my tastes"). Only counts while those are learned. */
   useTastes?: boolean
+  /** A character the user has: the new one belongs to their story ("Part of Sophie's story"). */
+  storyOf?: string
 }
 
 /**

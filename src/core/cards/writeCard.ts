@@ -1,6 +1,6 @@
 import type { LlmMessage } from '@core/prompt/buildMessages'
 import type { Tastes } from '@core/prompt/notice'
-import type { MoodPick } from '@shared/types'
+import type { Character, MoodPick } from '@shared/types'
 import { moodsSection } from './moods'
 
 // Writing a character from one sentence: the user says who they have in mind, and the
@@ -114,7 +114,7 @@ export function sectionGuide(section: CardSection): string {
  * `moods`: what the user asked for with a click or three (see moods.ts).
  * Without an idea ("Surprise me"), the model invents the character.
  */
-export function cardRequest(idea: string, tastes?: Tastes, moods: readonly MoodPick[] = []): LlmMessage[] {
+export function cardRequest(idea: string, tastes?: Tastes, moods: readonly MoodPick[] = [], story?: StorySource): LlmMessage[] {
   const likes = tastes?.likes ?? []
   const dislikes = tastes?.dislikes ?? []
   const about =
@@ -129,12 +129,79 @@ export function cardRequest(idea: string, tastes?: Tastes, moods: readonly MoodP
           .join('\n')
       : ''
   const text = idea.trim().slice(0, MAX_IDEA_LENGTH)
-  const asked = text ? `The idea: ${text}` : NO_IDEA
+  const asked = text ? `The idea: ${text}` : story ? noIdeaIn(story.name) : NO_IDEA
   return [
     { role: 'system', content: INSTRUCTIONS },
-    { role: 'user', content: [asked, moodsSection(moods), about].filter(Boolean).join('\n\n') },
+    { role: 'user', content: [story && storySection(story), asked, moodsSection(moods), about].filter(Boolean).join('\n\n') },
   ]
 }
+
+// --- "Part of someone's story" ------------------------------------------------------
+// A new character written from the story of one the user already has: her mother, his
+// rival, the friend she keeps mentioning. The model gets that character's card (what makes
+// the story: who they are, the situation, the opening, the lorebook) and writes someone
+// else who lives in it, without contradicting it.
+
+/** What is read of the existing character. Their {{char}} is already their name. */
+export interface StorySource {
+  name: string
+  tagline: string
+  description: string
+  personality: string
+  scenario: string
+  firstMessage: string
+  /** Their lorebook notes, the ones in use. */
+  notes: string[]
+}
+
+/** Room for each part of the card, in characters: about 2,500 tokens in all, so the request still fits an 8k model. */
+const STORY_ROOM = { description: 3000, personality: 1000, scenario: 800, firstMessage: 1000, notes: 2000 }
+
+/** The parts of `character` a related character is written from. */
+export function storyOf(character: Pick<Character, 'name' | 'tagline' | 'description' | 'personality' | 'scenario' | 'firstMessage' | 'lorebook'>): StorySource {
+  const name = character.name.trim() || 'the other character'
+  const named = (text: string): string => text.replace(/\{\{\s*(char|bot)\s*\}\}|<(BOT|CHAR)>/gi, name).trim()
+  return {
+    name,
+    tagline: named(character.tagline),
+    description: named(character.description),
+    personality: named(character.personality),
+    scenario: named(character.scenario),
+    firstMessage: named(character.firstMessage),
+    notes: (character.lorebook?.entries ?? []).filter((entry) => entry.enabled && entry.content.trim()).map((entry) => named(entry.content)),
+  }
+}
+
+const cut = (text: string, room: number): string => (text.length > room ? `${text.slice(0, room).trimEnd()}…` : text)
+
+/** The existing character's card, and what the new one must do with it. */
+export function storySection(story: StorySource): string {
+  const { name } = story
+  const parts = [
+    story.tagline && `In one line: ${story.tagline}`,
+    story.description && `Description:\n${cut(story.description, STORY_ROOM.description)}`,
+    story.personality && `Personality:\n${cut(story.personality, STORY_ROOM.personality)}`,
+    story.scenario && `Scenario:\n${cut(story.scenario, STORY_ROOM.scenario)}`,
+    story.firstMessage && `How their chats open:\n${cut(story.firstMessage, STORY_ROOM.firstMessage)}`,
+    story.notes.length > 0 && `What else is known of their life:\n${cut(story.notes.map((note) => `- ${note}`).join('\n'), STORY_ROOM.notes)}`,
+  ].filter(Boolean)
+  return [
+    `This new character belongs to the story of a character who already exists: ${name}. Here is ${name}'s card.`,
+    `<${name}'s card>\n${parts.join('\n\n')}\n</${name}'s card>`,
+    [
+      `Write someone else, who lives in that same story: a different person from ${name}, with a voice of their own.`,
+      `Keep every fact of ${name}'s story as it is: names, places, the past, and how things stand between ${name} and {{user}}. Add to it, never contradict it, and do not move it on: the new character's scenario and first message happen in the same world, at a time that fits it.`,
+      `Call ${name} by name everywhere: {{char}} is the new character, never ${name}. {{user}} is the same person as in ${name}'s story, unless the idea says otherwise.`,
+      `Say in the description who the new character is to ${name}, and how each sees the other. One of the lorebook notes is about ${name}, with "${name}" among its keywords, as the new character knows them.`,
+      `Write in the language of ${name}'s card, unless the idea is written in another one, and in a style that sits well next to it, without copying its sentences.`,
+      `When either character is under 18, nothing romantic or sexual between the two of them, nor involving the younger one with anyone.`,
+    ].join(' '),
+  ].join('\n\n')
+}
+
+/** What stands for the idea, in someone's story, when the user has none. */
+const noIdeaIn = (name: string): string =>
+  `There is no idea this time: choose someone from ${name}'s story who would be good to meet, someone their card mentions or hints at, and make them specific and unexpected.`
 
 /** What stands for the idea when the user has none. */
 const NO_IDEA =

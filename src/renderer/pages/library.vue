@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Heart, MessageCircle, Pencil, Play, Plus, Search, Trash2, Upload } from '@lucide/vue'
+import { Heart, MessageCircle, Pencil, Play, Plus, Search, Trash2, Upload, UserRoundPlus } from '@lucide/vue'
 import { applyMacros } from '@core/prompt/macros'
 import type { Character, ImportResult, Scenario } from '@shared/types'
 
@@ -374,6 +374,15 @@ function onDrop(event: DragEvent): void {
           </button>
           <button
             type="button"
+            class="card-action card-story"
+            :aria-label="`New character from ${character.name}'s story`"
+            :title="`New character from ${character.name}'s story: a parent, a rival, a friend…`"
+            @click="characterEditor.openInStory(character)"
+          >
+            <UserRoundPlus :size="14" :stroke-width="2" />
+          </button>
+          <button
+            type="button"
             class="card-action card-edit"
             :aria-label="`Edit ${character.name}`"
             title="Edit character"
@@ -690,6 +699,9 @@ h2 {
 .card-edit {
   right: 44px;
 }
+.card-story {
+  right: 80px;
+}
 /* The heart sits on the other corner. It shows when the card is pointed at, and stays once pressed. */
 .card-like {
   position: absolute;
@@ -740,7 +752,8 @@ h2 {
 .card-action:focus-visible {
   opacity: 1;
 }
-.card-edit:hover {
+.card-edit:hover,
+.card-story:hover {
   background: var(--bg-selected);
   color: #fff;
 }

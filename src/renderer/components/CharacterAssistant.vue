@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { Check, Crown, Dices, Feather, Flame, KeyRound, Moon, PartyPopper, Sparkles, Square } from '@lucide/vue'
+import { Check, Crown, Dices, Feather, Flame, KeyRound, Moon, PartyPopper, Sparkles, Square, UserRoundPlus, X } from '@lucide/vue'
 import type { Component } from 'vue'
 import { CARD_MOODS, MAX_MOOD_LEVEL, MAX_MOODS } from '@core/cards/moods'
 import { MAX_IDEA_LENGTH, readWrittenCard, type CardSection, type WrittenCard } from '@core/cards/writeCard'
-import type { CardMood, MoodPick } from '@shared/types'
+import type { CardMood, Character, MoodPick } from '@shared/types'
 
 // "Describe your character": the user writes a sentence, picks a mood or two if they
 // like, and the model the app is connected to writes the whole card. With no sentence
@@ -17,6 +17,8 @@ const props = defineProps<{
    * when they would rather keep them.
    */
   mayReplace: () => Promise<boolean>
+  /** Opened as "Part of X's story" (from X's card or panel): the new character belongs to that story. */
+  inStory?: Character | null
 }>()
 
 const emit = defineEmits<{
@@ -31,6 +33,24 @@ const settingsStore = useSettingsStore()
 const model = computed(() => settingsStore.connection.model || 'the model')
 
 const idea = ref('')
+
+// "Part of someone's story": the new character is written from the card of one the user
+// already has (Sophie's mother, her rival…). The model reads that card first and keeps its
+// facts. Set when the editor is opened from a character, or picked here.
+const charactersStore = useCharactersStore()
+const inStory = ref<Character | null>(props.inStory ?? null)
+const choosingStory = ref(false)
+const storyChoices = computed(() => [...charactersStore.characters].sort((a, b) => a.name.localeCompare(b.name)))
+function chooseStory(event: Event): void {
+  const id = (event.target as HTMLSelectElement).value
+  inStory.value = charactersStore.characters.find((character) => character.id === id) ?? null
+  choosingStory.value = false
+}
+const placeholder = computed(() =>
+  inStory.value
+    ? `Who they are to ${inStory.value.name}: a parent, a rival, an old friend… and anything else you have in mind`
+    : 'A sarcastic librarian in a steampunk city who secretly sells forbidden books',
+)
 /** The count only shows once the idea gets near the limit. */
 /**
  * The idea box opens up only while it is being typed in. Once the user moves on to the
@@ -90,11 +110,19 @@ function moodTitle(mood: CardMood): string {
   return `${strengths[level - 1]}. ${next}${adult}`
 }
 
-const examples = [
-  'A grumpy lighthouse keeper who talks to the sea',
-  'The AI of a space station that is hiding something',
-  'A rival apprentice at a school of magic',
-]
+const examples = computed(() =>
+  inStory.value
+    ? [
+        `${inStory.value.name}'s parent, who sees it all differently`,
+        `${inStory.value.name}'s oldest friend`,
+        `Someone from ${inStory.value.name}'s past`,
+      ]
+    : [
+        'A grumpy lighthouse keeper who talks to the sea',
+        'The AI of a space station that is hiding something',
+        'A rival apprentice at a school of magic',
+      ],
+)
 
 // While the model writes, the panel shows it plainly: a light runs around it, in the
 // colors of the moods that were picked, and a row of steps fills in as the parts of the
@@ -189,7 +217,7 @@ async function write(): Promise<void> {
   })
 
   try {
-    const outcome = await window.api.characters.write({ requestId: id, idea: text, useTastes: useTastes.value, moods: moods.value.map((pick) => ({ ...pick })) })
+    const outcome = await window.api.characters.write({ requestId: id, idea: text, useTastes: useTastes.value, moods: moods.value.map((pick) => ({ ...pick })), storyOf: inStory.value?.id })
     if (!alive) return
 
     const card = readWrittenCard(outcome.text)
@@ -240,7 +268,39 @@ defineExpose({ stop })
     <div class="intro">
       <Sparkles class="spark" :size="14" :stroke-width="2" />
       <span class="title">Describe your character</span>
-      <span class="hint">and {{ model }} writes the rest. You can change everything afterwards.</span>
+      <span class="hint">
+        <template v-if="inStory">and {{ model }} writes someone from {{ inStory.name }}'s story, from their card.</template>
+        <template v-else>and {{ model }} writes the rest.</template>
+        You can change everything afterwards.
+      </span>
+    </div>
+
+    <div v-if="inStory || storyChoices.length > 0" class="story">
+      <template v-if="inStory">
+        <span class="story-chip">
+          <UserRoundPlus :size="13" :stroke-width="2" />From <strong>{{ inStory.name }}</strong>'s story
+          <button
+            type="button"
+            class="story-clear"
+            :disabled="busy"
+            aria-label="Not from another character's story"
+            title="Write a character of their own instead"
+            @click="inStory = null"
+          >
+            <X :size="12" :stroke-width="2.4" />
+          </button>
+        </span>
+      </template>
+      <label v-else-if="choosingStory" class="story-choose">
+        <span class="hint">From the story of</span>
+        <select class="field" :disabled="busy" @change="chooseStory" @keydown.escape.stop="choosingStory = false">
+          <option value="" selected disabled>Choose a character…</option>
+          <option v-for="character in storyChoices" :key="character.id" :value="character.id">{{ character.name }}</option>
+        </select>
+      </label>
+      <button v-else type="button" class="story-add" :disabled="busy" @click="choosingStory = true">
+        <UserRoundPlus :size="13" :stroke-width="2" />From another character's story…
+      </button>
     </div>
 
     <div class="row">
@@ -251,7 +311,7 @@ defineExpose({ stop })
         rows="2"
         :maxlength="MAX_IDEA_LENGTH"
         aria-label="Describe your character"
-        placeholder="A sarcastic librarian in a steampunk city who secretly sells forbidden books"
+        :placeholder="placeholder"
         :disabled="busy"
         autofocus
         @keydown.enter.exact.prevent="idea.trim() && write()"
@@ -607,6 +667,63 @@ defineExpose({ stop })
 .hint {
   font-size: 12px;
   color: var(--text-faint);
+}
+
+/* "Part of someone's story": a chip once chosen, a quiet link before. */
+.story {
+  display: flex;
+  align-items: center;
+  min-height: 26px;
+}
+.story-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px 3px 10px;
+  font-size: 12.5px;
+  color: var(--text);
+  background: color-mix(in oklab, var(--accent) 18%, transparent);
+  border: 1px solid color-mix(in oklab, var(--accent) 45%, transparent);
+  border-radius: var(--radius-pill);
+}
+.story-clear {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+}
+.story-clear:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--bg-button);
+}
+.story-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  font-size: 12px;
+  color: var(--text-faint);
+  background: none;
+  border: none;
+}
+.story-add:hover:not(:disabled) {
+  color: var(--text);
+}
+.story-choose {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.story-choose select {
+  width: auto;
+  min-width: 200px;
+  height: 28px;
+  font-size: 12.5px;
 }
 
 .row {

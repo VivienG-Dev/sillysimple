@@ -352,6 +352,7 @@ function finish(): void {
         v-if="!editing.character"
         ref="assistant"
         v-model:busy="assistBusy"
+        :in-story="editing.inStory ?? null"
         :may-replace="mayReplace"
         @written="onWritten"
       />
