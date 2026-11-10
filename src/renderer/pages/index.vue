@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Plus, Sparkles, Trash2, UserPlus, X } from '@lucide/vue'
+import { Plus, Sparkles, Trash2, X } from '@lucide/vue'
 import { applyMacros } from '@core/prompt/macros'
 import { detectMood, type Mood } from '@core/mood/detectMood'
 import { seededRandom, waitingLines } from '@core/mood/waiting'
@@ -143,12 +143,6 @@ const addable = computed(() => {
 })
 const sceneIsFull = computed(() => chatStore.members.length >= MAX_CHAT_MEMBERS)
 
-function addCharacter(event: Event): void {
-  const select = event.target as HTMLSelectElement
-  if (select.value) void chatStore.addMember(select.value)
-  select.value = '' // Back to the placeholder, so the same menu can be used again.
-}
-
 /** "with Professor Quill and Mara": who else is in the chat, under the title. */
 const sceneCaption = computed(() => {
   const names = chatStore.members.slice(1).map((member) => member.character.name)
@@ -245,10 +239,12 @@ useStickToBottom(scroller, () => [rows.value.length, chatStore.streamingReply?.t
           <option v-for="chat in chatStore.chats" :key="chat.id" :value="chat.id">{{ chatLabel(chat) }}</option>
         </select>
 
-        <!-- The button is a menu: the system's own list of characters opens over it -->
-        <label
-          class="btn btn-small add-character"
-          :class="{ disabled: chatStore.isBusy || sceneIsFull || addable.length === 0 }"
+        <!-- Opens a panel of the characters who can join, with their picture and who they are -->
+        <AddCharacterMenu
+          :characters="addable"
+          :disabled="chatStore.isBusy || sceneIsFull || addable.length === 0"
+          :places-left="MAX_CHAT_MEMBERS - chatStore.members.length"
+          :user-name="settingsStore.persona.name"
           :title="
             sceneIsFull
               ? `A chat can hold ${MAX_CHAT_MEMBERS} characters at most`
@@ -256,17 +252,8 @@ useStickToBottom(scroller, () => [rows.value.length, chatStore.streamingReply?.t
                 ? 'There is no other character to add'
                 : 'Bring another character into this chat'
           "
-        >
-          <UserPlus :size="14" :stroke-width="2" />Add a character
-          <select
-            aria-label="Add a character to this chat"
-            :disabled="chatStore.isBusy || sceneIsFull || addable.length === 0"
-            @change="addCharacter"
-          >
-            <option value="" disabled selected>Add to this chat…</option>
-            <option v-for="item in addable" :key="item.id" :value="item.id">{{ item.name }}</option>
-          </select>
-        </label>
+          @pick="chatStore.addMember($event)"
+        />
 
         <button
           type="button"
@@ -463,30 +450,6 @@ useStickToBottom(scroller, () => [rows.value.length, chatStore.streamingReply?.t
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.add-character {
-  position: relative;
-  -webkit-app-region: no-drag;
-}
-.add-character.disabled {
-  opacity: 0.5;
-}
-/* The real menu, invisible, laid over the button. */
-.add-character select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  opacity: 0;
-  cursor: pointer;
-}
-.add-character select:disabled {
-  cursor: default;
-}
-/* The menu cannot be seen, so its focus ring is drawn around the button instead. */
-.add-character:has(select:focus-visible) {
-  outline: 2px solid var(--accent-strong);
-  outline-offset: 2px;
 }
 
 .chat-picker {

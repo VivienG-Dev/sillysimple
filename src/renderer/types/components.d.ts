@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AddCharacterMenu: typeof import('./../components/AddCharacterMenu.vue')['default']
     ApiKeyField: typeof import('./../components/ApiKeyField.vue')['default']
     AppIcon: typeof import('./../components/AppIcon.vue')['default']
     AppMascot: typeof import('./../components/AppMascot.vue')['default']

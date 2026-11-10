@@ -6,8 +6,22 @@ What changes from one version of SillySimple to the next. The installers are on
 
 ## 0.1.8 (not released yet)
 
+### New
+
+- **Characters from the same story.** A new character can now be written from one you
+  already have: their mother, their rival, the friend they keep mentioning. *New character
+  from …'s story*, in the right panel (or the person-plus button on a card in the library),
+  opens *Describe your character* with that story attached; *From another character's
+  story…* picks one there. The model reads
+  that character's card first and keeps its facts: names, places, the past, and who you are
+  in it. The new card says who they are to each other and gets a lorebook note about them.
+
 ### Better
 
+- **A better way to add a character to a chat.** *Add a character* used to open a bare list
+  of names. It now opens a panel with each character's picture and the start of who they
+  are, a search field when the list is long, and the places left in the chat. Arrow keys
+  and Enter work too.
 - **Longer memory with large models.** The summary of a long chat used to stay under 700
   tokens whatever the model. It now grows with what the model can read: up to 2000 tokens
   with a 32k model, so a long story is summed up less tightly.
