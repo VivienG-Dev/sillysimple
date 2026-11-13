@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cardRequest, isGreeting, readWrittenCard, storyOf } from './writeCard'
+import { cardReplyTokens, cardRequest, CARD_REPLY_TOKENS, formatOf, isGreeting, readWrittenCard, storyOf } from './writeCard'
 
 const ANSWER = `### NAME
 Mara Venn
@@ -351,5 +351,67 @@ describe('a character from another one\'s story', () => {
     const long = storyOf({ ...sophie, description: 'word '.repeat(5000) } as typeof sophie)
     const [, user] = cardRequest('her rival', undefined, [], long)
     expect(user?.content.length).toBeLessThan(6000)
+  })
+})
+
+describe('a card written in the format of another', () => {
+  const helen = {
+    name: 'Helen Hawthorne',
+    description: '[\nName: Helen Hawthorne\nHair: ("Brunette" + "long, wavy")\nPersonality: ("Witty")\n]',
+    personality: '',
+    scenario: '',
+    exampleMessages: '',
+    firstMessage: '*Helen waves from the porch.*',
+    alternateGreetings: [],
+    lorebook: null,
+  } as unknown as Parameters<typeof formatOf>[0]
+
+  it('hides the example character\'s name, full and first', () => {
+    const format = formatOf(helen)
+    expect(format.description).toContain('Name: {{char}}')
+    expect(format.firstMessage).toBe('*{{char}} waves from the porch.*')
+  })
+
+  it('follows the example where it has a part, and the app\'s own way where it has none', () => {
+    const [system, user] = cardRequest('a lighthouse keeper', undefined, [], undefined, formatOf(helen))
+    expect(system?.content).toContain("written like the example's description")
+    expect(system?.content).toContain('Five to seven traits') // No personality in the example: the app's own guide.
+    expect(system?.content).toContain('### SECOND GREETING')
+    expect(user?.content).toContain('<example card>')
+    expect(user?.content).toContain('Hair: ("Brunette" + "long, wavy")')
+    expect(user?.content).not.toContain('Helen')
+  })
+
+  it('keeps the app\'s instructions without an example', () => {
+    expect(cardRequest('x')[0]?.content).not.toContain('example card')
+  })
+})
+
+describe('how many openings', () => {
+  it('says nothing when the user did not choose', () => {
+    expect(cardRequest('a pirate')[1]?.content).not.toContain('Openings:')
+  })
+
+  it('asks for exactly that many, with their headings, and makes room for them', () => {
+    const user = cardRequest('a pirate', undefined, [], undefined, undefined, 4)[1]?.content ?? ''
+    expect(user).toContain('write exactly 4 of them')
+    expect(user).toContain('### FOURTH GREETING')
+    expect(user).not.toContain('### FIFTH GREETING')
+    expect(cardReplyTokens(4)).toBeGreaterThan(CARD_REPLY_TOKENS)
+    expect(cardReplyTokens()).toBe(CARD_REPLY_TOKENS)
+  })
+
+  it('writes the count into the instructions, without the "unless the idea asks" rule', () => {
+    const system = cardRequest('a pirate', undefined, [], undefined, undefined, 4)[0]?.content ?? ''
+    expect(system).toContain('### FOURTH GREETING')
+    expect(system).toContain('exactly 4 openings')
+    expect(system).not.toContain('Stop there, unless')
+    expect(system).not.toContain('### FIFTH GREETING')
+    expect(cardRequest('a pirate')[0]?.content).toContain('Stop there, unless')
+  })
+
+  it('asks for the first message only with one, and keeps within five', () => {
+    expect(cardRequest('x', undefined, [], undefined, undefined, 1)[1]?.content).toContain('first message only')
+    expect(cardRequest('x', undefined, [], undefined, undefined, 9)[1]?.content).toContain('exactly 5')
   })
 })

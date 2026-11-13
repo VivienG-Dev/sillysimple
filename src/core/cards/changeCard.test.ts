@@ -26,7 +26,8 @@ describe('changeRequest', () => {
     expect(user?.content).toContain('### TAGS\nfantasy, mystery')
     expect(user?.content).toContain('2. Tomas, brother: Her brother, lost at sea.')
     expect(user?.content).toContain('### GREETING 2\n*The lamps flicker.*')
-    expect(user?.content.trim().endsWith('The change: Make her a man')).toBe(true)
+    expect(user?.content).toContain('The change: Make her a man')
+    expect(system?.content).toContain("keeps the card's own format")
   })
 })
 

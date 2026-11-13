@@ -4,7 +4,7 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { improveRequest, IMPROVE_REPLY_TOKENS, IMPROVE_TEMPERATURE, isTipId } from '@core/cards/reviewCard'
 import { changeRequest, CHANGE_REPLY_TOKENS, CHANGE_TEMPERATURE } from '@core/cards/changeCard'
 import { withoutComments } from '@core/prompt/comments'
-import { CARD_REPLY_TOKENS, CARD_TEMPERATURE, cardRequest, storyOf } from '@core/cards/writeCard'
+import { CARD_TEMPERATURE, cardReplyTokens, cardRequest, formatOf, storyOf } from '@core/cards/writeCard'
 import { cleanMoods, describeMoods } from '@core/cards/moods'
 import { isAbort } from '@core/engine/errors'
 import { cleanModelName } from '@core/engine/models'
@@ -1308,11 +1308,15 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
     // "Part of someone's story": read from the card file, never taken from the page.
     const source = typeof request.storyOf === 'string' && request.storyOf ? await getCharacter(request.storyOf) : null
     if (request.storyOf && !source) return { status: 'error', text: '', error: 'The character this one was to be based on is not there any more.' }
+    const greetings = typeof request.greetings === 'number' && Number.isInteger(request.greetings) ? request.greetings : undefined
+    // "Written like…": the layout of another card the user has, also read from its file.
+    const example = typeof request.formatOf === 'string' && request.formatOf ? await getCharacter(request.formatOf) : null
+    if (request.formatOf && !example) return { status: 'error', text: '', error: 'The card to take the format from is not there any more.' }
     return writeCard(event, request.requestId, {
-      messages: cardRequest(idea, tastes, moods, source ? storyOf(source) : undefined),
-      maxTokens: CARD_REPLY_TOKENS,
+      messages: cardRequest(idea, tastes, moods, source ? storyOf(source) : undefined, example ? formatOf(example) : undefined, greetings),
+      maxTokens: cardReplyTokens(greetings),
       temperature: CARD_TEMPERATURE,
-      what: [idea.trim() ? 'whole card' : 'whole card, no idea given', source && 'in another character\'s story', tastes && 'with tastes', moods.length > 0 && `moods: ${describeMoods(moods)}`]
+      what: [idea.trim() ? 'whole card' : 'whole card, no idea given', source && 'in another character\'s story', example && 'in another card\'s format', greetings && `${greetings} openings`, tastes && 'with tastes', moods.length > 0 && `moods: ${describeMoods(moods)}`]
         .filter(Boolean)
         .join(', '),
     })

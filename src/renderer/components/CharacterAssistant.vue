@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Check, Crown, Dices, Feather, Flame, KeyRound, Moon, PartyPopper, Sparkles, Square, UserRoundPlus, X } from '@lucide/vue'
+import { Check, Crown, Dices, Feather, Flame, KeyRound, Moon, PartyPopper, LayoutTemplate, Sparkles, Square, UserRoundPlus, X } from '@lucide/vue'
 import type { Component } from 'vue'
 import { CARD_MOODS, MAX_MOOD_LEVEL, MAX_MOODS } from '@core/cards/moods'
-import { MAX_IDEA_LENGTH, readWrittenCard, type CardSection, type WrittenCard } from '@core/cards/writeCard'
+import { MAX_GREETINGS, MAX_IDEA_LENGTH, readWrittenCard, type CardSection, type WrittenCard } from '@core/cards/writeCard'
 import type { CardMood, Character, MoodPick } from '@shared/types'
 
 // "Describe your character": the user writes a sentence, picks a mood or two if they
@@ -41,6 +41,20 @@ const charactersStore = useCharactersStore()
 const inStory = ref<Character | null>(props.inStory ?? null)
 const choosingStory = ref(false)
 const storyChoices = computed(() => [...charactersStore.characters].sort((a, b) => a.name.localeCompare(b.name)))
+// How many openings (the first message and the other greetings), chosen with a click.
+// "Auto": two, or as many as the idea asks for.
+const greetings = ref<number | null>(null)
+const greetingChoices = Array.from({ length: MAX_GREETINGS }, (_, index) => index + 1)
+
+// "Written like…": a card whose layout the new one follows (a bracketed list, W++, prose…),
+// field by field. Nothing of what it says is taken. Without one, the app's own format.
+const writtenLike = ref<Character | null>(null)
+const choosingFormat = ref(false)
+function chooseFormat(event: Event): void {
+  const id = (event.target as HTMLSelectElement).value
+  writtenLike.value = charactersStore.characters.find((character) => character.id === id) ?? null
+  choosingFormat.value = false
+}
 function chooseStory(event: Event): void {
   const id = (event.target as HTMLSelectElement).value
   inStory.value = charactersStore.characters.find((character) => character.id === id) ?? null
@@ -217,7 +231,7 @@ async function write(): Promise<void> {
   })
 
   try {
-    const outcome = await window.api.characters.write({ requestId: id, idea: text, useTastes: useTastes.value, moods: moods.value.map((pick) => ({ ...pick })), storyOf: inStory.value?.id })
+    const outcome = await window.api.characters.write({ requestId: id, idea: text, useTastes: useTastes.value, moods: moods.value.map((pick) => ({ ...pick })), storyOf: inStory.value?.id, formatOf: writtenLike.value?.id, greetings: greetings.value ?? undefined })
     if (!alive) return
 
     const card = readWrittenCard(outcome.text)
@@ -275,7 +289,7 @@ defineExpose({ stop })
       </span>
     </div>
 
-    <div v-if="inStory || storyChoices.length > 0" class="story">
+    <div v-if="storyChoices.length > 0 || inStory" class="story">
       <template v-if="inStory">
         <span class="story-chip">
           <UserRoundPlus :size="13" :stroke-width="2" />From <strong>{{ inStory.name }}</strong>'s story
@@ -299,7 +313,37 @@ defineExpose({ stop })
         </select>
       </label>
       <button v-else type="button" class="story-add" :disabled="busy" @click="choosingStory = true">
-        <UserRoundPlus :size="13" :stroke-width="2" />From another character's story…
+        <UserRoundPlus :size="14" :stroke-width="2" />From another character's story…
+      </button>
+      <span v-if="writtenLike" class="story-chip">
+        <LayoutTemplate :size="13" :stroke-width="2" />Written like <strong>{{ writtenLike.name }}</strong>
+        <button
+          type="button"
+          class="story-clear"
+          :disabled="busy"
+          aria-label="Use the app's own format"
+          title="Write it in the app's own format instead"
+          @click="writtenLike = null"
+        >
+          <X :size="12" :stroke-width="2.4" />
+        </button>
+      </span>
+      <label v-else-if="choosingFormat" class="story-choose">
+        <span class="hint">Written like</span>
+        <select class="field" :disabled="busy" @change="chooseFormat" @keydown.escape.stop="choosingFormat = false">
+          <option value="" selected disabled>Choose a card…</option>
+          <option v-for="character in storyChoices" :key="character.id" :value="character.id">{{ character.name }}</option>
+        </select>
+      </label>
+      <button
+        v-else
+        type="button"
+        class="story-add"
+        :disabled="busy"
+        title="Write the new card in the layout of a card you like: its labels, brackets, lists or prose, its lengths. Nothing of what it says is taken."
+        @click="choosingFormat = true"
+      >
+        <LayoutTemplate :size="14" :stroke-width="2" />In the format of another card…
       </button>
     </div>
 
@@ -349,6 +393,39 @@ defineExpose({ stop })
           <i v-for="step in MAX_MOOD_LEVEL" :key="step" :class="{ lit: step <= levelOf(mood) }" />
         </span>
       </button>
+    </div>
+
+    <div class="openings" role="radiogroup" aria-label="Openings">
+      <span class="hint">Openings:</span>
+      <button
+        type="button"
+        role="radio"
+        class="opening"
+        :class="{ on: greetings === null }"
+        :aria-checked="greetings === null"
+        :disabled="busy"
+        title="Two openings, or as many as your idea asks for"
+        @click="greetings = null"
+      >
+        Auto
+      </button>
+      <button
+        v-for="count in greetingChoices"
+        :key="count"
+        type="button"
+        role="radio"
+        class="opening"
+        :class="{ on: greetings === count }"
+        :aria-checked="greetings === count"
+        :disabled="busy"
+        :title="count === 1 ? 'The first message only' : `The first message and ${count - 1} other ${count === 2 ? 'opening' : 'openings'}, each for another situation`"
+        @click="greetings = count"
+      >
+        {{ count }}
+      </button>
+      <span v-if="greetings !== null" class="hint">
+        {{ greetings === 1 ? 'the first message only' : `the first message + ${greetings - 1} other ${greetings === 2 ? 'greeting' : 'greetings'}` }}
+      </span>
     </div>
 
     <label v-if="tastes.length > 0" class="tastes" :title="`What is noted about how you play: ${tastes.join(', ')}.`">
@@ -672,9 +749,12 @@ defineExpose({ stop })
 /* "Part of someone's story": a chip once chosen, a quiet link before. */
 .story {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 6px 14px;
   min-height: 26px;
 }
+
 .story-chip {
   display: inline-flex;
   align-items: center;
@@ -701,18 +781,35 @@ defineExpose({ stop })
   color: var(--text);
   background: var(--bg-button);
 }
+/* Two optional starting points, shown as dashed pills: clearly buttons, quieter than the main one. */
 .story-add {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 0;
-  font-size: 12px;
-  color: var(--text-faint);
-  background: none;
-  border: none;
+  height: 28px;
+  padding: 0 12px 0 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-panel);
+  border: 1px dashed var(--border-hover);
+  border-radius: var(--radius-pill);
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background 0.15s;
+}
+.story-add svg {
+  color: var(--accent-strong);
 }
 .story-add:hover:not(:disabled) {
   color: var(--text);
+  border-style: solid;
+  border-color: var(--accent-strong);
+  background: color-mix(in oklab, var(--accent) 12%, var(--bg-panel));
+}
+.story-add:disabled {
+  opacity: 0.5;
 }
 .story-choose {
   display: flex;
@@ -724,6 +821,42 @@ defineExpose({ stop })
   min-width: 200px;
   height: 28px;
   font-size: 12.5px;
+}
+
+/* How many openings: small pills, one lit. */
+.openings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+.opening {
+  min-width: 30px;
+  height: 26px;
+  padding: 0 9px;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background 0.15s;
+}
+.opening:hover:not(:disabled):not(.on) {
+  color: var(--text);
+  border-color: var(--border-hover);
+}
+.opening.on {
+  color: #fff;
+  background: var(--accent);
+  border-color: transparent;
+}
+.opening:disabled:not(.on) {
+  opacity: 0.5;
 }
 
 .row {

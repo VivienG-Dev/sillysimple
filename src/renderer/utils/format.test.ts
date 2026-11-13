@@ -70,3 +70,28 @@ describe('formatMessage and a line break inside a quote', () => {
     expect(formatMessage('"Wait\n\nwhat." she says.')).toBe('<p>&quot;Wait</p><p>what.&quot; she says.</p>')
   })
 })
+
+describe('formatMessage and a name before what is said', () => {
+  it('starts a paragraph at each "Name:" after the end of a sentence, with the name in bold', () => {
+    expect(formatMessage('The door opens. Kara: "You came." Old Tom: *nods slowly*')).toBe(
+      '<p>The door opens.</p>' +
+        '<p><strong class="speaker">Kara:</strong> <span class="say">&quot;You came.&quot;</span></p>' +
+        '<p><strong class="speaker">Old Tom:</strong> <em>nods slowly</em></p>',
+    )
+  })
+
+  it('makes a line that starts with a name a paragraph of its own', () => {
+    expect(formatMessage('Rain on the glass.\nKara: Not now.')).toBe('<p>Rain on the glass.</p><p><strong class="speaker">Kara:</strong> Not now.</p>')
+  })
+
+  it('does the same with a non-breaking space around the name', () => {
+    expect(formatMessage('"Ask me."\u00a0Kara:\u00a0*Her lips tingle.*')).toBe(
+      '<p><span class="say">&quot;Ask me.&quot;</span></p><p><strong class="speaker">Kara:</strong>\u00a0<em>Her lips tingle.</em></p>',
+    )
+  })
+
+  it('leaves a colon inside a sentence alone', () => {
+    expect(formatMessage('She knows one rule: never look back.')).toBe('<p>She knows one rule: never look back.</p>')
+    expect(formatMessage('He says Note: this is fine.')).toBe('<p>He says Note: this is fine.</p>')
+  })
+})

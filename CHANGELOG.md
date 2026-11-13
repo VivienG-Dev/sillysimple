@@ -8,6 +8,14 @@ What changes from one version of SillySimple to the next. The installers are on
 
 ### New
 
+- **Choose how many openings.** *Describe your character* has an *Openings* row: *Auto* (two,
+  or as many as the idea asks) or 1 to 5, the first message included. No need to write
+  "with three greetings" in the idea any more.
+- **New characters in the format of a card you like.** *In the format of another card…*, in
+  *Describe your character*, picks a card whose layout the new one follows: a bracketed
+  list, W++, plain prose, its labels and its lengths. Nothing of what that card says is
+  taken; its character's name is not even shown to the model. Without one, cards are
+  written in the app's own format, as before.
 - **Change a character in a few words.** In the editor of a character you have, *Change it*
   takes what should be different (another gender, another era, shyer, a new name) and the
   model rewrites only the parts of the card that this touches: description, greetings,
@@ -47,6 +55,8 @@ What changes from one version of SillySimple to the next. The installers are on
 
 ### Fixed
 
+- **"Kara: …" starts a new paragraph.** When a reply gives each speaker's lines after their
+  name, it all ran together in one block. Each name now starts its own paragraph, in bold.
 - **A stressed word in a line of dialogue looks stressed.** In `"I'm *growing up* fast"`, the
   word between asterisks took the dim colour of actions and seemed to drop out of the line.
   Inside quotes it now keeps the colour of speech, in italics.

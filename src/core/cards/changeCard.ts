@@ -37,12 +37,14 @@ export interface CardChange {
 /** How many tokens the model may write: a change that touches every part of a long card is long too. */
 export const CHANGE_REPLY_TOKENS = 6000
 /** Low: the model is to change what is asked, not to rewrite with fresh ideas. */
-export const CHANGE_TEMPERATURE = 0.4
+export const CHANGE_TEMPERATURE = 0.3
 export const MAX_CHANGE_LENGTH = 2000
 
 const INSTRUCTIONS = `You edit character cards for a roleplay chat app. You are given a card, under headings, and a change the person wants. Make that change everywhere in the card where it shows, and nothing else.
 
 Rewrite a part only when the change touches it. Then write that part again in full, and keep everything in it that the change does not reach exactly as it was: the same sentences, the same length, the same layout, the same *asterisks* and "quotes", {{char}} and {{user}} where they were. Never shorten a part or sum it up. A part the change does not touch is left out of your answer.
+
+Every part keeps the card's own format, even when the change rewrites most of it. What you write new is written the way the rest of that part is written: a list of labels in brackets stays a list of labels in brackets, with the same labels in the same order; W++ stays W++; prose stays prose, in the same person and tense; a greeting keeps the length, the mix of *actions* and "speech" and the paragraphs of the one it replaces. Never turn a list into prose or prose into a list, and never add labels or sections the card does not have.
 
 Answer with the parts you rewrite only, each under its heading on a line of its own, written as in the card: ### NAME, ### TAGLINE, ### DESCRIPTION, ### PERSONALITY, ### SCENARIO, ### EXAMPLE DIALOGUE, ### TAGS (one line, separated by commas), ### LORE, ### FIRST MESSAGE, ### GREETING 2, ### GREETING 3 and so on. Nothing before the first heading and nothing after the last part: no comment, no summary of what you changed.
 
@@ -77,7 +79,10 @@ function cardText(card: ChangedCard): string {
 export function changeRequest(card: ChangedCard, change: string): LlmMessage[] {
   return [
     { role: 'system', content: INSTRUCTIONS },
-    { role: 'user', content: `The card:\n\n${cardText(card)}\n\nThe change: ${change.trim().slice(0, MAX_CHANGE_LENGTH)}` },
+    {
+      role: 'user',
+      content: `The card:\n\n${cardText(card)}\n\nThe change: ${change.trim().slice(0, MAX_CHANGE_LENGTH)}\n\n(Write each part you rewrite in the card's own format, as it is above.)`,
+    },
   ]
 }
 

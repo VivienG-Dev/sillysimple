@@ -744,6 +744,10 @@ export interface WriteCharacterRequest {
   useTastes?: boolean
   /** A character the user has: the new one belongs to their story ("Part of Sophie's story"). */
   storyOf?: string
+  /** A character the user has whose card layout the new one is written in ("Written like…"). */
+  formatOf?: string
+  /** How many openings to write, the first message included (1 to 5). Absent: as the idea says, two by default. */
+  greetings?: number
 }
 
 /**

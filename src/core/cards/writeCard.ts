@@ -113,8 +113,19 @@ export function sectionGuide(section: CardSection): string {
  * account ("Use my tastes"). The idea always comes first: tastes only fill what it leaves open.
  * `moods`: what the user asked for with a click or three (see moods.ts).
  * Without an idea ("Surprise me"), the model invents the character.
+ * `greetings`: how many openings the user asked for with the buttons, the first message
+ * included (1 to MAX_GREETINGS); without it, two, or as many as the idea asks.
+ * `story`: an existing character whose story the new one belongs to. `format`: a card whose
+ * layout the new one is written in ("Written like…"); without one, the app's own format.
  */
-export function cardRequest(idea: string, tastes?: Tastes, moods: readonly MoodPick[] = [], story?: StorySource): LlmMessage[] {
+export function cardRequest(
+  idea: string,
+  tastes?: Tastes,
+  moods: readonly MoodPick[] = [],
+  story?: StorySource,
+  format?: FormatSource,
+  greetings?: number,
+): LlmMessage[] {
   const likes = tastes?.likes ?? []
   const dislikes = tastes?.dislikes ?? []
   const about =
@@ -131,8 +142,13 @@ export function cardRequest(idea: string, tastes?: Tastes, moods: readonly MoodP
   const text = idea.trim().slice(0, MAX_IDEA_LENGTH)
   const asked = text ? `The idea: ${text}` : story ? noIdeaIn(story.name) : NO_IDEA
   return [
-    { role: 'system', content: INSTRUCTIONS },
-    { role: 'user', content: [story && storySection(story), asked, moodsSection(moods), about].filter(Boolean).join('\n\n') },
+    { role: 'system', content: withGreetings(format ? instructionsLike(format) : INSTRUCTIONS, greetings) },
+    {
+      role: 'user',
+      content: [format && formatSection(format), story && storySection(story), asked, moodsSection(moods), about, greetingsSection(greetings)]
+        .filter(Boolean)
+        .join('\n\n'),
+    },
   ]
 }
 
@@ -398,4 +414,140 @@ function asTag(text: string): string {
 function examplesOf(text: string): string {
   if (!text) return ''
   return /<START>/i.test(text) ? text : `<START>\n${text}`
+}
+
+// --- "Written like…": the format of a card the user likes --------------------------
+// Card writers have their own layouts: bracketed lists ("Hair: ("Brunette" + "long")"),
+// W++, plain prose, headed sections. The user picks a card whose layout they like and
+// the new character is written in it, field by field: the same labels, brackets and
+// lengths, nothing of what the card says. A field the example leaves empty is written
+// the app's own way. The answer keeps the app's headings, so it is read as any other.
+
+/** A card's fields, as the format to follow. Its character's name is replaced by {{char}}. */
+export interface FormatSource {
+  description: string
+  personality: string
+  scenario: string
+  exampleMessages: string
+  firstMessage: string
+  /** The greetings after the first one, for their layout too. Only whether there are some matters. */
+  hasOtherGreetings: boolean
+  notes: string[]
+}
+
+/** Room for each field of the example, in characters: enough to see its layout, about 3,000 tokens in all. */
+const FORMAT_ROOM = { description: 4000, personality: 1500, scenario: 600, exampleMessages: 1800, firstMessage: 1800, notes: 1000 }
+
+/** The parts of `character` a card is written like. Their name, and first name, become {{char}}: never copied. */
+export function formatOf(
+  character: Pick<Character, 'name' | 'description' | 'personality' | 'scenario' | 'exampleMessages' | 'firstMessage' | 'alternateGreetings' | 'lorebook'>,
+): FormatSource {
+  const names = [character.name.trim(), ...character.name.trim().split(/\s+/).filter((word) => word.length > 2)]
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length)
+    .map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const pattern = names.length > 0 ? new RegExp(`\\b(?:${names.join('|')})\\b`, 'g') : null
+  const unnamed = (text: string): string => {
+    const trimmed = text.replace(/<(BOT|CHAR)>/gi, '{{char}}').trim()
+    return pattern ? trimmed.replace(pattern, '{{char}}') : trimmed
+  }
+  return {
+    description: unnamed(character.description),
+    personality: unnamed(character.personality),
+    scenario: unnamed(character.scenario),
+    exampleMessages: unnamed(character.exampleMessages),
+    firstMessage: unnamed(character.firstMessage),
+    hasOtherGreetings: character.alternateGreetings.some((text) => text.trim()),
+    notes: (character.lorebook?.entries ?? []).filter((entry) => entry.content.trim()).map((entry) => unnamed(entry.content)),
+  }
+}
+
+/** The example card, under the names its parts have in the answer. */
+export function formatSection(format: FormatSource): string {
+  const part = (heading: string, text: string, room: number): string | false =>
+    Boolean(text) && `[${heading}]\n${text.length > room ? `${text.slice(0, room).trimEnd()}\n[…]` : text}`
+  const parts = [
+    part('DESCRIPTION', format.description, FORMAT_ROOM.description),
+    part('PERSONALITY', format.personality, FORMAT_ROOM.personality),
+    part('SCENARIO', format.scenario, FORMAT_ROOM.scenario),
+    part('EXAMPLE DIALOGUE', format.exampleMessages, FORMAT_ROOM.exampleMessages),
+    part('LORE', format.notes.slice(0, 4).join('\n'), FORMAT_ROOM.notes),
+    part('FIRST MESSAGE', format.firstMessage, FORMAT_ROOM.firstMessage),
+  ].filter(Boolean)
+  return [
+    'The example card, for its format only. Its character is someone else: nothing of who they are goes into the new card.',
+    `<example card>\n${parts.join('\n\n')}\n</example card>`,
+  ].join('\n\n')
+}
+
+/** What the example has in each part: the system message says to follow it there, and the app's way elsewhere. */
+function instructionsLike(format: FormatSource): string {
+  const head = INSTRUCTIONS.slice(0, INSTRUCTIONS.indexOf('Answer with these sections'))
+  const like = (field: string, text: string, section: CardSection): string =>
+    text
+      ? `Laid out and written like the example's ${field}: the same labels, brackets, lists or prose, the same kind of detail, about as long. Only the layout and the way of writing are the example's.`
+      : sectionGuide(section)
+  const sections: [CardSection, string][] = [
+    ['NAME', sectionGuide('NAME')],
+    ['TAGLINE', sectionGuide('TAGLINE')],
+    ['DESCRIPTION', like('description', format.description, 'DESCRIPTION')],
+    ['PERSONALITY', like('personality', format.personality, 'PERSONALITY')],
+    ['SCENARIO', like('scenario', format.scenario, 'SCENARIO')],
+    ['EXAMPLE DIALOGUE', like('example dialogue', format.exampleMessages, 'EXAMPLE DIALOGUE')],
+    ['TAGS', sectionGuide('TAGS')],
+    [
+      'LORE',
+      `${sectionGuide('LORE')}${format.notes.length > 0 ? ' The note itself is written like the example\'s notes.' : ''}`,
+    ],
+    ['FIRST MESSAGE', like('first message', format.firstMessage, 'FIRST MESSAGE')],
+    ['SECOND GREETING', format.firstMessage ? 'Another opening message, written the same way and as long, for a different situation or mood.' : sectionGuide('SECOND GREETING')],
+  ]
+  return `${head}This time the card follows the format of an example card, given with the idea: write each part the way the same part of the example is laid out and written. Take nothing of what it says: the new character is someone else, with their own name, looks, past, people and places. Where the example says {{char}}, it means its own character: write the new character's details there.
+
+Answer with these sections, each heading on its own line, in this order, and nothing before the first one or after the last one:
+
+${sections.map(([section, guide]) => `### ${section}\n${guide}`).join('\n\n')}
+
+${INSTRUCTIONS.slice(INSTRUCTIONS.indexOf('Stop there'))}`
+}
+
+// --- How many openings -------------------------------------------------------------
+
+/** The most openings a written card can have: the first message and four more (SECOND to FIFTH GREETING). */
+export const MAX_GREETINGS = 5
+const GREETING_HEADINGS = ['FIRST MESSAGE', 'SECOND GREETING', 'THIRD GREETING', 'FOURTH GREETING', 'FIFTH GREETING']
+
+/** The line that says how many openings to write, when the user chose. It goes last, where it is read last. */
+export function greetingsSection(greetings?: number): string {
+  if (greetings === undefined || !Number.isInteger(greetings)) return ''
+  const count = Math.min(MAX_GREETINGS, Math.max(1, greetings))
+  if (count === 1) return 'Openings: write the first message only, and no other greeting: end the answer after ### FIRST MESSAGE.'
+  const headings = GREETING_HEADINGS.slice(0, count).map((heading) => `### ${heading}`)
+  return `Openings: write exactly ${count} of them, whatever the idea says: ${headings.join(', ')}. Each one as long as the first, each for another situation or mood.`
+}
+
+/**
+ * The instructions with the openings the user chose written into them: the list of
+ * headings ends with exactly that many, and "stop there unless the idea asks for more"
+ * is gone, so the two never pull against each other. Without a choice, as they are.
+ */
+function withGreetings(instructions: string, greetings?: number): string {
+  if (greetings === undefined || !Number.isInteger(greetings)) return instructions
+  const count = Math.min(MAX_GREETINGS, Math.max(1, greetings))
+  const start = instructions.lastIndexOf('### SECOND GREETING')
+  if (start === -1) return instructions
+  const others = GREETING_HEADINGS.slice(1, count).map(
+    (heading) => `### ${heading}\nAnother opening message, written like the first one and as long, for a different situation or mood than the ones before.`,
+  )
+  const end =
+    count === 1
+      ? 'Stop after the first message: this card has no other greeting.'
+      : `Stop after ### ${GREETING_HEADINGS[count - 1]}: the card has exactly ${count} openings, the first message included.`
+  return `${instructions.slice(0, start)}${[...others, end].join('\n\n')}`
+}
+
+/** Room for the answer: a full card, and some two hundred tokens more for each opening past the second. */
+export function cardReplyTokens(greetings?: number): number {
+  const count = greetings === undefined ? 2 : Math.min(MAX_GREETINGS, Math.max(1, greetings))
+  return CARD_REPLY_TOKENS + Math.max(0, count - 2) * 300
 }

@@ -32,6 +32,17 @@ function mediaHtml(markdownAlt: string | undefined, markdownSource: string | und
   return `<img class="media-picture" src="${address}" alt="${escapeHtml(alt)}" loading="lazy" referrerpolicy="no-referrer" />`
 }
 
+// "Kara: …": a character's name before what they say, as models write a scene with several
+// voices. Up to three capitalised words and a colon. Each such line starts a paragraph of
+// its own, with the name in bold, instead of running on in one block. In the middle of a
+// line, only after the end of a sentence and before a quote or an action, so that "Note:"
+// or "Rule: …" inside a sentence is left alone.
+const NAME = String.raw`\p{Lu}[\p{L}\p{M}'’-]*(?: \p{Lu}[\p{L}\p{M}'’-]*){0,2}`
+// [^\S\n]: any space but a line break, non-breaking and thin ones included: some models write those.
+const SPEAKER_AT_LINE = new RegExp(String.raw`\n[^\S\n]*(?=${NAME}:[^\S\n])`, 'gu')
+const SPEAKER_IN_LINE = new RegExp(String.raw`([.!?…"”»*])[^\S\n]+(?=${NAME}:[^\S\n]*["“«*])`, 'gu')
+const SPEAKER_LABEL = new RegExp(String.raw`^(${NAME}):(?=\s)`, 'u')
+
 /** A paragraph that is all one action: between asterisks from start to end. */
 const WHOLE_ACTION = /^\*([^*\n]+)\*$/
 /** From this many characters on, such a paragraph is narration, not an action. */
@@ -63,6 +74,8 @@ export function formatMessage(text: string, options: { media?: boolean; styled?:
       media.push(html)
       return MARK(media.length - 1)
     })
+    .replace(SPEAKER_IN_LINE, '$1\n\n')
+    .replace(SPEAKER_AT_LINE, '\n\n')
 
   return escapeHtml(marked)
     .trim()
@@ -70,7 +83,9 @@ export function formatMessage(text: string, options: { media?: boolean; styled?:
     .map((paragraph) => paragraph.trim())
     .filter(Boolean)
     .map((paragraph) => {
-      const withBold = paragraph.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+      const withBold = paragraph
+        .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+        .replace(SPEAKER_LABEL, '<strong class="speaker">$1:</strong>')
       // A whole paragraph between asterisks is not an action slipped into a line: it is how
       // that model writes its narration. In italics and dimmed it tires the eye over a long
       // reply (Vivien, 16 October), so it is shown as plain telling. A short one ("*nods*")
