@@ -58,3 +58,15 @@ describe('formatMessage and HTML comments', () => {
     expect(html).toBe('<p>She waves.</p>')
   })
 })
+
+describe('formatMessage and a line break inside a quote', () => {
+  it('keeps what is said as one, across the line break', () => {
+    expect(formatMessage('She stares. "Too\nwhat." Then silence.')).toBe(
+      '<p>She stares. <span class="say">&quot;Too<br>what.&quot;</span> Then silence.</p>',
+    )
+  })
+
+  it('does not run a quote over into the next paragraph', () => {
+    expect(formatMessage('"Wait\n\nwhat." she says.')).toBe('<p>&quot;Wait</p><p>what.&quot; she says.</p>')
+  })
+})

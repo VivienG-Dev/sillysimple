@@ -20,6 +20,7 @@ declare module 'vue' {
     AppTitleBar: typeof import('./../components/AppTitleBar.vue')['default']
     AppTour: typeof import('./../components/AppTour.vue')['default']
     CardAdvice: typeof import('./../components/CardAdvice.vue')['default']
+    CardChange: typeof import('./../components/CardChange.vue')['default']
     CardCredit: typeof import('./../components/CardCredit.vue')['default']
     CharacterAssistant: typeof import('./../components/CharacterAssistant.vue')['default']
     CharacterAvatar: typeof import('./../components/CharacterAvatar.vue')['default']

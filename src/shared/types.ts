@@ -38,6 +38,8 @@ export interface Character {
   creator?: CardCreator
   /** Present when the user marked this character as one they like. Kept in the card, where SillyTavern keeps it too. */
   favorite?: boolean
+  /** Saved from another character with "Save as new character": that one's name. Kept in the card. */
+  copyOf?: string
   /** The voice the user gave this character, for each voice service they used. Kept in the card. */
   voices?: Partial<Record<VoiceService, VoiceChoice>>
   /** Address of the card's picture, when the card is a .png. */
@@ -797,6 +799,31 @@ export interface ReviewedCard {
   loreCount: number
   /** The keywords of those notes, to tell the model what is already covered. */
   loreKeys?: string[]
+}
+
+/** A card as the model reads it for a change asked in words ("Change it", see src/core/cards/changeCard.ts). */
+export interface ChangedCard {
+  name: string
+  tagline: string
+  description: string
+  personality: string
+  scenario: string
+  exampleMessages: string
+  tags: string[]
+  firstMessage: string
+  alternateGreetings: string[]
+  /** Every lorebook note, in the editor's order: the model names them by their place. */
+  lore: { keys: string[]; content: string }[]
+}
+
+/** Asks the model to change a card the way the user said. */
+export interface ChangeCharacterRequest {
+  /** As for WriteCharacterRequest. */
+  requestId: string
+  /** The card as it is in the editor, saved or not. */
+  card: ChangedCard
+  /** What should be different, in the user's words. */
+  change: string
 }
 
 /** Asks the model for the one part of a card a piece of advice is about (see src/core/cards/reviewCard.ts). */

@@ -8,6 +8,16 @@ What changes from one version of SillySimple to the next. The installers are on
 
 ### New
 
+- **Change a character in a few words.** In the editor of a character you have, *Change it*
+  takes what should be different (another gender, another era, shyer, a new name) and the
+  model rewrites only the parts of the card that this touches: description, greetings,
+  lorebook notes and the rest, keeping everything else word for word. The parts change in
+  the editor as they are written; nothing is saved until you save, and *Undo* puts the
+  card back as it was.
+- **Save as new character.** The editor of a character you have can now save what is in it
+  as another character, picture and lorebook included, and leave the original as it was:
+  a changed version next to the first one, by hand or with *Change it*. Under the same name
+  it becomes "Mara 2", and its card in the library says *Version*.
 - **Characters from the same story.** A new character can now be written from one you
   already have: their mother, their rival, the friend they keep mentioning. *New character
   from …'s story*, in the right panel (or the person-plus button on a card in the library),
@@ -37,6 +47,12 @@ What changes from one version of SillySimple to the next. The installers are on
 
 ### Fixed
 
+- **A stressed word in a line of dialogue looks stressed.** In `"I'm *growing up* fast"`, the
+  word between asterisks took the dim colour of actions and seemed to drop out of the line.
+  Inside quotes it now keeps the colour of speech, in italics.
+- **A line break inside quotes no longer splits what is said.** In `"Too` / `what."`, the
+  second line lost the colour of speech, and the voice read it as narration. Quotes now
+  hold across a line break (not across a blank line, which starts a new paragraph).
 - **Hidden notes in cards stay hidden.** Some cards hold notes for the model between
   `<!--` and `-->`. They showed in the chat, pictures inside them included. As in
   SillyTavern, they are now only for the model: not shown, not read aloud, not taken for

@@ -37,9 +37,10 @@ const WHOLE_ACTION = /^\*([^*\n]+)\*$/
 /** From this many characters on, such a paragraph is narration, not an action. */
 const TOLD_LENGTH = 80
 
-// What is said out loud, between quotes: "…", “…” or « … ». On one line, the quotes kept.
-// (Escaped first, so a straight quote reads &quot; here.)
-const SPOKEN = /&quot;[^\n]*?&quot;|“[^”\n]*”|«[^»\n]*»/g
+// What is said out loud, between quotes: "…", “…” or « … ». Within a paragraph, so a line
+// that breaks in the middle of a reply ("Too
+// what.") stays one; the quotes are kept. (Escaped first, so a straight quote reads &quot; here.)
+const SPOKEN = /&quot;[\s\S]*?&quot;|“[^”]*”|«[^»]*»/g
 
 /**
  * Turns roleplay text into safe HTML: *actions* become italics, **words** bold, blank lines

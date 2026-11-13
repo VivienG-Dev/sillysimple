@@ -2,6 +2,7 @@ import { copyFile, rename, rm, writeFile } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { improveRequest, IMPROVE_REPLY_TOKENS, IMPROVE_TEMPERATURE, isTipId } from '@core/cards/reviewCard'
+import { changeRequest, CHANGE_REPLY_TOKENS, CHANGE_TEMPERATURE } from '@core/cards/changeCard'
 import { withoutComments } from '@core/prompt/comments'
 import { CARD_REPLY_TOKENS, CARD_TEMPERATURE, cardRequest, storyOf } from '@core/cards/writeCard'
 import { cleanMoods, describeMoods } from '@core/cards/moods'
@@ -85,6 +86,8 @@ import {
   type DataSummary,
   type EngineStatus,
   type GenerateRequest,
+  type ChangeCharacterRequest,
+  type ChangedCard,
   type ImproveCharacterRequest,
   type ModelInfo,
   type NoticeEvent,
@@ -107,6 +110,7 @@ import {
 import {
   adoptCard,
   cardFile,
+  copyCharacter,
   createCharacter,
   getCharacter,
   importCards,
@@ -449,6 +453,10 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
 
   ipcMain.handle(IPC.charactersCreate, (_event, draft: CharacterDraft, portrait?: Uint8Array) =>
     createCharacter(draft, portrait),
+  )
+
+  ipcMain.handle(IPC.charactersCopy, (_event, id: string, draft: CharacterDraft, portrait?: Uint8Array) =>
+    copyCharacter(String(id), draft, portrait),
   )
 
   ipcMain.handle(IPC.charactersUpdate, async (_event, id: string, draft: CharacterDraft, portrait?: Uint8Array) => {
@@ -1310,6 +1318,19 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
     })
   })
 
+  // "Change it": the parts of a card that a change asked in words touches.
+  ipcMain.handle(IPC.charactersChange, async (event, request: ChangeCharacterRequest): Promise<WriteCharacterOutcome> => {
+    const change = typeof request.change === 'string' ? request.change.trim() : ''
+    if (!change) return { status: 'error', text: '', error: 'Say what should change first.' }
+    const card = cleanChangedCard(request.card)
+    return writeCard(event, request.requestId, {
+      messages: changeRequest(card, change),
+      maxTokens: CHANGE_REPLY_TOKENS,
+      temperature: CHANGE_TEMPERATURE,
+      what: 'change',
+    })
+  })
+
   // Advice on a character: the one part of the card a piece of advice is about.
   ipcMain.handle(IPC.charactersImprove, async (event, request: ImproveCharacterRequest): Promise<WriteCharacterOutcome> => {
     const messages = isTipId(request.tip) ? improveRequest(request.card, request.tip) : null
@@ -1424,4 +1445,22 @@ export function registerIpcHandlers(db: SwappableDatabase, keys: KeyStore, dataF
       return { status: 'done', value: null }
     }),
   )
+}
+
+/** A card sent by the page for a change, read field by field: anything else is dropped. */
+function cleanChangedCard(card: Partial<ChangedCard> | undefined): ChangedCard {
+  const text = (value: unknown): string => (typeof value === 'string' ? value : '')
+  const texts = (value: unknown): string[] => (Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [])
+  return {
+    name: text(card?.name),
+    tagline: text(card?.tagline),
+    description: text(card?.description),
+    personality: text(card?.personality),
+    scenario: text(card?.scenario),
+    exampleMessages: text(card?.exampleMessages),
+    tags: texts(card?.tags),
+    firstMessage: text(card?.firstMessage),
+    alternateGreetings: texts(card?.alternateGreetings),
+    lore: (Array.isArray(card?.lore) ? card.lore : []).map((note) => ({ keys: texts(note?.keys), content: text(note?.content) })),
+  }
 }

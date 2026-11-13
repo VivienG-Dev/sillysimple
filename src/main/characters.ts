@@ -1,6 +1,6 @@
 import { copyFile, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { basename, extname, join } from 'node:path'
-import { applyDraft, applyFavorite, applyVoice, parseCardFile, parseJsonBytes, toCardV2 } from '@core/cards/parseCard'
+import { applyCopyOf, applyDraft, applyFavorite, applyVoice, parseCardFile, parseJsonBytes, toCardV2 } from '@core/cards/parseCard'
 import { readCardsFromPng, writeCardsToPng, type CardKeyword } from '@core/cards/png'
 import { PORTRAIT_SCHEME } from '@shared/ipc'
 import type { Character, CharacterDraft, ImportResult, VoiceChoice, VoiceService } from '@shared/types'
@@ -137,6 +137,38 @@ export async function updateCharacter(id: string, draft: CharacterDraft, portrai
   await writeSafely(join(directory, pictureName), pictureCard(portrait, card))
   await rm(path) // Everything it held is now inside the picture.
   return readCharacter(pictureName)
+}
+
+/**
+ * "Save as new character": a new card file made from a copy of `id`'s, with the editor's
+ * changes applied, the way updateCharacter does. Everything the editor does not show
+ * (creator notes, lorebook settings, other apps' data) comes along, and the picture too
+ * unless a new one is given. The original card is not touched.
+ */
+export async function copyCharacter(id: string, draft: CharacterDraft, portrait?: Uint8Array): Promise<Character> {
+  checkDraft(draft, portrait)
+
+  const fileName = await fileNameOf(id)
+  if (!fileName) throw new Error('This character no longer exists.')
+  const bytes = await readFile(join(directory, fileName))
+  // The copy says whose version it is (shown on its card), unless the original was a copy itself.
+  const original = await readCharacter(fileName)
+  const from = original.copyOf ?? original.name
+  const mark = (card: unknown): Record<string, unknown> => applyCopyOf(applyDraft(card, draft), from)
+
+  if (isPng(fileName)) {
+    const cards = new Map<CardKeyword, unknown>()
+    for (const [keyword, card] of readCardsFromPng(bytes)) cards.set(keyword, mark(card))
+    if (cards.size === 0) throw new Error('This image has no character data inside.')
+    const copyName = await freeFileName(slugOf(draft.name), '.png')
+    await writeSafely(join(directory, copyName), writeCardsToPng(portrait ?? bytes, cards))
+    return readCharacter(copyName)
+  }
+
+  const card = mark(parseJsonBytes(bytes))
+  const copyName = await freeFileName(slugOf(draft.name), portrait ? '.png' : '.json')
+  await writeSafely(join(directory, copyName), portrait ? pictureCard(portrait, card) : jsonCard(card))
+  return readCharacter(copyName)
 }
 
 /** Where a character's card file is, or null if there is no such character. */

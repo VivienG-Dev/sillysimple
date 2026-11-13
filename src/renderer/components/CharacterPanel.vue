@@ -276,6 +276,7 @@ const extras = computed(() => cardExtras(props.character))
         <div class="identity-text">
           <h2 class="title-serif name">{{ character.name }}</h2>
           <span class="tagline">{{ character.tagline }}</span>
+          <span v-if="character.copyOf" class="version">A changed version of {{ character.copyOf }}</span>
           <CardCredit v-if="character.creator" :creator="character.creator" />
         </div>
         <button
@@ -775,6 +776,10 @@ const extras = computed(() => cardExtras(props.character))
   color: var(--text-faint);
 }
 
+.version {
+  font-size: 11.5px;
+  color: var(--accent-text);
+}
 .in-story {
   display: flex;
   flex-wrap: wrap;

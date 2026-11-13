@@ -66,7 +66,30 @@ export function parseCard(json: unknown): CardFields {
     ...creatorOf(data),
     ...(favoriteOf(json) && { favorite: true }),
     ...voicesOf(data),
+    ...copyOfOf(data),
   }
+}
+
+/**
+ * The character this one was saved from with "Save as new character", by name. The
+ * app's own mark, under `extensions.sillysimple.copyOf`: it tells the copy from the
+ * original at a glance.
+ */
+function copyOfOf(data: Record<string, unknown>): { copyOf?: string } {
+  const extensions = isRecord(data['extensions']) ? data['extensions'] : {}
+  const own = isRecord(extensions['sillysimple']) ? extensions['sillysimple'] : {}
+  const from = text(own['copyOf']).trim()
+  return from ? { copyOf: from.slice(0, 80) } : {}
+}
+
+/** Returns the card `json` marked as a version of the character called `original`. Nothing else in it changes. */
+export function applyCopyOf(json: unknown, original: string): Record<string, unknown> {
+  const card = isRecord(json) ? (structuredClone(json) as Record<string, unknown>) : {}
+  const data = isRecord(card['data']) ? card['data'] : card
+  const extensions = isRecord(data['extensions']) ? data['extensions'] : {}
+  const own = isRecord(extensions['sillysimple']) ? extensions['sillysimple'] : {}
+  data['extensions'] = { ...extensions, sillysimple: { ...own, copyOf: original.trim().slice(0, 80) } }
+  return card
 }
 
 /**

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Heart, MessageCircle, Pencil, Play, Plus, Search, Trash2, Upload, UserRoundPlus } from '@lucide/vue'
+import { CopyPlus, Heart, MessageCircle, Pencil, Play, Plus, Search, Trash2, Upload, UserRoundPlus } from '@lucide/vue'
 import { applyMacros } from '@core/prompt/macros'
 import type { Character, ImportResult, Scenario } from '@shared/types'
 
@@ -339,6 +339,10 @@ function onDrop(event: DragEvent): void {
             >
               <img v-if="character.portraitUrl" :src="character.portraitUrl" alt="" draggable="false" />
               <template v-else>{{ initials(character.name) }}</template>
+              <!-- Saved with "Save as new character": not the original -->
+              <span v-if="character.copyOf" class="card-version" :title="`A changed version of ${character.copyOf}`">
+                <CopyPlus :size="11" :stroke-width="2.2" />Version
+              </span>
             </span>
             <span class="card-body">
               <span class="card-name">{{ character.name }}</span>
@@ -703,6 +707,26 @@ h2 {
   right: 80px;
 }
 /* The heart sits on the other corner. It shows when the card is pointed at, and stays once pressed. */
+/* "Version": a character saved from another one, on the corner of its picture. */
+.card-version {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px 2px 6px;
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #fff;
+  background: color-mix(in oklab, var(--accent) 85%, black);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+}
 .card-like {
   position: absolute;
   z-index: 1;
@@ -770,6 +794,7 @@ h2 {
 /* Every card is the same: a picture frame of the usual shape of card art (2:3), then three
    lines of text. A picture of another shape fills the frame and is cut, keeping its top. */
 .card-portrait {
+  position: relative;
   aspect-ratio: 2 / 3;
   display: flex;
   align-items: center;

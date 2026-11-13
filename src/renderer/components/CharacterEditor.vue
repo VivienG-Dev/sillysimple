@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { Camera, Plus, X } from '@lucide/vue'
+// Named apart from the <CardChange> component, which the auto-imports would otherwise not bring in.
+import type { CardChange as ModelChange } from '@core/cards/changeCard'
 import { isGreeting, OTHER_GREETINGS, type CardSection, type WrittenCard } from '@core/cards/writeCard'
 import { EMPTY_CHARACTER } from '@shared/defaults'
-import type { Character, CharacterDraft, LorebookEntry, ReviewedCard } from '@shared/types'
+import type { ChangedCard, Character, CharacterDraft, LorebookEntry, ReviewedCard } from '@shared/types'
 
 // The window where a character is written or changed, opened with useCharacterEditor().
 // Four tabs: who the character is, how chats open, instructions for the model, and its lorebook.
@@ -193,8 +195,8 @@ const reviewed = computed<ReviewedCard>(() => {
   }
 })
 
-/** What the fields held before the last fix, to put back if the user does not like it. */
-let beforeFix: { draft: CharacterDraft; lore: LorebookEntry[] } | null = null
+/** What the fields held before the last fix or change, to put back if the user does not like it. */
+let beforeFix: { draft: CharacterDraft; lore: LorebookEntry[]; tags?: string } | null = null
 
 /** Shows what the model has written so far for a fix, in the field it belongs to. */
 function onImproved(card: WrittenCard, finished: boolean, sections: CardSection[]): void {
@@ -236,7 +238,81 @@ function undoFix(): void {
   if (!beforeFix) return
   draft.value = beforeFix.draft
   lore.value = beforeFix.lore
+  if (beforeFix.tags !== undefined) tagsText.value = beforeFix.tags
   beforeFix = null
+}
+
+// --- "Change it": the parts a change asked in words touches -------------------------
+
+const changer = ref<{ stop(): void } | null>(null)
+
+/** The card as the model reads it for a change: every field it may rewrite, and every lorebook note. */
+const changeable = computed<ChangedCard>(() => ({
+  name: draft.value.name,
+  tagline: draft.value.tagline,
+  description: draft.value.description,
+  personality: draft.value.personality,
+  scenario: draft.value.scenario,
+  exampleMessages: draft.value.exampleMessages,
+  tags: tagsText.value.split(',').map((tag) => tag.trim()).filter(Boolean),
+  firstMessage: draft.value.firstMessage,
+  alternateGreetings: draft.value.alternateGreetings,
+  lore: lore.value.map((entry) => ({ keys: entry.keys, content: entry.content })),
+}))
+
+/**
+ * Shows what the model has rewritten so far. Every time from the card as it was before
+ * the change, so a part that is being written replaces the old one and nothing else moves.
+ */
+function onChanged(change: ModelChange, finished: boolean): void {
+  if (change.last === null && !finished) {
+    beforeFix = { draft: toPlain(draft.value), lore: toPlain(lore.value), tags: tagsText.value } // A change begins.
+    problem.value = ''
+    return
+  }
+  const before = beforeFix
+  if (!before) return
+
+  const next = toPlain(before.draft)
+  const { fields } = change
+  if (fields.NAME !== undefined) next.name = fields.NAME
+  if (fields.TAGLINE !== undefined) next.tagline = fields.TAGLINE
+  if (fields.DESCRIPTION !== undefined) next.description = fields.DESCRIPTION
+  if (fields.PERSONALITY !== undefined) next.personality = fields.PERSONALITY
+  if (fields.SCENARIO !== undefined) next.scenario = fields.SCENARIO
+  if (fields['EXAMPLE DIALOGUE'] !== undefined) next.exampleMessages = fields['EXAMPLE DIALOGUE']
+  if (fields['FIRST MESSAGE'] !== undefined) next.firstMessage = fields['FIRST MESSAGE']
+  // Other openings by their place; one past the end is a new one.
+  for (const [index, text] of [...change.greetings].sort(([a], [b]) => a - b)) {
+    if (index < next.alternateGreetings.length) next.alternateGreetings[index] = text
+    else next.alternateGreetings.push(text)
+  }
+  draft.value = next
+  tagsText.value = fields.TAGS !== undefined ? fields.TAGS.split(',').map((tag) => tag.trim()).filter(Boolean).join(', ') : (before.tags ?? tagsText.value)
+
+  // Lorebook notes by their place: rewritten in place (their settings kept), added, or removed.
+  const notes = toPlain(before.lore)
+  const removed = new Set<number>()
+  for (const item of change.lore) {
+    if (item.index === null) notes.push({ ...newLoreEntry(), keys: [...item.keys], content: item.content })
+    else if (item.index >= 0 && item.index < before.lore.length) {
+      if (item.remove) removed.add(item.index)
+      else notes[item.index] = { ...notes[item.index]!, keys: [...item.keys], content: item.content }
+    }
+  }
+  lore.value = notes.filter((_, index) => !removed.has(index))
+
+  if (finished) return
+  // Follow the writing: its tab, and its field brought into view.
+  const last = change.last
+  tab.value = last === 'LORE' ? 'lorebook' : last === 'FIRST MESSAGE' || last === 'GREETING' ? 'greetings' : 'description'
+  void nextTick(() => {
+    const field =
+      last === 'GREETING'
+        ? [...(dialog.value?.querySelectorAll<HTMLElement>('.greeting textarea') ?? [])].at(-1)
+        : dialog.value?.querySelector<HTMLElement>(`[data-section="${last}"]`)
+    field?.scrollIntoView({ block: 'nearest' })
+  })
 }
 
 // --- Picture ---------------------------------------------------------------------
@@ -275,7 +351,8 @@ async function addGreeting(): Promise<void> {
 
 // --- Save and close --------------------------------------------------------------
 
-async function save(): Promise<void> {
+/** `asNew`: "Save as new character", a copy with these changes; the original stays as it was. */
+async function save(asNew = false): Promise<void> {
   if (saving.value || assistBusy.value) return
   if (!draft.value.name.trim()) {
     tab.value = 'description'
@@ -295,7 +372,14 @@ async function save(): Promise<void> {
   }
 
   try {
-    if (original.value) {
+    if (original.value && asNew) {
+      // Under the same name, the copy becomes "Mara 2" (or 3…): the two are told apart in every list.
+      toSave.name = freeName(toSave.name.trim())
+      // The copy opens straight into its first chat, like a new character.
+      const copied = await charactersStore.copy(original.value.id, toSave, picture.value?.bytes)
+      charactersStore.select(copied.id)
+      void router.push('/')
+    } else if (original.value) {
       await charactersStore.update(original.value.id, toSave, picture.value?.bytes)
     } else {
       // A new character opens straight into its first chat.
@@ -311,6 +395,16 @@ async function save(): Promise<void> {
   }
 }
 
+/** `name`, or "name 2", "name 3"… when a character already has it. */
+function freeName(name: string): string {
+  const taken = new Set(charactersStore.characters.map((character) => character.name.trim().toLowerCase()))
+  if (!taken.has(name.toLowerCase())) return name
+  const base = name.replace(/\s+\d+$/, '')
+  let number = 2
+  while (taken.has(`${base} ${number}`.toLowerCase())) number += 1
+  return `${base} ${number}`
+}
+
 /** Errors from the main process arrive wrapped: "Error invoking remote method '…': Error: <the message>". */
 function describeError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error)
@@ -320,6 +414,7 @@ function describeError(error: unknown): string {
 async function cancel(): Promise<void> {
   if (saving.value) return
   assistant.value?.stop() // Closing the window also ends what the model is writing.
+  changer.value?.stop()
   if (isDirty()) {
     const discard = await confirm({
       title: 'Discard your changes?',
@@ -357,6 +452,7 @@ function finish(): void {
         @written="onWritten"
       />
       <CardAdvice v-else ref="assistant" v-model:busy="assistBusy" :card="reviewed" @written="onImproved" @undo="undoFix" />
+      <CardChange v-if="editing.character" ref="changer" v-model:busy="assistBusy" :card="changeable" @changed="onChanged" @undo="undoFix" />
 
       <header class="head">
         <button
@@ -535,7 +631,17 @@ function finish(): void {
         <p v-if="problem" class="problem" role="alert">{{ problem }}</p>
         <span v-else v-pre class="hint macros">{{char}} and {{user}} are replaced by the two names.</span>
         <button type="button" class="btn" :disabled="saving" @click="cancel">Cancel</button>
-        <button type="button" class="btn btn-primary" :disabled="saving || assistBusy" @click="save">
+        <button
+          v-if="original"
+          type="button"
+          class="btn"
+          :disabled="saving || assistBusy"
+          :title="`Keep ${original.name} as they are, and save this as another character`"
+          @click="save(true)"
+        >
+          Save as new character
+        </button>
+        <button type="button" class="btn btn-primary" :disabled="saving || assistBusy" @click="save()">
           {{ original ? 'Save' : 'Create character' }}
         </button>
       </footer>

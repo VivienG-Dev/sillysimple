@@ -540,6 +540,11 @@ function nextSwipe(): void {
 .message.user .prose :deep(.say) {
   color: var(--text);
 }
+/* A word between asterisks inside what is said is stressed, not an action: it keeps the
+   colour of the speech and only turns italic. */
+.prose :deep(.say em) {
+  color: inherit;
+}
 /* Pictures and sounds a card puts in its messages (see formatMessage) */
 .prose :deep(.media-picture),
 .prose :deep(.media-video) {

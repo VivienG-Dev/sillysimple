@@ -4,6 +4,7 @@ import type {
   Attempt,
   Author,
   BackupInfo,
+  ChangeCharacterRequest,
   Character,
   CharacterDraft,
   ChatEvent,
@@ -151,6 +152,8 @@ export interface SillyApi {
     create(draft: CharacterDraft, portrait?: Uint8Array): Promise<Character>
     /** Rewrites what the editor changed in a card file. Everything else in the file is kept. */
     update(id: string, draft: CharacterDraft, portrait?: Uint8Array): Promise<Character>
+    /** Saves the editor's changes as a new character, from a copy of this one's card. The original is not touched. */
+    copy(id: string, draft: CharacterDraft, portrait?: Uint8Array): Promise<Character>
     /**
      * Has the connected model write a character from an idea. Nothing is saved: the text
      * arrives through `chat.onEvent` while it is written, and is returned whole at the end.
@@ -162,6 +165,11 @@ export interface SillyApi {
      * fits the rest. Works like `write`: the text arrives through `chat.onEvent` meanwhile.
      */
     improve(request: ImproveCharacterRequest): Promise<WriteCharacterOutcome>
+    /**
+     * Has the model rewrite the parts of a card that a change asked in words touches
+     * ("a woman instead of a man"). Works like `write`: the text arrives through `chat.onEvent`.
+     */
+    change(request: ChangeCharacterRequest): Promise<WriteCharacterOutcome>
     /** Marks a character as a favourite, or removes the mark. Returns the character as it is now saved. */
     setFavorite(id: string, favorite: boolean): Promise<Character>
     /**

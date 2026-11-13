@@ -41,6 +41,13 @@ export const useCharactersStore = defineStore('characters', () => {
     return character
   }
 
+  /** Saves the editor's changes as a new character, made from a copy of `id`'s card. */
+  async function copy(id: string, draft: CharacterDraft, portrait?: Uint8Array): Promise<Character> {
+    const character = await window.api.characters.copy(id, toPlain(draft), portrait)
+    await load()
+    return character
+  }
+
   /** Saves the editor's changes into the character's card file. */
   async function update(id: string, draft: CharacterDraft, portrait?: Uint8Array): Promise<Character> {
     const character = await window.api.characters.update(id, toPlain(draft), portrait)
@@ -101,6 +108,7 @@ export const useCharactersStore = defineStore('characters', () => {
     select,
     importFiles,
     create,
+    copy,
     update,
     toggleFavorite,
     setVoice,

@@ -12,7 +12,8 @@ export const FIRST_CHUNK = 220
 /** The following pieces: long enough for the voice to keep its flow, well within what any service takes at once. */
 export const NEXT_CHUNK = 700
 
-const QUOTED = /"([^"\n]+)"|“([^”\n]+)”|«\s*([^»\n]+?)\s*»/g
+// A line break inside the quotes is allowed ("Too\nwhat."), not a blank line: that is a new paragraph.
+const QUOTED = /"((?:[^"\n]|\n(?!\s*\n))+)"|“((?:[^”\n]|\n(?!\s*\n))+)”|«\s*((?:[^»\n]|\n(?!\s*\n))+?)\s*»/g
 const BETWEEN_ASTERISKS = /\*([^*\n]*)\*/g
 
 /** What is never read out: code, links' addresses, macros that were not filled in, the signs that open a line. */
